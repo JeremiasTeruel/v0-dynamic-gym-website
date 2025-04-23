@@ -8,8 +8,11 @@ import Alert from "@/components/alert"
 
 export default function PagarCuota() {
   const router = useRouter()
-  const { usuarios, buscarUsuario, actualizarPago } = useGymContext()
+  const { buscarUsuario, actualizarPago, error } = useGymContext()
   const [showAlert, setShowAlert] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+  const [errorLocal, setErrorLocal] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     dni: "",
@@ -19,7 +22,7 @@ export default function PagarCuota() {
 
   const [userFound, setUserFound] = useState(null)
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
@@ -27,8 +30,15 @@ export default function PagarCuota() {
     }))
 
     if (name === "dni" && value.length > 5) {
-      const usuario = buscarUsuario(value)
-      setUserFound(usuario || null)
+      setIsSearching(true)
+      try {
+        const usuario = await buscarUsuario(value)
+        setUserFound(usuario)
+      } catch (error) {
+        console.error("Error al buscar usuario:", error)
+      } finally {
+        setIsSearching(false)
+      }
     }
   }
 
@@ -38,24 +48,26 @@ export default function PagarCuota() {
     return date.toISOString().split("T")[0]
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setErrorLocal(null)
 
     if (!formData.dni || !formData.fechaPago) {
-      alert("Por favor complete todos los campos")
+      setErrorLocal("Por favor complete todos los campos")
       return
     }
 
     if (!userFound) {
-      alert("Usuario no encontrado")
+      setErrorLocal("Usuario no encontrado")
       return
     }
 
-    const newDueDate = calculateNewDueDate(formData.fechaPago)
-
     try {
+      setIsSubmitting(true)
+      const newDueDate = calculateNewDueDate(formData.fechaPago)
+
       // Actualizar el pago usando la función del contexto
-      actualizarPago(formData.dni, newDueDate, formData.metodoPago)
+      await actualizarPago(formData.dni, newDueDate, formData.metodoPago)
 
       // Mostrar la alerta de éxito
       setShowAlert(true)
@@ -63,7 +75,9 @@ export default function PagarCuota() {
       console.log("Pago actualizado para:", userFound.nombreApellido)
     } catch (error) {
       console.error("Error al actualizar pago:", error)
-      alert("Error al actualizar pago: " + error.message)
+      setErrorLocal("Error al actualizar pago. Por favor, intenta de nuevo.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -72,18 +86,34 @@ export default function PagarCuota() {
       <h1 className="text-4xl font-bold text-green-600 mb-10">Pagar Cuota</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
+        {(errorLocal || error) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            {errorLocal || error}
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium mb-1">DNI</label>
-          <input
-            type="text"
-            name="dni"
-            value={formData.dni}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
+          <div className="flex">
+            <input
+              type="text"
+              name="dni"
+              value={formData.dni}
+              onChange={handleChange}
+              className="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              required
+              disabled={isSubmitting}
+            />
+            {isSearching && (
+              <div className="ml-2 flex items-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-green-500"></div>
+              </div>
+            )}
+          </div>
           {userFound && <p className="text-sm text-green-600 mt-1">Usuario encontrado: {userFound.nombreApellido}</p>}
-          {formData.dni.length > 5 && !userFound && <p className="text-sm text-red-500 mt-1">Usuario no encontrado</p>}
+          {formData.dni.length > 5 && !userFound && !isSearching && (
+            <p className="text-sm text-red-500 mt-1">Usuario no encontrado</p>
+          )}
         </div>
 
         <div>
@@ -95,6 +125,7 @@ export default function PagarCuota() {
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -116,6 +147,7 @@ export default function PagarCuota() {
             value={formData.metodoPago}
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            disabled={isSubmitting}
           >
             <option value="Efectivo">Efectivo</option>
             <option value="Mercado Pago">Mercado Pago</option>
@@ -132,10 +164,12 @@ export default function PagarCuota() {
 
           <button
             type="submit"
-            className="bg-gray-500 text-white px-6 py-2 rounded-md hover:scale-105 transition-transform"
-            disabled={!userFound}
+            className={`bg-gray-500 text-white px-6 py-2 rounded-md transition-transform ${
+              isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
+            }`}
+            disabled={isSubmitting || !userFound}
           >
-            Guardar
+            {isSubmitting ? "Guardando..." : "Guardar"}
           </button>
         </div>
       </form>

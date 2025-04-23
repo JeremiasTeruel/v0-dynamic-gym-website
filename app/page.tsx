@@ -11,26 +11,35 @@ export default function Home() {
   const [searchDni, setSearchDni] = useState("")
   const [foundUser, setFoundUser] = useState(null)
   const [showAlert, setShowAlert] = useState(false)
-  const { buscarUsuario } = useGymContext()
+  const [isSearching, setIsSearching] = useState(false)
+  const { buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
 
-  const handleSearch = () => {
-    if (!searchDni.trim()) return
+  const handleSearch = async () => {
+    if (!searchDni.trim() || isSearching) return
 
-    // Buscar usuario por DNI
-    const usuario = buscarUsuario(searchDni.trim())
+    setIsSearching(true)
 
-    if (usuario) {
-      setFoundUser(usuario)
+    try {
+      // Buscar usuario por DNI
+      const usuario = await buscarUsuario(searchDni.trim())
 
-      // Configurar un temporizador para limpiar la pantalla después de 5 segundos
-      setTimeout(() => {
+      if (usuario) {
+        setFoundUser(usuario)
+
+        // Configurar un temporizador para limpiar la pantalla después de 5 segundos
+        setTimeout(() => {
+          setFoundUser(null)
+          setSearchDni("")
+        }, 5000)
+      } else {
         setFoundUser(null)
-        setSearchDni("")
-      }, 5000)
-    } else {
-      setFoundUser(null)
-      setShowAlert(true)
+        setShowAlert(true)
+      }
+    } catch (error) {
+      console.error("Error al buscar usuario:", error)
+    } finally {
+      setIsSearching(false)
     }
   }
 
@@ -61,59 +70,69 @@ export default function Home() {
         </Link>
       </div>
 
-      <div className="w-full max-w-md">
-        <div className="flex mb-6">
-          <input
-            type="text"
-            placeholder="Ingrese el DNI del usuario"
-            value={searchDni}
-            onChange={(e) => setSearchDni(e.target.value)}
-            className="flex-1 p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <button
-            onClick={handleSearch}
-            className="bg-gray-500 text-white px-4 py-2 rounded-r-md hover:scale-105 transition-transform"
-          >
-            Buscar
-          </button>
+      {cargando ? (
+        <div className="w-full max-w-md flex justify-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
         </div>
-
-        {foundUser && (
-          <div className="border border-gray-200 rounded-md p-4 mb-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-2">{foundUser.nombreApellido}</h2>
-            <p className="mb-1">
-              <span className="font-medium">DNI:</span> {foundUser.dni}
-            </p>
-            <p className="mb-1">
-              <span className="font-medium">Edad:</span> {foundUser.edad} años
-            </p>
-            <div className="flex items-center mt-3">
-              <span className="font-medium mr-2">Estado de cuota:</span>
-              {isPaymentDue(foundUser.fechaVencimiento) ? (
-                <div className="flex items-center text-red-500">
-                  <XCircle className="h-5 w-5 mr-1" />
-                  <span>Vencida el {formatDate(foundUser.fechaVencimiento)}</span>
-                </div>
-              ) : (
-                <div className="flex items-center text-green-500">
-                  <CheckCircle className="h-5 w-5 mr-1" />
-                  <span>Al día hasta {formatDate(foundUser.fechaVencimiento)}</span>
-                </div>
-              )}
-            </div>
+      ) : (
+        <div className="w-full max-w-md">
+          <div className="flex mb-6">
+            <input
+              type="text"
+              placeholder="Ingrese el DNI del usuario"
+              value={searchDni}
+              onChange={(e) => setSearchDni(e.target.value)}
+              className="flex-1 p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              disabled={isSearching}
+            />
+            <button
+              onClick={handleSearch}
+              className={`bg-gray-500 text-white px-4 py-2 rounded-r-md transition-transform ${
+                isSearching ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
+              }`}
+              disabled={isSearching}
+            >
+              {isSearching ? "Buscando..." : "Buscar"}
+            </button>
           </div>
-        )}
 
-        <div className="flex flex-col space-y-3">
-          <Link href="/nuevo-usuario" className="text-green-600 hover:underline text-center">
-            ¿Nuevo en el gimnasio?
-          </Link>
+          {foundUser && (
+            <div className="border border-gray-200 rounded-md p-4 mb-6 shadow-sm">
+              <h2 className="text-xl font-semibold mb-2">{foundUser.nombreApellido}</h2>
+              <p className="mb-1">
+                <span className="font-medium">DNI:</span> {foundUser.dni}
+              </p>
+              <p className="mb-1">
+                <span className="font-medium">Edad:</span> {foundUser.edad} años
+              </p>
+              <div className="flex items-center mt-3">
+                <span className="font-medium mr-2">Estado de cuota:</span>
+                {isPaymentDue(foundUser.fechaVencimiento) ? (
+                  <div className="flex items-center text-red-500">
+                    <XCircle className="h-5 w-5 mr-1" />
+                    <span>Vencida el {formatDate(foundUser.fechaVencimiento)}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center text-green-500">
+                    <CheckCircle className="h-5 w-5 mr-1" />
+                    <span>Al día hasta {formatDate(foundUser.fechaVencimiento)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
-          <Link href="/pagar-cuota" className="text-green-600 hover:underline text-center">
-            Pagar cuota mensual
-          </Link>
+          <div className="flex flex-col space-y-3">
+            <Link href="/nuevo-usuario" className="text-green-600 hover:underline text-center">
+              ¿Nuevo en el gimnasio?
+            </Link>
+
+            <Link href="/pagar-cuota" className="text-green-600 hover:underline text-center">
+              Pagar cuota mensual
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       <Alert
         message="Usuario no encontrado."

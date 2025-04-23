@@ -1,57 +1,133 @@
 "use client"
 
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
+import { type Usuario, usuariosIniciales } from "@/data/usuarios"
 import {
-  type Usuario,
-  cargarUsuarios,
+  obtenerTodosUsuarios,
   buscarUsuarioPorDni,
-  agregarUsuario,
-  actualizarPagoUsuario,
-} from "@/data/usuarios"
+  agregarUsuario as dbAgregarUsuario,
+  actualizarPagoUsuario as dbActualizarPagoUsuario,
+  inicializarBaseDeDatos,
+  eliminarUsuario as dbEliminarUsuario,
+} from "@/services/usuario-service"
 
 interface GymContextType {
   usuarios: Usuario[]
-  buscarUsuario: (dni: string) => Usuario | undefined
-  agregarNuevoUsuario: (usuario: Omit<Usuario, "id">) => void
-  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string) => void
+  cargando: boolean
+  error: string | null
+  buscarUsuario: (dni: string) => Promise<Usuario | null>
+  agregarNuevoUsuario: (usuario: Omit<Usuario, "id">) => Promise<void>
+  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string) => Promise<void>
+  eliminarUsuario: (id: string) => Promise<void>
+  recargarUsuarios: () => Promise<void>
 }
 
 const GymContext = createContext<GymContextType | null>(null)
 
 export function GymProvider({ children }) {
-  const [usuarios, setUsuarios] = useState<Usuario[]>(() => cargarUsuarios())
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [cargando, setCargando] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Función para cargar todos los usuarios
+  const cargarUsuarios = async () => {
+    try {
+      setCargando(true)
+      setError(null)
+
+      // Inicializar la base de datos si está vacía
+      await inicializarBaseDeDatos(usuariosIniciales)
+
+      // Obtener todos los usuarios
+      const usuariosDB = await obtenerTodosUsuarios()
+      setUsuarios(usuariosDB)
+    } catch (err) {
+      console.error("Error al cargar usuarios:", err)
+      setError("Error al cargar usuarios. Por favor, intenta de nuevo.")
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  // Cargar usuarios al iniciar
+  useEffect(() => {
+    cargarUsuarios()
+  }, [])
 
   // Función para buscar un usuario por DNI
-  const buscarUsuario = (dni: string): Usuario | undefined => {
-    return buscarUsuarioPorDni(usuarios, dni)
+  const buscarUsuario = async (dni: string): Promise<Usuario | null> => {
+    try {
+      return await buscarUsuarioPorDni(dni)
+    } catch (err) {
+      console.error("Error al buscar usuario:", err)
+      setError("Error al buscar usuario. Por favor, intenta de nuevo.")
+      return null
+    }
   }
 
   // Función para agregar un nuevo usuario
-  const agregarNuevoUsuario = (usuario: Omit<Usuario, "id">): void => {
+  const agregarNuevoUsuario = async (usuario: Omit<Usuario, "id">): Promise<void> => {
     try {
-      const nuevosUsuarios = agregarUsuario(usuarios, usuario)
-      setUsuarios(nuevosUsuarios)
-      console.log("Usuario agregado correctamente:", usuario)
-    } catch (error) {
-      console.error("Error al agregar usuario:", error.message)
-      alert(error.message)
+      setError(null)
+      const nuevoUsuario = await dbAgregarUsuario(usuario)
+      if (nuevoUsuario) {
+        setUsuarios((prev) => [...prev, nuevoUsuario])
+      }
+    } catch (err) {
+      console.error("Error al agregar usuario:", err)
+      setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
+      throw err
     }
   }
 
   // Función para actualizar el pago de un usuario
-  const actualizarPago = (dni: string, nuevaFechaVencimiento: string, metodoPago: string): void => {
-    const nuevosUsuarios = actualizarPagoUsuario(usuarios, dni, nuevaFechaVencimiento, metodoPago)
-    setUsuarios(nuevosUsuarios)
-    console.log("Pago actualizado para usuario con DNI:", dni)
+  const actualizarPago = async (dni: string, nuevaFechaVencimiento: string, metodoPago: string): Promise<void> => {
+    try {
+      setError(null)
+      const usuarioActualizado = await dbActualizarPagoUsuario(dni, nuevaFechaVencimiento, metodoPago)
+
+      if (usuarioActualizado) {
+        setUsuarios((prev) => prev.map((u) => (u.dni === dni ? usuarioActualizado : u)))
+      }
+    } catch (err) {
+      console.error("Error al actualizar pago:", err)
+      setError("Error al actualizar pago. Por favor, intenta de nuevo.")
+      throw err
+    }
+  }
+
+  // Función para eliminar un usuario
+  const eliminarUsuario = async (id: string): Promise<void> => {
+    try {
+      setError(null)
+      const eliminado = await dbEliminarUsuario(id)
+
+      if (eliminado) {
+        setUsuarios((prev) => prev.filter((u) => u.id !== id))
+      }
+    } catch (err) {
+      console.error("Error al eliminar usuario:", err)
+      setError("Error al eliminar usuario. Por favor, intenta de nuevo.")
+      throw err
+    }
+  }
+
+  // Función para recargar usuarios
+  const recargarUsuarios = async (): Promise<void> => {
+    await cargarUsuarios()
   }
 
   return (
     <GymContext.Provider
       value={{
         usuarios,
+        cargando,
+        error,
         buscarUsuario,
         agregarNuevoUsuario,
         actualizarPago,
+        eliminarUsuario,
+        recargarUsuarios,
       }}
     >
       {children}

@@ -8,8 +8,10 @@ import Alert from "@/components/alert"
 
 export default function NuevoUsuario() {
   const router = useRouter()
-  const { agregarNuevoUsuario } = useGymContext()
+  const { agregarNuevoUsuario, error } = useGymContext()
   const [showAlert, setShowAlert] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorLocal, setErrorLocal] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     nombreApellido: "",
@@ -33,15 +35,18 @@ export default function NuevoUsuario() {
     return date.toISOString().split("T")[0]
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setErrorLocal(null)
 
     if (!formData.nombreApellido || !formData.dni || !formData.edad || !formData.fechaInicio) {
-      alert("Por favor complete todos los campos")
+      setErrorLocal("Por favor complete todos los campos")
       return
     }
 
     try {
+      setIsSubmitting(true)
+
       // Crear el nuevo usuario con la fecha de vencimiento calculada
       const nuevoUsuario = {
         ...formData,
@@ -49,7 +54,7 @@ export default function NuevoUsuario() {
       }
 
       // Agregar el usuario usando la función del contexto
-      agregarNuevoUsuario(nuevoUsuario)
+      await agregarNuevoUsuario(nuevoUsuario)
 
       // Mostrar la alerta de éxito
       setShowAlert(true)
@@ -58,7 +63,9 @@ export default function NuevoUsuario() {
       console.log("Usuario creado:", nuevoUsuario)
     } catch (error) {
       console.error("Error al crear usuario:", error)
-      alert("Error al crear usuario: " + error.message)
+      setErrorLocal(error.message || "Error al crear usuario. Por favor, intenta de nuevo.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -67,6 +74,12 @@ export default function NuevoUsuario() {
       <h1 className="text-4xl font-bold text-green-600 mb-10">Nuevo Usuario</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
+        {(errorLocal || error) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            {errorLocal || error}
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium mb-1">Nombre y Apellido</label>
           <input
@@ -76,6 +89,7 @@ export default function NuevoUsuario() {
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -88,6 +102,7 @@ export default function NuevoUsuario() {
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -100,6 +115,7 @@ export default function NuevoUsuario() {
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -112,6 +128,7 @@ export default function NuevoUsuario() {
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -133,6 +150,7 @@ export default function NuevoUsuario() {
             value={formData.metodoPago}
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            disabled={isSubmitting}
           >
             <option value="Efectivo">Efectivo</option>
             <option value="Mercado Pago">Mercado Pago</option>
@@ -149,9 +167,12 @@ export default function NuevoUsuario() {
 
           <button
             type="submit"
-            className="bg-gray-500 text-white px-6 py-2 rounded-md hover:scale-105 transition-transform"
+            className={`bg-gray-500 text-white px-6 py-2 rounded-md transition-transform ${
+              isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
+            }`}
+            disabled={isSubmitting}
           >
-            Guardar
+            {isSubmitting ? "Guardando..." : "Guardar"}
           </button>
         </div>
       </form>
