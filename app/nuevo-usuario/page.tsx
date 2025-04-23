@@ -8,7 +8,7 @@ import Alert from "@/components/alert"
 
 export default function NuevoUsuario() {
   const router = useRouter()
-  const { addUser } = useGymContext()
+  const { agregarNuevoUsuario } = useGymContext()
   const [showAlert, setShowAlert] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -41,20 +41,25 @@ export default function NuevoUsuario() {
       return
     }
 
-    // Crear el nuevo usuario con la fecha de vencimiento calculada
-    const newUser = {
-      ...formData,
-      fechaVencimiento: calculateDueDate(formData.fechaInicio),
+    try {
+      // Crear el nuevo usuario con la fecha de vencimiento calculada
+      const nuevoUsuario = {
+        ...formData,
+        fechaVencimiento: calculateDueDate(formData.fechaInicio),
+      }
+
+      // Agregar el usuario usando la función del contexto
+      agregarNuevoUsuario(nuevoUsuario)
+
+      // Mostrar la alerta de éxito
+      setShowAlert(true)
+
+      // Registrar en consola para verificación
+      console.log("Usuario creado:", nuevoUsuario)
+    } catch (error) {
+      console.error("Error al crear usuario:", error)
+      alert("Error al crear usuario: " + error.message)
     }
-
-    // Agregar el usuario al contexto (que lo guardará en localStorage)
-    addUser(newUser)
-
-    // Mostrar la alerta de éxito
-    setShowAlert(true)
-
-    // Registrar en consola para verificación
-    console.log("Usuario creado:", newUser)
   }
 
   return (

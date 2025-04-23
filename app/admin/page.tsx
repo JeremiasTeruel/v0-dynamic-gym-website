@@ -1,10 +1,11 @@
 "use client"
+
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
 import { CheckCircle, XCircle } from "lucide-react"
 
 export default function Admin() {
-  const { users } = useGymContext()
+  const { usuarios } = useGymContext()
 
   const isPaymentDue = (dueDate) => {
     const today = new Date()
@@ -23,7 +24,7 @@ export default function Admin() {
 
       <div className="w-full max-w-4xl">
         <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">Lista de Usuarios ({users.length})</h2>
+          <h2 className="text-2xl font-semibold">Lista de Usuarios ({usuarios.length})</h2>
           <Link href="/" className="bg-gray-500 text-white px-4 py-2 rounded-md hover:scale-105 transition-transform">
             Volver al Inicio
           </Link>
@@ -33,6 +34,7 @@ export default function Admin() {
           <table className="w-full">
             <thead className="bg-gray-100">
               <tr>
+                <th className="p-3 text-left">ID</th>
                 <th className="p-3 text-left">Nombre y Apellido</th>
                 <th className="p-3 text-left">DNI</th>
                 <th className="p-3 text-left">Edad</th>
@@ -42,15 +44,16 @@ export default function Admin() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user, index) => (
-                <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                  <td className="p-3">{user.nombreApellido}</td>
-                  <td className="p-3">{user.dni}</td>
-                  <td className="p-3">{user.edad}</td>
-                  <td className="p-3">{formatDate(user.fechaInicio)}</td>
-                  <td className="p-3">{formatDate(user.fechaVencimiento)}</td>
+              {usuarios.map((usuario) => (
+                <tr key={usuario.id} className="border-t border-gray-200">
+                  <td className="p-3">{usuario.id}</td>
+                  <td className="p-3">{usuario.nombreApellido}</td>
+                  <td className="p-3">{usuario.dni}</td>
+                  <td className="p-3">{usuario.edad}</td>
+                  <td className="p-3">{formatDate(usuario.fechaInicio)}</td>
+                  <td className="p-3">{formatDate(usuario.fechaVencimiento)}</td>
                   <td className="p-3">
-                    {isPaymentDue(user.fechaVencimiento) ? (
+                    {isPaymentDue(usuario.fechaVencimiento) ? (
                       <div className="flex items-center text-red-500">
                         <XCircle className="h-5 w-5 mr-1" />
                         <span>Vencida</span>
@@ -69,7 +72,7 @@ export default function Admin() {
         </div>
 
         <div className="mt-6">
-          <p className="text-sm text-gray-500">Total de usuarios registrados: {users.length}</p>
+          <p className="text-sm text-gray-500">Total de usuarios registrados: {usuarios.length}</p>
         </div>
       </div>
     </main>

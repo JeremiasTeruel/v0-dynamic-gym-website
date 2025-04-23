@@ -11,17 +11,17 @@ export default function Home() {
   const [searchDni, setSearchDni] = useState("")
   const [foundUser, setFoundUser] = useState(null)
   const [showAlert, setShowAlert] = useState(false)
-  const { users } = useGymContext()
+  const { buscarUsuario } = useGymContext()
   const router = useRouter()
 
   const handleSearch = () => {
     if (!searchDni.trim()) return
 
-    // Buscar por DNI exacto
-    const user = users.find((user) => user.dni === searchDni.trim())
+    // Buscar usuario por DNI
+    const usuario = buscarUsuario(searchDni.trim())
 
-    if (user) {
-      setFoundUser(user)
+    if (usuario) {
+      setFoundUser(usuario)
 
       // Configurar un temporizador para limpiar la pantalla después de 5 segundos
       setTimeout(() => {

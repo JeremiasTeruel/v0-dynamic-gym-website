@@ -8,7 +8,7 @@ import Alert from "@/components/alert"
 
 export default function PagarCuota() {
   const router = useRouter()
-  const { users, updatePayment } = useGymContext()
+  const { usuarios, buscarUsuario, actualizarPago } = useGymContext()
   const [showAlert, setShowAlert] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -27,8 +27,8 @@ export default function PagarCuota() {
     }))
 
     if (name === "dni" && value.length > 5) {
-      const user = users.find((u) => u.dni === value)
-      setUserFound(user || null)
+      const usuario = buscarUsuario(value)
+      setUserFound(usuario || null)
     }
   }
 
@@ -53,8 +53,18 @@ export default function PagarCuota() {
 
     const newDueDate = calculateNewDueDate(formData.fechaPago)
 
-    updatePayment(formData.dni, newDueDate, formData.metodoPago)
-    setShowAlert(true)
+    try {
+      // Actualizar el pago usando la función del contexto
+      actualizarPago(formData.dni, newDueDate, formData.metodoPago)
+
+      // Mostrar la alerta de éxito
+      setShowAlert(true)
+
+      console.log("Pago actualizado para:", userFound.nombreApellido)
+    } catch (error) {
+      console.error("Error al actualizar pago:", error)
+      alert("Error al actualizar pago: " + error.message)
+    }
   }
 
   return (
