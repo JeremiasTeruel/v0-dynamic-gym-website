@@ -25,9 +25,17 @@ export default function Admin() {
       <div className="w-full max-w-4xl">
         <div className="mb-6 flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Lista de Usuarios ({usuarios.length})</h2>
-          <Link href="/" className="bg-gray-500 text-white px-4 py-2 rounded-md hover:scale-105 transition-transform">
-            Volver al Inicio
-          </Link>
+          <div className="flex gap-4">
+            <Link
+              href="/sincronizar"
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:scale-105 transition-transform"
+            >
+              Sincronizar Datos
+            </Link>
+            <Link href="/" className="bg-gray-500 text-white px-4 py-2 rounded-md hover:scale-105 transition-transform">
+              Volver al Inicio
+            </Link>
+          </div>
         </div>
 
         <div className="border rounded-md overflow-hidden">

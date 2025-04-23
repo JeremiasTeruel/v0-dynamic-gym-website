@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle } from "lucide-react"
+import { CheckCircle, XCircle, Settings } from "lucide-react"
 import Alert from "@/components/alert"
 
 export default function Home() {
@@ -53,7 +53,13 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-8">
-      <h1 className="text-4xl font-bold text-green-600 mb-10">Dynamic Gym</h1>
+      <div className="w-full max-w-md flex justify-between items-center mb-6">
+        <h1 className="text-4xl font-bold text-green-600">Dynamic Gym</h1>
+        <Link href="/admin" className="text-gray-500 hover:text-gray-700">
+          <Settings className="h-6 w-6" />
+          <span className="sr-only">Administración</span>
+        </Link>
+      </div>
 
       <div className="w-full max-w-md">
         <div className="flex mb-6">

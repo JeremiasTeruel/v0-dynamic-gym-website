@@ -9,7 +9,13 @@ export interface Usuario {
   metodoPago: string
 }
 
+// NOTA: En una aplicación real, estos datos estarían en una base de datos
+// y no en un archivo estático. Para sincronizar entre dispositivos,
+// necesitarías una base de datos como MongoDB, Firebase, etc.
+
 // Array inicial de usuarios
+// Este array sirve como datos iniciales, pero no se modifica directamente
+// en el archivo. Las modificaciones se guardan en localStorage.
 export const usuariosIniciales: Usuario[] = [
   {
     id: "1",
@@ -49,6 +55,24 @@ export const cargarUsuarios = (): Usuario[] => {
 export const guardarUsuarios = (usuarios: Usuario[]): void => {
   if (typeof window !== "undefined") {
     localStorage.setItem("gymUsuarios", JSON.stringify(usuarios))
+
+    // SIMULACIÓN: En una aplicación real, aquí enviaríamos los datos a un servidor
+    console.log("Datos guardados en localStorage. En una aplicación real, estos datos se enviarían a un servidor.")
+    console.log("Usuarios actualizados:", usuarios)
+
+    // Para sincronizar entre dispositivos, necesitarías código como este:
+    /*
+    fetch('/api/usuarios', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(usuarios),
+    })
+    .then(response => response.json())
+    .then(data => console.log('Éxito:', data))
+    .catch((error) => console.error('Error:', error));
+    */
   }
 }
 
@@ -74,6 +98,10 @@ export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, 
   // Agregar al array y guardar
   const nuevosUsuarios = [...usuarios, usuarioConId]
   guardarUsuarios(nuevosUsuarios)
+
+  // SIMULACIÓN: En una aplicación real, aquí enviaríamos el nuevo usuario a un servidor
+  console.log("Nuevo usuario agregado:", usuarioConId)
+
   return nuevosUsuarios
 }
 
@@ -88,5 +116,27 @@ export const actualizarPagoUsuario = (
     usuario.dni === dni ? { ...usuario, fechaVencimiento: nuevaFechaVencimiento, metodoPago } : usuario,
   )
   guardarUsuarios(nuevosUsuarios)
+
+  // SIMULACIÓN: En una aplicación real, aquí enviaríamos la actualización a un servidor
+  console.log("Pago actualizado para usuario con DNI:", dni)
+
   return nuevosUsuarios
+}
+
+// Función para exportar los datos (simulación)
+export const exportarDatos = (): string => {
+  const usuarios = cargarUsuarios()
+  return JSON.stringify(usuarios, null, 2)
+}
+
+// Función para importar datos (simulación)
+export const importarDatos = (datosJSON: string): Usuario[] => {
+  try {
+    const usuarios = JSON.parse(datosJSON) as Usuario[]
+    guardarUsuarios(usuarios)
+    return usuarios
+  } catch (error) {
+    console.error("Error al importar datos:", error)
+    throw new Error("El formato de los datos importados no es válido")
+  }
 }
