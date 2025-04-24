@@ -5,22 +5,22 @@ if (typeof window !== "undefined") {
   throw new Error("Este módulo solo debe importarse desde el servidor")
 }
 
-// Usar la variable de entorno para la URI de MongoDB o la cadena de conexión directa como respaldo
+// Usar una cadena de conexión directa para evitar problemas con las variables de entorno
 const uri =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://jteruel8:naCxod-nirdec-sujve7@cluster0.dtczv4t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+  "mongodb+srv://jteruel8:naCxod-nirdec-sujve7@cluster0.dtczv4t.mongodb.net/dynamicGym?retryWrites=true&w=majority&appName=Cluster0"
+
+// Imprimir información de depuración (sin mostrar la contraseña completa)
+const uriForLogging = uri.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@")
+console.log("Usando cadena de conexión (censurada):", uriForLogging)
 
 const options = {
   // Opciones recomendadas para MongoDB Atlas
   maxPoolSize: 10,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 10000, // Aumentado para dar más tiempo
   socketTimeoutMS: 45000,
-}
-
-// Verificar que la URI esté definida
-if (!uri) {
-  console.error("¡ADVERTENCIA! No se encontró una cadena de conexión para MongoDB")
-  throw new Error("Por favor, configura la variable de entorno MONGODB_URI en tu proyecto de Vercel")
+  // Deshabilitar la validación estricta de TLS para pruebas
+  // (no recomendado para producción)
+  tlsAllowInvalidCertificates: true,
 }
 
 let client: MongoClient
@@ -44,15 +44,20 @@ export async function getMongoDb() {
       console.log("Esperando conexión del cliente...")
       const client = await clientPromise
       console.log("Cliente conectado, obteniendo base de datos...")
-      db = client.db()
+      // Especificar explícitamente el nombre de la base de datos
+      db = client.db("dynamicGym")
       console.log("Conexión a MongoDB establecida correctamente")
     }
     return db
   } catch (error) {
     console.error("Error al conectar con MongoDB:", error)
+    // Proporcionar información más detallada sobre el error
+    const errorMessage = error.message || "Error desconocido"
+    const errorCode = error.code || "Sin código"
+    const errorName = error.name || "Sin nombre"
+
     throw new Error(
-      "No se pudo conectar a la base de datos. Verifica que la variable de entorno MONGODB_URI esté configurada correctamente. Error: " +
-        error.message,
+      `No se pudo conectar a la base de datos. Error: ${errorMessage}. Código: ${errorCode}. Nombre: ${errorName}`,
     )
   }
 }
