@@ -27,17 +27,28 @@ export function GymProvider({ children }) {
       setCargando(true)
       setError(null)
 
+      console.log("Intentando cargar usuarios...")
+
       const response = await fetch("/api/usuarios")
+
+      console.log("Respuesta recibida:", {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      })
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || "Error al cargar usuarios")
+        console.error("Error en la respuesta:", errorData)
+        throw new Error(errorData.error || `Error al cargar usuarios: ${response.status} ${response.statusText}`)
       }
 
       const usuariosDB = await response.json()
+      console.log("Usuarios cargados:", usuariosDB.length)
       setUsuarios(usuariosDB)
     } catch (err) {
       console.error("Error al cargar usuarios:", err)
-      setError("Error al cargar usuarios. Por favor, intenta de nuevo.")
+      setError(`Error al cargar usuarios: ${err.message}. Por favor, intenta de nuevo.`)
     } finally {
       setCargando(false)
     }
