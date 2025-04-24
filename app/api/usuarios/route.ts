@@ -27,6 +27,7 @@ async function inicializarBaseDeDatos() {
     }
   } catch (error) {
     console.error("Error al inicializar la base de datos:", error)
+    throw error
   }
 }
 
@@ -51,7 +52,13 @@ export async function GET() {
     return NextResponse.json(usuariosFormateados)
   } catch (error) {
     console.error("Error al obtener usuarios:", error)
-    return NextResponse.json({ error: "Error al obtener usuarios" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Error al obtener usuarios",
+        details: error.message,
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -98,6 +105,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Error al agregar usuario" }, { status: 500 })
   } catch (error) {
     console.error("Error al agregar usuario:", error)
-    return NextResponse.json({ error: "Error al agregar usuario: " + error.message }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Error al agregar usuario",
+        details: error.message,
+      },
+      { status: 500 },
+    )
   }
 }

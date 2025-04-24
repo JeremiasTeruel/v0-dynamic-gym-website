@@ -5,8 +5,8 @@ if (typeof window !== "undefined") {
   throw new Error("Este módulo solo debe importarse desde el servidor")
 }
 
-const uri =
-  "mongodb+srv://jteruel8:PuertoMadryn2467@cluster0.dtczv4t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+// Usar la variable de entorno para la URI de MongoDB
+const uri = process.env.MONGODB_URI || ""
 const options = {
   // Opciones recomendadas para MongoDB Atlas
   maxPoolSize: 10,
@@ -14,17 +14,23 @@ const options = {
   socketTimeoutMS: 45000,
 }
 
+// Verificar que la URI esté definida
+if (!uri) {
+  console.error("¡ADVERTENCIA! La variable de entorno MONGODB_URI no está definida")
+  throw new Error("Por favor, configura la variable de entorno MONGODB_URI en tu proyecto de Vercel")
+}
+
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
 let db: Db
 
-if (!uri) {
-  throw new Error("Please add your MongoDB URI to .env.local")
+try {
+  client = new MongoClient(uri, options)
+  clientPromise = client.connect()
+} catch (error) {
+  console.error("Error al inicializar la conexión a MongoDB:", error)
+  throw new Error("No se pudo inicializar la conexión a la base de datos")
 }
-
-// In production mode, it's best to not use a global variable.
-client = new MongoClient(uri, options)
-clientPromise = client.connect()
 
 export async function getMongoDb() {
   try {
@@ -36,7 +42,9 @@ export async function getMongoDb() {
     return db
   } catch (error) {
     console.error("Error al conectar con MongoDB:", error)
-    throw new Error("No se pudo conectar a la base de datos")
+    throw new Error(
+      "No se pudo conectar a la base de datos. Verifica que la variable de entorno MONGODB_URI esté configurada correctamente.",
+    )
   }
 }
 
