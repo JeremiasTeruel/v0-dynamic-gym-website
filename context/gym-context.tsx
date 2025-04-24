@@ -1,15 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect } from "react"
-import { type Usuario, usuariosIniciales } from "@/data/usuarios"
-import {
-  obtenerTodosUsuarios,
-  buscarUsuarioPorDni,
-  agregarUsuario as dbAgregarUsuario,
-  actualizarPagoUsuario as dbActualizarPagoUsuario,
-  inicializarBaseDeDatos,
-  eliminarUsuario as dbEliminarUsuario,
-} from "@/services/usuario-service"
+import type { Usuario } from "@/data/usuarios"
 
 interface GymContextType {
   usuarios: Usuario[]
@@ -35,11 +27,12 @@ export function GymProvider({ children }) {
       setCargando(true)
       setError(null)
 
-      // Inicializar la base de datos si está vacía
-      await inicializarBaseDeDatos(usuariosIniciales)
+      const response = await fetch("/api/usuarios")
+      if (!response.ok) {
+        throw new Error("Error al cargar usuarios")
+      }
 
-      // Obtener todos los usuarios
-      const usuariosDB = await obtenerTodosUsuarios()
+      const usuariosDB = await response.json()
       setUsuarios(usuariosDB)
     } catch (err) {
       console.error("Error al cargar usuarios:", err)
@@ -57,7 +50,15 @@ export function GymProvider({ children }) {
   // Función para buscar un usuario por DNI
   const buscarUsuario = async (dni: string): Promise<Usuario | null> => {
     try {
-      return await buscarUsuarioPorDni(dni)
+      const response = await fetch(`/api/usuarios/${dni}`)
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null
+        }
+        throw new Error("Error al buscar usuario")
+      }
+
+      return await response.json()
     } catch (err) {
       console.error("Error al buscar usuario:", err)
       setError("Error al buscar usuario. Por favor, intenta de nuevo.")
@@ -69,10 +70,22 @@ export function GymProvider({ children }) {
   const agregarNuevoUsuario = async (usuario: Omit<Usuario, "id">): Promise<void> => {
     try {
       setError(null)
-      const nuevoUsuario = await dbAgregarUsuario(usuario)
-      if (nuevoUsuario) {
-        setUsuarios((prev) => [...prev, nuevoUsuario])
+
+      const response = await fetch("/api/usuarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(usuario),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Error al agregar usuario")
       }
+
+      const nuevoUsuario = await response.json()
+      setUsuarios((prev) => [...prev, nuevoUsuario])
     } catch (err) {
       console.error("Error al agregar usuario:", err)
       setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
@@ -84,11 +97,22 @@ export function GymProvider({ children }) {
   const actualizarPago = async (dni: string, nuevaFechaVencimiento: string, metodoPago: string): Promise<void> => {
     try {
       setError(null)
-      const usuarioActualizado = await dbActualizarPagoUsuario(dni, nuevaFechaVencimiento, metodoPago)
 
-      if (usuarioActualizado) {
-        setUsuarios((prev) => prev.map((u) => (u.dni === dni ? usuarioActualizado : u)))
+      const response = await fetch(`/api/usuarios/${dni}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fechaVencimiento: nuevaFechaVencimiento, metodoPago }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Error al actualizar pago")
       }
+
+      const usuarioActualizado = await response.json()
+      setUsuarios((prev) => prev.map((u) => (u.dni === dni ? usuarioActualizado : u)))
     } catch (err) {
       console.error("Error al actualizar pago:", err)
       setError("Error al actualizar pago. Por favor, intenta de nuevo.")
@@ -100,11 +124,17 @@ export function GymProvider({ children }) {
   const eliminarUsuario = async (id: string): Promise<void> => {
     try {
       setError(null)
-      const eliminado = await dbEliminarUsuario(id)
 
-      if (eliminado) {
-        setUsuarios((prev) => prev.filter((u) => u.id !== id))
+      const response = await fetch(`/api/usuarios/eliminar/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Error al eliminar usuario")
       }
+
+      setUsuarios((prev) => prev.filter((u) => u.id !== id))
     } catch (err) {
       console.error("Error al eliminar usuario:", err)
       setError("Error al eliminar usuario. Por favor, intenta de nuevo.")

@@ -1,5 +1,10 @@
 import { MongoClient, type Db } from "mongodb"
 
+// Asegurarnos de que este código solo se ejecute en el servidor
+if (typeof window !== "undefined") {
+  throw new Error("Este módulo solo debe importarse desde el servidor")
+}
+
 const uri =
   "mongodb+srv://jteruel8:PuertoMadryn2467@cluster0.dtczv4t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 const options = {}
@@ -12,23 +17,9 @@ if (!uri) {
   throw new Error("Please add your MongoDB URI to .env.local")
 }
 
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>
-  }
-
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options)
-    globalWithMongo._mongoClientPromise = client.connect()
-  }
-  clientPromise = globalWithMongo._mongoClientPromise
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options)
-  clientPromise = client.connect()
-}
+// In production mode, it's best to not use a global variable.
+client = new MongoClient(uri, options)
+clientPromise = client.connect()
 
 export async function getMongoDb() {
   if (!db) {
