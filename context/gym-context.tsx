@@ -29,7 +29,8 @@ export function GymProvider({ children }) {
 
       const response = await fetch("/api/usuarios")
       if (!response.ok) {
-        throw new Error("Error al cargar usuarios")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "Error al cargar usuarios")
       }
 
       const usuariosDB = await response.json()
@@ -55,7 +56,8 @@ export function GymProvider({ children }) {
         if (response.status === 404) {
           return null
         }
-        throw new Error("Error al buscar usuario")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "Error al buscar usuario")
       }
 
       return await response.json()
@@ -71,6 +73,8 @@ export function GymProvider({ children }) {
     try {
       setError(null)
 
+      console.log("Enviando solicitud para agregar usuario:", usuario)
+
       const response = await fetch("/api/usuarios", {
         method: "POST",
         headers: {
@@ -79,13 +83,15 @@ export function GymProvider({ children }) {
         body: JSON.stringify(usuario),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const data = await response.json()
+        console.error("Error en la respuesta del servidor:", data)
         throw new Error(data.error || "Error al agregar usuario")
       }
 
-      const nuevoUsuario = await response.json()
-      setUsuarios((prev) => [...prev, nuevoUsuario])
+      console.log("Usuario agregado exitosamente:", data)
+      setUsuarios((prev) => [...prev, data])
     } catch (err) {
       console.error("Error al agregar usuario:", err)
       setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
@@ -106,13 +112,14 @@ export function GymProvider({ children }) {
         body: JSON.stringify({ fechaVencimiento: nuevaFechaVencimiento, metodoPago }),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const data = await response.json()
+        console.error("Error en la respuesta del servidor:", data)
         throw new Error(data.error || "Error al actualizar pago")
       }
 
-      const usuarioActualizado = await response.json()
-      setUsuarios((prev) => prev.map((u) => (u.dni === dni ? usuarioActualizado : u)))
+      setUsuarios((prev) => prev.map((u) => (u.dni === dni ? data : u)))
     } catch (err) {
       console.error("Error al actualizar pago:", err)
       setError("Error al actualizar pago. Por favor, intenta de nuevo.")
@@ -129,8 +136,10 @@ export function GymProvider({ children }) {
         method: "DELETE",
       })
 
+      const data = await response.json().catch(() => ({}))
+
       if (!response.ok) {
-        const data = await response.json()
+        console.error("Error en la respuesta del servidor:", data)
         throw new Error(data.error || "Error al eliminar usuario")
       }
 

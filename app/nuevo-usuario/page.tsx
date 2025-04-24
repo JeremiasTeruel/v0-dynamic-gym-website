@@ -8,10 +8,11 @@ import Alert from "@/components/alert"
 
 export default function NuevoUsuario() {
   const router = useRouter()
-  const { agregarNuevoUsuario, error } = useGymContext()
+  const { agregarNuevoUsuario, error: contextError } = useGymContext()
   const [showAlert, setShowAlert] = useState(false)
+  const [alertMessage, setAlertMessage] = useState("Listo! Ya sos parte del gimnasio.")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [errorLocal, setErrorLocal] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     nombreApellido: "",
@@ -37,10 +38,10 @@ export default function NuevoUsuario() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setErrorLocal(null)
+    setError(null)
 
     if (!formData.nombreApellido || !formData.dni || !formData.edad || !formData.fechaInicio) {
-      setErrorLocal("Por favor complete todos los campos")
+      setError("Por favor complete todos los campos")
       return
     }
 
@@ -53,17 +54,22 @@ export default function NuevoUsuario() {
         fechaVencimiento: calculateDueDate(formData.fechaInicio),
       }
 
+      console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
+
       // Agregar el usuario usando la función del contexto
       await agregarNuevoUsuario(nuevoUsuario)
 
       // Mostrar la alerta de éxito
+      setAlertMessage("Listo! Ya sos parte del gimnasio.")
       setShowAlert(true)
 
       // Registrar en consola para verificación
       console.log("Usuario creado:", nuevoUsuario)
-    } catch (error) {
-      console.error("Error al crear usuario:", error)
-      setErrorLocal(error.message || "Error al crear usuario. Por favor, intenta de nuevo.")
+    } catch (err) {
+      console.error("Error al crear usuario:", err)
+      setError(err.message || "Error al crear usuario. Por favor, intenta de nuevo.")
+      setAlertMessage("Error al crear usuario: " + err.message)
+      setShowAlert(true)
     } finally {
       setIsSubmitting(false)
     }
@@ -74,9 +80,9 @@ export default function NuevoUsuario() {
       <h1 className="text-4xl font-bold text-green-600 mb-10">Nuevo Usuario</h1>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
-        {(errorLocal || error) && (
+        {(error || contextError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-            {errorLocal || error}
+            {error || contextError}
           </div>
         )}
 
@@ -178,10 +184,10 @@ export default function NuevoUsuario() {
       </form>
 
       <Alert
-        message="Listo! Ya sos parte del gimnasio."
+        message={alertMessage}
         isOpen={showAlert}
         onClose={() => setShowAlert(false)}
-        autoRedirect={true}
+        autoRedirect={!error && !contextError}
       />
     </main>
   )

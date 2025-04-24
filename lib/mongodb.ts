@@ -7,7 +7,12 @@ if (typeof window !== "undefined") {
 
 const uri =
   "mongodb+srv://jteruel8:PuertoMadryn2467@cluster0.dtczv4t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-const options = {}
+const options = {
+  // Opciones recomendadas para MongoDB Atlas
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+}
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
@@ -22,11 +27,17 @@ client = new MongoClient(uri, options)
 clientPromise = client.connect()
 
 export async function getMongoDb() {
-  if (!db) {
-    const client = await clientPromise
-    db = client.db()
+  try {
+    if (!db) {
+      const client = await clientPromise
+      db = client.db()
+      console.log("Conexión a MongoDB establecida correctamente")
+    }
+    return db
+  } catch (error) {
+    console.error("Error al conectar con MongoDB:", error)
+    throw new Error("No se pudo conectar a la base de datos")
   }
-  return db
 }
 
 // Export a module-scoped MongoClient promise. By doing this in a

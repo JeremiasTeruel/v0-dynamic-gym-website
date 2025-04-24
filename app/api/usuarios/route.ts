@@ -59,29 +59,45 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const usuario = await request.json()
+    console.log("Datos recibidos para crear usuario:", usuario)
+
+    // Validar que los campos requeridos estén presentes
+    if (!usuario.nombreApellido || !usuario.dni || !usuario.fechaInicio || !usuario.fechaVencimiento) {
+      console.error("Faltan campos requeridos:", usuario)
+      return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
+    }
+
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
     // Verificar si ya existe un usuario con ese DNI
     const usuarioExistente = await collection.findOne({ dni: usuario.dni })
     if (usuarioExistente) {
+      console.error("Ya existe un usuario con ese DNI:", usuario.dni)
       return NextResponse.json({ error: "Ya existe un usuario con ese DNI" }, { status: 400 })
     }
 
+    // Preparar el documento para insertar
+    // Asegurarse de que no haya un campo 'id' que pueda causar conflictos con '_id' de MongoDB
+    const { id, ...usuarioSinId } = usuario
+
     // Insertar el nuevo usuario
-    const resultado = await collection.insertOne(usuario)
+    const resultado = await collection.insertOne(usuarioSinId)
 
     if (resultado.acknowledged) {
       // Devolver el usuario con su nuevo ID
-      return NextResponse.json({
-        ...usuario,
+      const nuevoUsuario = {
+        ...usuarioSinId,
         id: resultado.insertedId.toString(),
-      })
+      }
+      console.log("Usuario creado exitosamente:", nuevoUsuario)
+      return NextResponse.json(nuevoUsuario)
     }
 
+    console.error("Error al insertar usuario en la base de datos")
     return NextResponse.json({ error: "Error al agregar usuario" }, { status: 500 })
   } catch (error) {
     console.error("Error al agregar usuario:", error)
-    return NextResponse.json({ error: "Error al agregar usuario" }, { status: 500 })
+    return NextResponse.json({ error: "Error al agregar usuario: " + error.message }, { status: 500 })
   }
 }

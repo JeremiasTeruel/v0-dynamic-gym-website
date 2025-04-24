@@ -9,9 +9,17 @@ interface AlertProps {
   onClose: () => void
   autoRedirect?: boolean
   redirectPath?: string
+  type?: "success" | "error" | "info"
 }
 
-export default function Alert({ message, isOpen, onClose, autoRedirect = false, redirectPath = "/" }: AlertProps) {
+export default function Alert({
+  message,
+  isOpen,
+  onClose,
+  autoRedirect = false,
+  redirectPath = "/",
+  type = "success",
+}: AlertProps) {
   const router = useRouter()
 
   useEffect(() => {
@@ -29,9 +37,15 @@ export default function Alert({ message, isOpen, onClose, autoRedirect = false, 
 
   if (!isOpen) return null
 
+  const bgColor = {
+    success: "bg-green-100 border-green-500 text-green-700",
+    error: "bg-red-100 border-red-500 text-red-700",
+    info: "bg-blue-100 border-blue-500 text-blue-700",
+  }[type]
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+      <div className={`p-6 rounded-lg shadow-lg max-w-sm w-full border ${bgColor}`}>
         <p className="text-center text-lg">{message}</p>
       </div>
     </div>
