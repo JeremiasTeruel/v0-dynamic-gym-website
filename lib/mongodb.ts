@@ -7,7 +7,7 @@ if (typeof window !== "undefined") {
 
 // Usar una cadena de conexión directa para evitar problemas con las variables de entorno
 const uri =
-  "mongodb+srv://jteruel8:naCxod-nirdec-sujve7@cluster0.dtczv4t.mongodb.net/dynamicGym?retryWrites=true&w=majority&appName=Cluster0"
+  "mongodb+srv://gymadmin:gympassword123@cluster0.dtczv4t.mongodb.net/dynamicGym?retryWrites=true&w=majority&appName=Cluster0"
 
 // Imprimir información de depuración (sin mostrar la contraseña completa)
 const uriForLogging = uri.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@")
