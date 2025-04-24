@@ -1,6 +1,6 @@
 // Definición de la estructura de un usuario
 export interface Usuario {
-  id: string
+  _id: string
   nombreApellido: string
   dni: string
   edad: string
