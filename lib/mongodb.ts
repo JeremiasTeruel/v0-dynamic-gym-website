@@ -1,7 +1,7 @@
 import { MongoClient, type Db } from "mongodb"
 
 const uri =
-  "mongodb://dynamicGym_enterocean:7ea3a9e084c6592a9d1317f7c0125d5b5ae1bd79@a9f94.h.filess.io:61003/dynamicGym_enterocean"
+  "mongodb+srv://jteruel8:PuertoMadryn2467@cluster0.dtczv4t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 const options = {}
 
 let client: MongoClient

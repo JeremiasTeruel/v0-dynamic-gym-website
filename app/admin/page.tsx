@@ -146,7 +146,7 @@ export default function Admin() {
 
         <div className="mt-6">
           <p className="text-sm text-gray-500">Total de usuarios registrados: {usuarios.length}</p>
-          <p className="text-sm text-gray-500 mt-1">Conectado a la base de datos MongoDB: dynamicGym_enterocean</p>
+          <p className="text-sm text-gray-500 mt-1">Conectado a la base de datos MongoDB Atlas: Cluster0</p>
         </div>
       </div>
     </main>
