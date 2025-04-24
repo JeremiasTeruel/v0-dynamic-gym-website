@@ -5,9 +5,10 @@ if (typeof window !== "undefined") {
   throw new Error("Este módulo solo debe importarse desde el servidor")
 }
 
-// Usar la variable de entorno para la URI de MongoDB
-const uri = process.env.MONGODB_URI || ""
-console.log("MongoDB URI configurada:", uri ? "Sí (longitud: " + uri.length + ")" : "No")
+// Usar la variable de entorno para la URI de MongoDB o la cadena de conexión directa como respaldo
+const uri =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://jteruel8:naCxod-nirdec-sujve7@cluster0.dtczv4t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 const options = {
   // Opciones recomendadas para MongoDB Atlas
@@ -18,7 +19,7 @@ const options = {
 
 // Verificar que la URI esté definida
 if (!uri) {
-  console.error("¡ADVERTENCIA! La variable de entorno MONGODB_URI no está definida")
+  console.error("¡ADVERTENCIA! No se encontró una cadena de conexión para MongoDB")
   throw new Error("Por favor, configura la variable de entorno MONGODB_URI en tu proyecto de Vercel")
 }
 
