@@ -4,9 +4,54 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
 import { RefreshCw, ArrowLeft, CreditCard, BadgeDollarSign, Calendar } from "lucide-react"
-import { formatCurrency, groupPaymentsByMonth, getCurrentMonthTotal } from "@/models/payment"
 import MonthlyChart from "@/components/chart"
 import { useMobile } from "@/hooks/use-mobile"
+import type { Payment } from "@/models/payment"
+
+// Definir las funciones utilitarias directamente en este archivo
+// Función para formatear el monto en pesos argentinos
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+  }).format(amount)
+}
+
+// Función para agrupar pagos por mes
+function groupPaymentsByMonth(payments: Payment[]): { [key: string]: number } {
+  const grouped = payments.reduce(
+    (acc, payment) => {
+      const date = new Date(payment.date)
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`
+
+      if (!acc[monthYear]) {
+        acc[monthYear] = 0
+      }
+
+      acc[monthYear] += payment.amount
+      return acc
+    },
+    {} as { [key: string]: number },
+  )
+
+  return grouped
+}
+
+// Función para obtener el total del mes actual
+function getCurrentMonthTotal(payments: Payment[]): number {
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+
+  return payments.reduce((total, payment) => {
+    const paymentDate = new Date(payment.date)
+    if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+      return total + payment.amount
+    }
+    return total
+  }, 0)
+}
 
 export default function Ingresos() {
   const { pagos, cargandoPagos, recargarPagos } = useGymContext()

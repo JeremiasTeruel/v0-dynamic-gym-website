@@ -3,6 +3,15 @@
 import { useEffect, useRef } from "react"
 import Chart from "chart.js/auto"
 
+// Función para formatear el monto en pesos argentinos
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+  }).format(amount)
+}
+
 interface ChartProps {
   data: { [key: string]: number }
   currentMonth: string
@@ -75,10 +84,7 @@ export default function MonthlyChart({ data, currentMonth }: ChartProps) {
                   label += ": "
                 }
                 if (context.parsed.y !== null) {
-                  label += new Intl.NumberFormat("es-AR", {
-                    style: "currency",
-                    currency: "ARS",
-                  }).format(context.parsed.y)
+                  label += formatCurrency(context.parsed.y)
                 }
                 return label
               },
