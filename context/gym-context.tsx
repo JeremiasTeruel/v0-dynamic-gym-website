@@ -1,18 +1,24 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect } from "react"
+// Importar el modelo de pago
 import type { Usuario } from "@/data/usuarios"
+import type { Payment } from "@/models/payment"
 
+// Añadir los pagos al estado y funciones relacionadas a la interfaz
 interface GymContextType {
   usuarios: Usuario[]
   cargando: boolean
   error: string | null
   buscarUsuario: (dni: string) => Promise<Usuario | null>
   agregarNuevoUsuario: (usuario: Omit<Usuario, "id">) => Promise<void>
-  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string) => Promise<void>
+  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string, monto: number) => Promise<void>
   actualizarUsuario: (id: string, datosActualizados: Partial<Usuario>) => Promise<void>
   eliminarUsuario: (id: string) => Promise<void>
   recargarUsuarios: () => Promise<void>
+  pagos: Payment[]
+  cargandoPagos: boolean
+  recargarPagos: () => Promise<void>
 }
 
 const GymContext = createContext<GymContextType | null>(null)
@@ -32,10 +38,13 @@ const ordenarUsuariosAlfabeticamente = (usuarios: Usuario[]): Usuario[] => {
   })
 }
 
+// Agregar el estado de pagos al provider
 export function GymProvider({ children }) {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [cargando, setCargando] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  const [pagos, setPagos] = useState<Payment[]>([])
+  const [cargandoPagos, setCargandoPagos] = useState<boolean>(true)
 
   // Función para cargar todos los usuarios
   const cargarUsuarios = async () => {
@@ -72,11 +81,6 @@ export function GymProvider({ children }) {
       setCargando(false)
     }
   }
-
-  // Cargar usuarios al iniciar
-  useEffect(() => {
-    cargarUsuarios()
-  }, [])
 
   // Función para buscar un usuario por DNI
   const buscarUsuario = async (dni: string): Promise<Usuario | null> => {
@@ -128,36 +132,6 @@ export function GymProvider({ children }) {
     } catch (err) {
       console.error("Error al agregar usuario:", err)
       setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
-      throw err
-    }
-  }
-
-  // Función para actualizar el pago de un usuario
-  const actualizarPago = async (dni: string, nuevaFechaVencimiento: string, metodoPago: string): Promise<void> => {
-    try {
-      setError(null)
-
-      const response = await fetch(`/api/usuarios/${dni}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ fechaVencimiento: nuevaFechaVencimiento, metodoPago }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        console.error("Error en la respuesta del servidor:", data)
-        throw new Error(data.error || "Error al actualizar pago")
-      }
-
-      // Actualizar el usuario y reordenar la lista
-      const nuevosUsuarios = usuarios.map((u) => (u.dni === dni ? data : u))
-      setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
-    } catch (err) {
-      console.error("Error al actualizar pago:", err)
-      setError("Error al actualizar pago. Por favor, intenta de nuevo.")
       throw err
     }
   }
@@ -226,6 +200,104 @@ export function GymProvider({ children }) {
     await cargarUsuarios()
   }
 
+  // Función para cargar pagos
+  const cargarPagos = async () => {
+    try {
+      setCargandoPagos(true)
+
+      const response = await fetch("/api/payments")
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Error al cargar pagos: ${response.status} ${response.statusText}`)
+      }
+
+      const pagosDB = await response.json()
+      setPagos(pagosDB)
+    } catch (err) {
+      console.error("Error al cargar pagos:", err)
+      setError(`Error al cargar pagos: ${err.message}. Por favor, intenta de nuevo.`)
+    } finally {
+      setCargandoPagos(false)
+    }
+  }
+
+  // Cargar pagos al iniciar
+  useEffect(() => {
+    cargarPagos()
+  }, [])
+
+  // Actualizar la función actualizarPago para incluir el registro del pago
+  const actualizarPago = async (
+    dni: string,
+    nuevaFechaVencimiento: string,
+    metodoPago: string,
+    monto: number,
+  ): Promise<void> => {
+    try {
+      setError(null)
+
+      // 1. Actualizar la fecha de vencimiento del usuario
+      const response = await fetch(`/api/usuarios/${dni}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fechaVencimiento: nuevaFechaVencimiento, metodoPago }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        console.error("Error en la respuesta del servidor:", data)
+        throw new Error(data.error || "Error al actualizar pago")
+      }
+
+      // Actualizar el usuario local
+      const nuevosUsuarios = usuarios.map((u) => (u.dni === dni ? data : u))
+      setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
+
+      // 2. Registrar el pago
+      const usuario = usuarios.find((u) => u.dni === dni)
+      if (!usuario) {
+        throw new Error("Usuario no encontrado")
+      }
+
+      const pagoResponse = await fetch("/api/payments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: usuario.id,
+          userName: usuario.nombreApellido,
+          date: new Date().toISOString(),
+          amount: monto,
+          paymentMethod: metodoPago,
+        }),
+      })
+
+      if (!pagoResponse.ok) {
+        const errorData = await pagoResponse.json().catch(() => ({}))
+        console.error("Error al registrar pago:", errorData)
+        // No lanzamos error para que el pago del usuario se actualice incluso si falla el registro
+      } else {
+        // Actualizar la lista de pagos localmente
+        const nuevoPago = await pagoResponse.json()
+        setPagos((pagosAnteriores) => [nuevoPago, ...pagosAnteriores])
+      }
+    } catch (err) {
+      console.error("Error al actualizar pago:", err)
+      setError("Error al actualizar pago. Por favor, intenta de nuevo.")
+      throw err
+    }
+  }
+
+  // Función para recargar pagos
+  const recargarPagos = async (): Promise<void> => {
+    await cargarPagos()
+  }
+
   return (
     <GymContext.Provider
       value={{
@@ -238,6 +310,9 @@ export function GymProvider({ children }) {
         actualizarUsuario,
         eliminarUsuario,
         recargarUsuarios,
+        pagos,
+        cargandoPagos,
+        recargarPagos,
       }}
     >
       {children}

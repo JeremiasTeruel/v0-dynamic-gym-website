@@ -16,10 +16,12 @@ export default function PagarCuota() {
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
   const isMobile = useMobile()
 
+  // Agregar monto de pago al formulario
   const [formData, setFormData] = useState({
     dni: "",
     fechaPago: new Date().toISOString().split("T")[0],
     metodoPago: "Efectivo",
+    monto: 15000, // Valor predeterminado
   })
 
   const [userFound, setUserFound] = useState(null)
@@ -50,11 +52,12 @@ export default function PagarCuota() {
     return date.toISOString().split("T")[0]
   }
 
+  // Actualizar el handleSubmit para incluir el monto
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorLocal(null)
 
-    if (!formData.dni || !formData.fechaPago) {
+    if (!formData.dni || !formData.fechaPago || !formData.monto) {
       setErrorLocal("Por favor complete todos los campos")
       return
     }
@@ -68,8 +71,8 @@ export default function PagarCuota() {
       setIsSubmitting(true)
       const newDueDate = calculateNewDueDate(formData.fechaPago)
 
-      // Actualizar el pago usando la función del contexto
-      await actualizarPago(formData.dni, newDueDate, formData.metodoPago)
+      // Actualizar el pago usando la función del contexto, ahora incluyendo el monto
+      await actualizarPago(formData.dni, newDueDate, formData.metodoPago, formData.monto)
 
       // Mostrar la alerta de éxito
       setShowAlert(true)
@@ -158,6 +161,24 @@ export default function PagarCuota() {
             <option value="Efectivo">Efectivo</option>
             <option value="Mercado Pago">Mercado Pago</option>
           </select>
+        </div>
+
+        {/* Agregar el campo de monto en el formulario (antes del div de los botones) */}
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
+          <label className="block text-sm font-medium mb-1">Monto</label>
+          <input
+            type="number"
+            name="monto"
+            value={formData.monto}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            required
+            disabled={isSubmitting}
+            min="1"
+            step="0.01"
+            style={{ fontSize: "16px" }}
+          />
+          <p className="text-xs text-gray-500 mt-1">Ingrese el monto pagado por el usuario</p>
         </div>
 
         {/* Botones fijos en la parte inferior para móviles */}
