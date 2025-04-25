@@ -18,6 +18,7 @@ export default function NuevoUsuario() {
     nombreApellido: "",
     dni: "",
     edad: "",
+    telefono: "",
     fechaInicio: "",
     metodoPago: "Efectivo",
   })
@@ -118,6 +119,19 @@ export default function NuevoUsuario() {
             type="number"
             name="edad"
             value={formData.edad}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Teléfono</label>
+          <input
+            type="number"
+            name="telefono"
+            value={formData.telefono}
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required

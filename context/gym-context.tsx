@@ -10,11 +10,27 @@ interface GymContextType {
   buscarUsuario: (dni: string) => Promise<Usuario | null>
   agregarNuevoUsuario: (usuario: Omit<Usuario, "id">) => Promise<void>
   actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string) => Promise<void>
+  actualizarUsuario: (id: string, datosActualizados: Partial<Usuario>) => Promise<void>
   eliminarUsuario: (id: string) => Promise<void>
   recargarUsuarios: () => Promise<void>
 }
 
 const GymContext = createContext<GymContextType | null>(null)
+
+// Función para ordenar usuarios alfabéticamente
+const ordenarUsuariosAlfabeticamente = (usuarios: Usuario[]): Usuario[] => {
+  return [...usuarios].sort((a, b) => {
+    const nombreA = a.nombreApellido
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+    const nombreB = b.nombreApellido
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+    return nombreA.localeCompare(nombreB)
+  })
+}
 
 export function GymProvider({ children }) {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
@@ -45,7 +61,10 @@ export function GymProvider({ children }) {
 
       const usuariosDB = await response.json()
       console.log("Usuarios cargados:", usuariosDB.length)
-      setUsuarios(usuariosDB)
+
+      // Ordenar usuarios alfabéticamente antes de guardarlos en el estado
+      const usuariosOrdenados = ordenarUsuariosAlfabeticamente(usuariosDB)
+      setUsuarios(usuariosOrdenados)
     } catch (err) {
       console.error("Error al cargar usuarios:", err)
       setError(`Error al cargar usuarios: ${err.message}. Por favor, intenta de nuevo.`)
@@ -102,7 +121,10 @@ export function GymProvider({ children }) {
       }
 
       console.log("Usuario agregado exitosamente:", data)
-      setUsuarios((prev) => [...prev, data])
+
+      // Agregar el nuevo usuario y reordenar la lista
+      const nuevosUsuarios = ordenarUsuariosAlfabeticamente([...usuarios, data])
+      setUsuarios(nuevosUsuarios)
     } catch (err) {
       console.error("Error al agregar usuario:", err)
       setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
@@ -130,10 +152,46 @@ export function GymProvider({ children }) {
         throw new Error(data.error || "Error al actualizar pago")
       }
 
-      setUsuarios((prev) => prev.map((u) => (u.dni === dni ? data : u)))
+      // Actualizar el usuario y reordenar la lista
+      const nuevosUsuarios = usuarios.map((u) => (u.dni === dni ? data : u))
+      setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
     } catch (err) {
       console.error("Error al actualizar pago:", err)
       setError("Error al actualizar pago. Por favor, intenta de nuevo.")
+      throw err
+    }
+  }
+
+  // Función para actualizar un usuario
+  const actualizarUsuario = async (id: string, datosActualizados: Partial<Usuario>): Promise<void> => {
+    try {
+      setError(null)
+
+      console.log("Enviando solicitud para actualizar usuario:", id, datosActualizados)
+
+      const response = await fetch(`/api/usuarios/actualizar/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(datosActualizados),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        console.error("Error en la respuesta del servidor:", data)
+        throw new Error(data.error || "Error al actualizar usuario")
+      }
+
+      console.log("Usuario actualizado exitosamente:", data)
+
+      // Actualizar el usuario y reordenar la lista
+      const nuevosUsuarios = usuarios.map((u) => (u.id === id ? data : u))
+      setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
+    } catch (err) {
+      console.error("Error al actualizar usuario:", err)
+      setError(err.message || "Error al actualizar usuario. Por favor, intenta de nuevo.")
       throw err
     }
   }
@@ -154,6 +212,7 @@ export function GymProvider({ children }) {
         throw new Error(data.error || "Error al eliminar usuario")
       }
 
+      // Eliminar el usuario (no es necesario reordenar ya que solo se elimina)
       setUsuarios((prev) => prev.filter((u) => u.id !== id))
     } catch (err) {
       console.error("Error al eliminar usuario:", err)
@@ -176,6 +235,7 @@ export function GymProvider({ children }) {
         buscarUsuario,
         agregarNuevoUsuario,
         actualizarPago,
+        actualizarUsuario,
         eliminarUsuario,
         recargarUsuarios,
       }}

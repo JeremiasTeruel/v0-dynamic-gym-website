@@ -103,6 +103,9 @@ export default function Home() {
                 <span className="font-medium">DNI:</span> {foundUser.dni}
               </p>
               <p className="mb-1">
+                <span className="font-medium">Teléfono:</span> {foundUser.telefono}
+              </p>
+              <p className="mb-1">
                 <span className="font-medium">Edad:</span> {foundUser.edad} años
               </p>
               <div className="flex items-center mt-3">

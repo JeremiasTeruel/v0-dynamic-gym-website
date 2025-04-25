@@ -3,6 +3,7 @@ export interface Usuario {
   _id: string
   nombreApellido: string
   dni: string
+  telefono: string
   edad: string
   fechaInicio: string
   fechaVencimiento: string

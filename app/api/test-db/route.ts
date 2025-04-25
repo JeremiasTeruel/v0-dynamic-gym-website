@@ -7,7 +7,7 @@ export async function GET() {
 
     // Usar una cadena de conexión directa para la prueba
     const uri =
-      "mongodb+srv://jteruel8:naCxod-nirdec-sujve7@cluster0.dtczv4t.mongodb.net/dynamicGym?retryWrites=true&w=majority&appName=Cluster0"
+      "mongodb+srv://gymadmin:gympassword123@cluster0.dtczv4t.mongodb.net/dynamicGym?retryWrites=true&w=majority&appName=Cluster0"
 
     const options = {
       serverSelectionTimeoutMS: 5000,
