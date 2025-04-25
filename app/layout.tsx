@@ -1,6 +1,7 @@
 import type React from "react"
 import "./globals.css"
 import { GymProvider } from "@/context/gym-context"
+import MobileNav from "@/components/mobile-nav"
 
 export const metadata = {
   title: "Dynamic Gym",
@@ -16,7 +17,10 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        <GymProvider>{children}</GymProvider>
+        <GymProvider>
+          <div className="pb-20 md:pb-0">{children}</div>
+          <MobileNav />
+        </GymProvider>
       </body>
     </html>
   )

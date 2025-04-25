@@ -61,9 +61,9 @@ export default function Home() {
   }, [searchDni])
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-8">
+    <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
       <div className="w-full max-w-md flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-bold text-green-600">Dynamic Gym</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-green-600">Dynamic Gym</h1>
         <Link href="/admin" className="text-gray-500 hover:text-gray-700">
           <Settings className="h-6 w-6" />
           <span className="sr-only">Administración</span>
@@ -84,11 +84,12 @@ export default function Home() {
               onChange={(e) => setSearchDni(e.target.value)}
               className="flex-1 p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
               disabled={isSearching}
+              style={{ fontSize: "16px" }}
             />
             <button
               onClick={handleSearch}
-              className={`bg-gray-500 text-white px-4 py-2 rounded-r-md transition-transform ${
-                isSearching ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
+              className={`bg-green-600 text-white px-4 py-2 rounded-r-md transition-transform ${
+                isSearching ? "opacity-70 cursor-not-allowed" : "active:scale-95"
               }`}
               disabled={isSearching}
             >
@@ -97,7 +98,7 @@ export default function Home() {
           </div>
 
           {foundUser && (
-            <div className="border border-gray-200 rounded-md p-4 mb-6 shadow-sm">
+            <div className="border border-gray-200 rounded-md p-4 mb-6 shadow-sm bg-white">
               <h2 className="text-xl font-semibold mb-2">{foundUser.nombreApellido}</h2>
               <p className="mb-1">
                 <span className="font-medium">DNI:</span> {foundUser.dni}
@@ -126,11 +127,17 @@ export default function Home() {
           )}
 
           <div className="flex flex-col space-y-3">
-            <Link href="/nuevo-usuario" className="text-green-600 hover:underline text-center">
+            <Link
+              href="/nuevo-usuario"
+              className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
+            >
               ¿Nuevo en el gimnasio?
             </Link>
 
-            <Link href="/pagar-cuota" className="text-green-600 hover:underline text-center">
+            <Link
+              href="/pagar-cuota"
+              className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
+            >
               Pagar cuota mensual
             </Link>
           </div>

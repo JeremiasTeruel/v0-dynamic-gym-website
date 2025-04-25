@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
+import { useMobile } from "@/hooks/use-mobile"
 import Alert from "@/components/alert"
 
 export default function PagarCuota() {
@@ -13,6 +14,7 @@ export default function PagarCuota() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
+  const isMobile = useMobile()
 
   const [formData, setFormData] = useState({
     dni: "",
@@ -82,17 +84,17 @@ export default function PagarCuota() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-8">
-      <h1 className="text-4xl font-bold text-green-600 mb-10">Pagar Cuota</h1>
+    <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
+      <h1 className="text-3xl md:text-4xl font-bold text-green-600 mb-6 md:mb-10">Pagar Cuota</h1>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
+      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 md:space-y-6">
         {(errorLocal || error) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
             {errorLocal || error}
           </div>
         )}
 
-        <div>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
           <label className="block text-sm font-medium mb-1">DNI</label>
           <div className="flex">
             <input
@@ -103,6 +105,7 @@ export default function PagarCuota() {
               className="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               required
               disabled={isSubmitting}
+              style={{ fontSize: "16px" }}
             />
             {isSearching && (
               <div className="ml-2 flex items-center">
@@ -116,7 +119,7 @@ export default function PagarCuota() {
           )}
         </div>
 
-        <div>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
           <label className="block text-sm font-medium mb-1">Fecha de Pago</label>
           <input
             type="date"
@@ -126,21 +129,23 @@ export default function PagarCuota() {
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             required
             disabled={isSubmitting}
+            style={{ fontSize: "16px" }}
           />
         </div>
 
-        <div>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
           <label className="block text-sm font-medium mb-1">Nueva Fecha de Vencimiento</label>
           <input
             type="date"
             value={calculateNewDueDate(formData.fechaPago)}
             className="w-full p-3 border border-gray-300 rounded-md bg-gray-100"
             disabled
+            style={{ fontSize: "16px" }}
           />
           <p className="text-xs text-gray-500 mt-1">Se calcula automáticamente (1 mes después de la fecha de pago)</p>
         </div>
 
-        <div>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
           <label className="block text-sm font-medium mb-1">Método de Pago</label>
           <select
             name="metodoPago"
@@ -148,30 +153,56 @@ export default function PagarCuota() {
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
             disabled={isSubmitting}
+            style={{ fontSize: "16px" }}
           >
             <option value="Efectivo">Efectivo</option>
             <option value="Mercado Pago">Mercado Pago</option>
           </select>
         </div>
 
-        <div className="flex justify-between pt-4">
-          <Link
-            href="/"
-            className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:scale-105 transition-transform"
-          >
-            Cancelar
-          </Link>
+        {/* Botones fijos en la parte inferior para móviles */}
+        {isMobile ? (
+          <div className="fixed bottom-20 left-0 right-0 bg-white border-t p-4 flex justify-between z-10">
+            <Link
+              href="/"
+              className="bg-gray-300 text-gray-700 px-6 py-3 rounded-md w-5/12 flex items-center justify-center"
+            >
+              Cancelar
+            </Link>
 
-          <button
-            type="submit"
-            className={`bg-gray-500 text-white px-6 py-2 rounded-md transition-transform ${
-              isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
-            }`}
-            disabled={isSubmitting || !userFound}
-          >
-            {isSubmitting ? "Guardando..." : "Guardar"}
-          </button>
-        </div>
+            <button
+              type="submit"
+              className={`bg-green-600 text-white px-6 py-3 rounded-md w-5/12 flex items-center justify-center ${
+                isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : ""
+              }`}
+              disabled={isSubmitting || !userFound}
+            >
+              {isSubmitting ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex justify-between pt-4">
+            <Link
+              href="/"
+              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:scale-105 transition-transform"
+            >
+              Cancelar
+            </Link>
+
+            <button
+              type="submit"
+              className={`bg-green-600 text-white px-6 py-2 rounded-md transition-transform ${
+                isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
+              }`}
+              disabled={isSubmitting || !userFound}
+            >
+              {isSubmitting ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        )}
+
+        {/* Espacio adicional en la parte inferior para móviles */}
+        {isMobile && <div className="h-24"></div>}
       </form>
 
       <Alert
