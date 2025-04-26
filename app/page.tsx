@@ -9,6 +9,7 @@ import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import { useMobile } from "@/hooks/use-mobile"
 import ProximosVencimientos from "@/components/proximos-vencimientos"
+import CuotasVencidas from "@/components/cuotas-vencidas"
 
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
@@ -66,7 +67,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
-      <div className="w-full max-w-md flex justify-between items-center mb-6">
+      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
         <h1 className="text-3xl md:text-4xl font-bold text-green-600">Dynamic Gym</h1>
         <Link href="/admin" className="text-gray-500 hover:text-gray-700">
           <Settings className="h-6 w-6" />
@@ -75,81 +76,95 @@ export default function Home() {
       </div>
 
       {cargando ? (
-        <div className="w-full max-w-md flex justify-center py-8">
+        <div className="w-full max-w-6xl flex justify-center py-8">
           <LoadingDumbbell size={32} className="text-green-500" />
         </div>
       ) : (
-        <div className="w-full max-w-md">
-          <div className="flex mb-6">
-            <input
-              type="text"
-              placeholder="Ingrese el DNI del usuario"
-              value={searchDni}
-              onChange={(e) => setSearchDni(e.target.value)}
-              className="flex-1 p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              disabled={isSearching}
-              style={{ fontSize: "16px" }}
-            />
-            <button
-              onClick={handleSearch}
-              className={`bg-green-600 text-white px-4 py-2 rounded-r-md transition-transform ${
-                isSearching ? "opacity-70 cursor-not-allowed" : "active:scale-95"
-              }`}
-              disabled={isSearching}
-            >
-              {isSearching ? "Buscando..." : "Buscar"}
-            </button>
+        <div className="w-full max-w-6xl">
+          <div className="max-w-md mx-auto mb-8">
+            <div className="flex mb-6">
+              <input
+                type="text"
+                placeholder="Ingrese el DNI del usuario"
+                value={searchDni}
+                onChange={(e) => setSearchDni(e.target.value)}
+                className="flex-1 p-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                disabled={isSearching}
+                style={{ fontSize: "16px" }}
+              />
+              <button
+                onClick={handleSearch}
+                className={`bg-green-600 text-white px-4 py-2 rounded-r-md transition-transform ${
+                  isSearching ? "opacity-70 cursor-not-allowed" : "active:scale-95"
+                }`}
+                disabled={isSearching}
+              >
+                {isSearching ? "Buscando..." : "Buscar"}
+              </button>
+            </div>
+
+            {foundUser && (
+              <div className="border border-gray-200 rounded-md p-4 mb-6 shadow-sm bg-white">
+                <h2 className="text-xl font-semibold mb-2">{foundUser.nombreApellido}</h2>
+                <p className="mb-1">
+                  <span className="font-medium">DNI:</span> {foundUser.dni}
+                </p>
+                <p className="mb-1">
+                  <span className="font-medium">Teléfono:</span> {foundUser.telefono}
+                </p>
+                <p className="mb-1">
+                  <span className="font-medium">Edad:</span> {foundUser.edad} años
+                </p>
+                <div className="flex items-center mt-3">
+                  <span className="font-medium mr-2">Estado de cuota:</span>
+                  {isPaymentDue(foundUser.fechaVencimiento) ? (
+                    <div className="flex items-center text-red-500">
+                      <XCircle className="h-5 w-5 mr-1" />
+                      <span>Vencida el {formatDate(foundUser.fechaVencimiento)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-green-500">
+                      <CheckCircle className="h-5 w-5 mr-1" />
+                      <span>Al día hasta {formatDate(foundUser.fechaVencimiento)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!isMobile && (
+              <div className="flex flex-col space-y-3 mb-8">
+                <Link
+                  href="/nuevo-usuario"
+                  className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
+                >
+                  ¿Nuevo en el gimnasio?
+                </Link>
+
+                <Link
+                  href="/pagar-cuota"
+                  className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
+                >
+                  Pagar cuota mensual
+                </Link>
+              </div>
+            )}
           </div>
 
-          {foundUser && (
-            <div className="border border-gray-200 rounded-md p-4 mb-6 shadow-sm bg-white">
-              <h2 className="text-xl font-semibold mb-2">{foundUser.nombreApellido}</h2>
-              <p className="mb-1">
-                <span className="font-medium">DNI:</span> {foundUser.dni}
-              </p>
-              <p className="mb-1">
-                <span className="font-medium">Teléfono:</span> {foundUser.telefono}
-              </p>
-              <p className="mb-1">
-                <span className="font-medium">Edad:</span> {foundUser.edad} años
-              </p>
-              <div className="flex items-center mt-3">
-                <span className="font-medium mr-2">Estado de cuota:</span>
-                {isPaymentDue(foundUser.fechaVencimiento) ? (
-                  <div className="flex items-center text-red-500">
-                    <XCircle className="h-5 w-5 mr-1" />
-                    <span>Vencida el {formatDate(foundUser.fechaVencimiento)}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center text-green-500">
-                    <CheckCircle className="h-5 w-5 mr-1" />
-                    <span>Al día hasta {formatDate(foundUser.fechaVencimiento)}</span>
-                  </div>
-                )}
-              </div>
+          {/* Listas de vencimientos */}
+          {isMobile ? (
+            // Vista móvil: una lista debajo de la otra
+            <div className="space-y-8">
+              <ProximosVencimientos usuarios={usuarios} />
+              <CuotasVencidas usuarios={usuarios} />
+            </div>
+          ) : (
+            // Vista escritorio: listas lado a lado
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <ProximosVencimientos usuarios={usuarios} />
+              <CuotasVencidas usuarios={usuarios} />
             </div>
           )}
-
-          {!isMobile && (
-            <div className="flex flex-col space-y-3 mb-8">
-              <Link
-                href="/nuevo-usuario"
-                className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
-              >
-                ¿Nuevo en el gimnasio?
-              </Link>
-
-              <Link
-                href="/pagar-cuota"
-                className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
-              >
-                Pagar cuota mensual
-              </Link>
-            </div>
-          )}
-
-          {/* Lista de próximos vencimientos */}
-          <ProximosVencimientos usuarios={usuarios} />
         </div>
       )}
 
