@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
 import { useMobile } from "@/hooks/use-mobile"
 import Alert from "@/components/alert"
+import LoadingDumbbell from "@/components/loading-dumbbell"
 
 export default function NuevoUsuario() {
   const router = useRouter()
@@ -204,6 +205,7 @@ export default function NuevoUsuario() {
               }`}
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingDumbbell size={20} className="mr-2" /> : null}
               {isSubmitting ? "Guardando..." : "Guardar"}
             </button>
           </div>
@@ -223,6 +225,7 @@ export default function NuevoUsuario() {
               }`}
               disabled={isSubmitting}
             >
+              {isSubmitting ? <LoadingDumbbell size={20} className="mr-2 inline" /> : null}
               {isSubmitting ? "Guardando..." : "Guardar"}
             </button>
           </div>

@@ -1,7 +1,6 @@
 "use client"
 import { CheckCircle, XCircle, Trash2, Edit } from "lucide-react"
 import type { Usuario } from "@/data/usuarios"
-import LoadingDumbbell from "@/components/loading-dumbbell"
 
 interface UserCardProps {
   usuario: Usuario
@@ -65,7 +64,11 @@ export default function UserCard({ usuario, onEdit, onDelete, isDeleting, format
               className="bg-red-500 text-white p-1.5 rounded-md"
               aria-label="Eliminar usuario"
             >
-              {isDeleting ? <LoadingDumbbell size={16} /> : <Trash2 className="h-4 w-4" />}
+              {isDeleting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
             </button>
           </div>
         </div>

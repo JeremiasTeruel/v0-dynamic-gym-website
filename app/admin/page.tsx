@@ -3,14 +3,12 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
-// Agregar import para el ícono
-import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart } from "lucide-react"
+import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
-// Importar el nuevo componente de carga
 import LoadingDumbbell from "@/components/loading-dumbbell"
 
 export default function Admin() {
@@ -185,20 +183,12 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Agregar el botón de enlace a ingresos en el header (después del título y antes del buscador) */}
         <div className="mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl md:text-2xl font-semibold">
               Lista de Usuarios ({usuariosFiltrados.length}/{usuarios.length})
             </h2>
             <div className="flex items-center">
-              <Link
-                href="/admin/ingresos"
-                className="ml-2 p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                title="Ver ingresos"
-              >
-                <BarChart className="h-5 w-5" />
-              </Link>
               <button
                 onClick={handleRecargar}
                 className="ml-2 p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -229,7 +219,7 @@ export default function Admin() {
 
         {cargando ? (
           <div className="flex justify-center py-8">
-            <LoadingDumbbell size={48} />
+            <LoadingDumbbell size={32} className="text-green-500" />
           </div>
         ) : (
           <>
@@ -322,7 +312,7 @@ export default function Admin() {
                                     title="Eliminar usuario"
                                   >
                                     {eliminando === usuario.id ? (
-                                      <LoadingDumbbell size={20} />
+                                      <LoadingDumbbell size={20} className="text-red-500" />
                                     ) : (
                                       <Trash2 className="h-5 w-5" />
                                     )}

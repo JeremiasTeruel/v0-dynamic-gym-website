@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
 import { CheckCircle, XCircle, Settings } from "lucide-react"
 import Alert from "@/components/alert"
-import { useMobile } from "@/hooks/use-mobile"
 import LoadingDumbbell from "@/components/loading-dumbbell"
+import { useMobile } from "@/hooks/use-mobile"
 
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
@@ -75,7 +75,7 @@ export default function Home() {
 
       {cargando ? (
         <div className="w-full max-w-md flex justify-center py-8">
-          <LoadingDumbbell size={48} />
+          <LoadingDumbbell size={32} className="text-green-500" />
         </div>
       ) : (
         <div className="w-full max-w-md">
@@ -96,7 +96,7 @@ export default function Home() {
               }`}
               disabled={isSearching}
             >
-              {isSearching ? <LoadingDumbbell size={20} className="mx-2" /> : "Buscar"}
+              {isSearching ? "Buscando..." : "Buscar"}
             </button>
           </div>
 
@@ -129,7 +129,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Mostrar enlaces solo en dispositivos no móviles */}
           {!isMobile && (
             <div className="flex flex-col space-y-3">
               <Link
