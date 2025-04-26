@@ -8,13 +8,14 @@ import { CheckCircle, XCircle, Settings } from "lucide-react"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import { useMobile } from "@/hooks/use-mobile"
+import ProximosVencimientos from "@/components/proximos-vencimientos"
 
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
   const [foundUser, setFoundUser] = useState(null)
   const [showAlert, setShowAlert] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
-  const { buscarUsuario, cargando } = useGymContext()
+  const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const isMobile = useMobile()
 
@@ -130,7 +131,7 @@ export default function Home() {
           )}
 
           {!isMobile && (
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-3 mb-8">
               <Link
                 href="/nuevo-usuario"
                 className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
@@ -146,6 +147,9 @@ export default function Home() {
               </Link>
             </div>
           )}
+
+          {/* Lista de próximos vencimientos */}
+          <ProximosVencimientos usuarios={usuarios} />
         </div>
       )}
 
