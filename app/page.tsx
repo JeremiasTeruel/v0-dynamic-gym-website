@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
 import { CheckCircle, XCircle, Settings } from "lucide-react"
 import Alert from "@/components/alert"
+import { useMobile } from "@/hooks/use-mobile"
+import LoadingDumbbell from "@/components/loading-dumbbell"
 
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
@@ -14,6 +16,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false)
   const { buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
+  const isMobile = useMobile()
 
   const handleSearch = async () => {
     if (!searchDni.trim() || isSearching) return
@@ -72,7 +75,7 @@ export default function Home() {
 
       {cargando ? (
         <div className="w-full max-w-md flex justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          <LoadingDumbbell size={48} />
         </div>
       ) : (
         <div className="w-full max-w-md">
@@ -93,7 +96,7 @@ export default function Home() {
               }`}
               disabled={isSearching}
             >
-              {isSearching ? "Buscando..." : "Buscar"}
+              {isSearching ? <LoadingDumbbell size={20} className="mx-2" /> : "Buscar"}
             </button>
           </div>
 
@@ -126,21 +129,24 @@ export default function Home() {
             </div>
           )}
 
-          <div className="flex flex-col space-y-3">
-            <Link
-              href="/nuevo-usuario"
-              className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
-            >
-              ¿Nuevo en el gimnasio?
-            </Link>
+          {/* Mostrar enlaces solo en dispositivos no móviles */}
+          {!isMobile && (
+            <div className="flex flex-col space-y-3">
+              <Link
+                href="/nuevo-usuario"
+                className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
+              >
+                ¿Nuevo en el gimnasio?
+              </Link>
 
-            <Link
-              href="/pagar-cuota"
-              className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
-            >
-              Pagar cuota mensual
-            </Link>
-          </div>
+              <Link
+                href="/pagar-cuota"
+                className="bg-white p-4 rounded-lg shadow-sm text-green-600 text-center font-medium hover:bg-green-50 active:scale-98 transition-all"
+              >
+                Pagar cuota mensual
+              </Link>
+            </div>
+          )}
         </div>
       )}
 

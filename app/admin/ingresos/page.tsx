@@ -8,6 +8,9 @@ import MonthlyChart from "@/components/chart"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Payment } from "@/models/payment"
 
+// Importar el nuevo componente de carga
+import LoadingDumbbell from "@/components/loading-dumbbell"
+
 // Definir las funciones utilitarias directamente en este archivo
 // Función para formatear el monto en pesos argentinos
 function formatCurrency(amount: number): string {
@@ -194,7 +197,7 @@ export default function Ingresos() {
 
           {cargandoPagos ? (
             <div className="flex justify-center p-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+              <LoadingDumbbell size={48} />
             </div>
           ) : pagos.length === 0 ? (
             <div className="p-8 text-center text-gray-500">No hay pagos registrados</div>

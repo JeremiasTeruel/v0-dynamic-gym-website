@@ -10,6 +10,8 @@ import UserCard from "@/components/user-card"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
+// Importar el nuevo componente de carga
+import LoadingDumbbell from "@/components/loading-dumbbell"
 
 export default function Admin() {
   const { usuarios, cargando, error, eliminarUsuario, actualizarUsuario, recargarUsuarios } = useGymContext()
@@ -227,7 +229,7 @@ export default function Admin() {
 
         {cargando ? (
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+            <LoadingDumbbell size={48} />
           </div>
         ) : (
           <>
@@ -320,7 +322,7 @@ export default function Admin() {
                                     title="Eliminar usuario"
                                   >
                                     {eliminando === usuario.id ? (
-                                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-red-500"></div>
+                                      <LoadingDumbbell size={20} />
                                     ) : (
                                       <Trash2 className="h-5 w-5" />
                                     )}
