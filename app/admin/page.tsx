@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X } from "lucide-react"
+import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
 import { useMobile } from "@/hooks/use-mobile"
@@ -158,6 +158,24 @@ export default function Admin() {
       <h1 className="text-3xl md:text-4xl font-bold text-green-600 mb-6 md:mb-10">Administración - Dynamic Gym</h1>
 
       <div className="w-full max-w-6xl">
+        {/* Barra de navegación de administración */}
+        <div className="mb-8 flex flex-wrap gap-4 justify-center">
+          <Link
+            href="/admin/control-pagos"
+            className="flex items-center gap-2 bg-white px-4 py-3 rounded-lg shadow-sm text-green-600 font-medium hover:bg-green-50 transition-colors"
+          >
+            <BarChart className="h-5 w-5" />
+            Control de Pagos
+          </Link>
+
+          <Link
+            href="/"
+            className="flex items-center gap-2 bg-gray-500 px-4 py-3 rounded-lg shadow-sm text-white font-medium hover:bg-gray-600 transition-colors"
+          >
+            Volver al Inicio
+          </Link>
+        </div>
+
         {/* Barra de búsqueda optimizada para móviles */}
         <div className="sticky top-0 bg-white z-10 p-2 md:p-0 md:static md:bg-transparent mb-4 rounded-lg shadow-sm md:shadow-none">
           <div className="relative">
@@ -201,15 +219,6 @@ export default function Admin() {
                 <X className="h-5 w-5" />
               </Link>
             </div>
-          </div>
-
-          <div className="hidden md:flex">
-            <Link
-              href="/"
-              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:scale-105 transition-transform text-center"
-            >
-              Volver al Inicio
-            </Link>
           </div>
         </div>
 
