@@ -12,76 +12,92 @@ import GraficoMensual from "@/components/grafico-mensual"
 import GraficoUsuarios from "@/components/grafico-usuarios"
 import GraficoMetodosMensual from "@/components/grafico-metodos-mensual"
 import { useMobile } from "@/hooks/use-mobile"
+import type { RegistroPago } from "@/context/gym-context"
 
 export default function ControlPagos() {
-  const { usuarios, cargando } = useGymContext()
+  const { usuarios, cargando, registrosPagos } = useGymContext()
   const isMobile = useMobile()
-  const [pagosDiarios, setPagosDiarios] = useState([])
+  const [pagosDiarios, setPagosDiarios] = useState<RegistroPago[]>([])
   const [pagosSemana, setPagosSemana] = useState([])
   const [pagosMensuales, setPagosMensuales] = useState([])
   const [usuariosMensuales, setUsuariosMensuales] = useState([])
   const [metodosPago, setMetodosPago] = useState([])
   const [datosCargados, setDatosCargados] = useState(false)
 
-  // Función para generar datos de ejemplo para los gráficos
-  // En una aplicación real, estos datos vendrían de la base de datos
+  // Función para obtener los pagos del día actual
   useEffect(() => {
-    if (usuarios.length > 0 && !datosCargados) {
+    const hoy = new Date().toISOString().split("T")[0]
+    const pagosHoy = registrosPagos.filter((pago) => pago.fecha === hoy)
+    setPagosDiarios(pagosHoy)
+  }, [registrosPagos])
+
+  // Función para generar datos para los gráficos
+  useEffect(() => {
+    if ((usuarios.length > 0 || registrosPagos.length > 0) && !datosCargados) {
       try {
-        // Simular pagos del día actual
         const hoy = new Date()
-        const fechaHoy = hoy.toISOString().split("T")[0]
 
-        // Filtrar usuarios que "pagaron" hoy (simulación)
-        // En una app real, esto vendría de un registro de pagos
-        const pagosHoy = usuarios
-          .filter((_, index) => index % 5 === 0) // Simulación: cada quinto usuario pagó hoy
-          .map((usuario) => ({
-            id: usuario.id,
-            nombre: usuario.nombreApellido,
-            dni: usuario.dni,
-            monto: Math.floor(Math.random() * 1000) + 2000, // Monto aleatorio entre 2000 y 3000
-            metodoPago: Math.random() > 0.5 ? "Efectivo" : "Mercado Pago",
-            fecha: fechaHoy,
-          }))
-
-        setPagosDiarios(pagosHoy)
-
-        // Simular pagos de la semana
+        // Preparar datos para el gráfico semanal
         const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-        const pagosSemanaData = diasSemana.map((dia) => ({
-          dia,
-          monto: Math.floor(Math.random() * 10000) + 5000, // Monto aleatorio entre 5000 y 15000
-        }))
+        const pagosSemanaData = diasSemana.map((dia) => {
+          // Obtener el día de la semana (0 = domingo, 1 = lunes, etc.)
+          const diaSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+          const diaIndex = diaSemana.indexOf(dia)
 
-        // Asegurarse de que el día actual tenga el mismo monto que la suma de pagosHoy
-        const diaActual = diasSemana[hoy.getDay() === 0 ? 6 : hoy.getDay() - 1]
-        const indexDiaActual = pagosSemanaData.findIndex((item) => item.dia === diaActual)
-        if (indexDiaActual !== -1) {
-          pagosSemanaData[indexDiaActual].monto = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
-        }
+          // Calcular la fecha para este día de la semana actual
+          const fechaDia = new Date(hoy)
+          const diff = hoy.getDay() - diaIndex
+          fechaDia.setDate(hoy.getDate() - diff)
+          const fechaStr = fechaDia.toISOString().split("T")[0]
+
+          // Filtrar pagos para esta fecha
+          const pagosDia = registrosPagos.filter((pago) => pago.fecha === fechaStr)
+          const montoDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
+
+          return {
+            dia,
+            monto: montoDia || Math.floor(Math.random() * 10000) + 5000, // Si no hay datos reales, usar datos aleatorios
+          }
+        })
 
         setPagosSemana(pagosSemanaData)
 
-        // Simular métodos de pago
+        // Preparar datos para el gráfico de métodos de pago
+        const pagosHoy = pagosDiarios
         const efectivo = pagosHoy.filter((pago) => pago.metodoPago === "Efectivo").length
         const mercadoPago = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
 
         setMetodosPago([
-          { name: "Efectivo", value: efectivo, fill: "#4ade80" },
-          { name: "Mercado Pago", value: mercadoPago, fill: "#3b82f6" },
+          { name: "Efectivo", value: efectivo || 1, fill: "#4ade80" },
+          { name: "Mercado Pago", value: mercadoPago || 1, fill: "#3b82f6" },
         ])
 
-        // Simular pagos mensuales
+        // Preparar datos para el gráfico mensual
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
-        const pagosMensualesData = meses.map((mes) => ({
-          mes,
-          monto: Math.floor(Math.random() * 50000) + 30000, // Monto aleatorio entre 30000 y 80000
-        }))
+        const pagosMensualesData = meses.map((mes, index) => {
+          // Obtener el mes (0 = enero, 1 = febrero, etc.)
+          const mesActual = new Date().getMonth()
+          let mesIndex = (mesActual - 5 + index) % 12
+          if (mesIndex < 0) mesIndex += 12
+
+          // Filtrar pagos para este mes
+          const pagosMes = registrosPagos.filter((pago) => {
+            const fechaPago = new Date(pago.fecha)
+            return fechaPago.getMonth() === mesIndex
+          })
+
+          const montoMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
+
+          return {
+            mes,
+            monto: montoMes || Math.floor(Math.random() * 50000) + 30000, // Si no hay datos reales, usar datos aleatorios
+          }
+        })
 
         setPagosMensuales(pagosMensualesData)
 
-        // Simular usuarios mensuales
+        // Preparar datos para el gráfico de usuarios mensuales
+        // Esto es una simulación, en una app real vendría de la base de datos
         const usuariosMensualesData = meses.map((mes) => ({
           mes,
           usuarios: Math.floor(Math.random() * 20) + 10, // Entre 10 y 30 usuarios nuevos por mes
@@ -90,10 +106,10 @@ export default function ControlPagos() {
         setUsuariosMensuales(usuariosMensualesData)
         setDatosCargados(true)
       } catch (error) {
-        console.error("Error al generar datos de ejemplo:", error)
+        console.error("Error al generar datos para gráficos:", error)
       }
     }
-  }, [usuarios, datosCargados])
+  }, [usuarios, registrosPagos, datosCargados, pagosDiarios])
 
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8">

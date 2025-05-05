@@ -21,6 +21,7 @@ export default function PagarCuota() {
     dni: "",
     fechaPago: new Date().toISOString().split("T")[0],
     metodoPago: "Efectivo",
+    montoPago: "2500", // Valor predeterminado
   })
 
   const [userFound, setUserFound] = useState(null)
@@ -55,7 +56,7 @@ export default function PagarCuota() {
     e.preventDefault()
     setErrorLocal(null)
 
-    if (!formData.dni || !formData.fechaPago) {
+    if (!formData.dni || !formData.fechaPago || !formData.montoPago) {
       setErrorLocal("Por favor complete todos los campos")
       return
     }
@@ -65,12 +66,19 @@ export default function PagarCuota() {
       return
     }
 
+    // Validar que el monto sea un número positivo
+    const monto = Number.parseFloat(formData.montoPago)
+    if (isNaN(monto) || monto <= 0) {
+      setErrorLocal("El monto debe ser un número positivo")
+      return
+    }
+
     try {
       setIsSubmitting(true)
       const newDueDate = calculateNewDueDate(formData.fechaPago)
 
       // Actualizar el pago usando la función del contexto
-      await actualizarPago(formData.dni, newDueDate, formData.metodoPago)
+      await actualizarPago(formData.dni, newDueDate, formData.metodoPago, monto)
 
       // Mostrar la alerta de éxito
       setShowAlert(true)
@@ -144,6 +152,25 @@ export default function PagarCuota() {
             style={{ fontSize: "16px" }}
           />
           <p className="text-xs text-gray-500 mt-1">Se calcula automáticamente (1 mes después de la fecha de pago)</p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
+          <label className="block text-sm font-medium mb-1">Monto de Pago</label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+            <input
+              type="number"
+              name="montoPago"
+              value={formData.montoPago}
+              onChange={handleChange}
+              className="w-full p-3 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              required
+              min="1"
+              step="0.01"
+              disabled={isSubmitting}
+              style={{ fontSize: "16px" }}
+            />
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">

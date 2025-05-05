@@ -1,18 +1,10 @@
 "use client"
 
 import { useMemo } from "react"
-
-interface Pago {
-  id: string
-  nombre: string
-  dni: string
-  monto: number
-  metodoPago: string
-  fecha: string
-}
+import type { RegistroPago } from "@/context/gym-context"
 
 interface PagosDelDiaProps {
-  pagos: Pago[]
+  pagos: RegistroPago[]
 }
 
 export default function PagosDelDia({ pagos = [] }: PagosDelDiaProps) {
@@ -43,7 +35,7 @@ export default function PagosDelDia({ pagos = [] }: PagosDelDiaProps) {
           <tbody className="bg-white divide-y divide-gray-200">
             {pagos.map((pago) => (
               <tr key={pago.id}>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{pago.nombre}</td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{pago.nombreUsuario}</td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{pago.dni}</td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{formatMonto(pago.monto)}</td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{pago.metodoPago}</td>

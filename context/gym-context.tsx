@@ -3,16 +3,30 @@
 import { createContext, useContext, useState, useEffect } from "react"
 import type { Usuario } from "@/data/usuarios"
 
+// Definir la interfaz para un registro de pago
+export interface RegistroPago {
+  id: string
+  usuarioId: string
+  nombreUsuario: string
+  dni: string
+  monto: number
+  metodoPago: string
+  fecha: string
+  tipo: "nuevo" | "renovacion" // Para distinguir entre nuevos usuarios y renovaciones
+}
+
 interface GymContextType {
   usuarios: Usuario[]
   cargando: boolean
   error: string | null
+  registrosPagos: RegistroPago[]
   buscarUsuario: (dni: string) => Promise<Usuario | null>
-  agregarNuevoUsuario: (usuario: Omit<Usuario, "id">) => Promise<void>
-  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string) => Promise<void>
+  agregarNuevoUsuario: (usuario: Omit<Usuario, "id">, montoPago: number) => Promise<void>
+  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string, montoPago: number) => Promise<void>
   actualizarUsuario: (id: string, datosActualizados: Partial<Usuario>) => Promise<void>
   eliminarUsuario: (id: string) => Promise<void>
   recargarUsuarios: () => Promise<void>
+  obtenerPagosDia: (fecha: string) => RegistroPago[]
 }
 
 const GymContext = createContext<GymContextType | null>(null)
@@ -32,10 +46,35 @@ const ordenarUsuariosAlfabeticamente = (usuarios: Usuario[]): Usuario[] => {
   })
 }
 
+// Función para generar un ID único
+const generarId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2)
+}
+
 export function GymProvider({ children }) {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [registrosPagos, setRegistrosPagos] = useState<RegistroPago[]>([])
   const [cargando, setCargando] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Cargar registros de pagos desde localStorage al iniciar
+  useEffect(() => {
+    const registrosGuardados = localStorage.getItem("gymRegistrosPagos")
+    if (registrosGuardados) {
+      try {
+        setRegistrosPagos(JSON.parse(registrosGuardados))
+      } catch (error) {
+        console.error("Error al cargar registros de pagos:", error)
+      }
+    }
+  }, [])
+
+  // Guardar registros de pagos en localStorage cuando cambian
+  useEffect(() => {
+    if (registrosPagos.length > 0) {
+      localStorage.setItem("gymRegistrosPagos", JSON.stringify(registrosPagos))
+    }
+  }, [registrosPagos])
 
   // Función para cargar todos los usuarios
   const cargarUsuarios = async () => {
@@ -98,8 +137,8 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para agregar un nuevo usuario
-  const agregarNuevoUsuario = async (usuario: Omit<Usuario, "id">): Promise<void> => {
+  // Función para agregar un nuevo usuario con registro de pago
+  const agregarNuevoUsuario = async (usuario: Omit<Usuario, "id">, montoPago: number): Promise<void> => {
     try {
       setError(null)
 
@@ -125,6 +164,21 @@ export function GymProvider({ children }) {
       // Agregar el nuevo usuario y reordenar la lista
       const nuevosUsuarios = ordenarUsuariosAlfabeticamente([...usuarios, data])
       setUsuarios(nuevosUsuarios)
+
+      // Registrar el pago
+      const fechaActual = new Date().toISOString().split("T")[0]
+      const nuevoPago: RegistroPago = {
+        id: generarId(),
+        usuarioId: data.id,
+        nombreUsuario: data.nombreApellido,
+        dni: data.dni,
+        monto: montoPago,
+        metodoPago: usuario.metodoPago,
+        fecha: fechaActual,
+        tipo: "nuevo",
+      }
+
+      setRegistrosPagos((prevRegistros) => [...prevRegistros, nuevoPago])
     } catch (err) {
       console.error("Error al agregar usuario:", err)
       setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
@@ -133,7 +187,12 @@ export function GymProvider({ children }) {
   }
 
   // Función para actualizar el pago de un usuario
-  const actualizarPago = async (dni: string, nuevaFechaVencimiento: string, metodoPago: string): Promise<void> => {
+  const actualizarPago = async (
+    dni: string,
+    nuevaFechaVencimiento: string,
+    metodoPago: string,
+    montoPago: number,
+  ): Promise<void> => {
     try {
       setError(null)
 
@@ -155,6 +214,25 @@ export function GymProvider({ children }) {
       // Actualizar el usuario y reordenar la lista
       const nuevosUsuarios = usuarios.map((u) => (u.dni === dni ? data : u))
       setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
+
+      // Registrar el pago
+      const fechaActual = new Date().toISOString().split("T")[0]
+      const usuarioActualizado = nuevosUsuarios.find((u) => u.dni === dni)
+
+      if (usuarioActualizado) {
+        const nuevoPago: RegistroPago = {
+          id: generarId(),
+          usuarioId: usuarioActualizado.id,
+          nombreUsuario: usuarioActualizado.nombreApellido,
+          dni: usuarioActualizado.dni,
+          monto: montoPago,
+          metodoPago: metodoPago,
+          fecha: fechaActual,
+          tipo: "renovacion",
+        }
+
+        setRegistrosPagos((prevRegistros) => [...prevRegistros, nuevoPago])
+      }
     } catch (err) {
       console.error("Error al actualizar pago:", err)
       setError("Error al actualizar pago. Por favor, intenta de nuevo.")
@@ -226,18 +304,25 @@ export function GymProvider({ children }) {
     await cargarUsuarios()
   }
 
+  // Función para obtener los pagos de un día específico
+  const obtenerPagosDia = (fecha: string): RegistroPago[] => {
+    return registrosPagos.filter((pago) => pago.fecha === fecha)
+  }
+
   return (
     <GymContext.Provider
       value={{
         usuarios,
         cargando,
         error,
+        registrosPagos,
         buscarUsuario,
         agregarNuevoUsuario,
         actualizarPago,
         actualizarUsuario,
         eliminarUsuario,
         recargarUsuarios,
+        obtenerPagosDia,
       }}
     >
       {children}

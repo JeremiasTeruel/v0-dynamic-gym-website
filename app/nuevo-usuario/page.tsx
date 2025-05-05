@@ -24,6 +24,7 @@ export default function NuevoUsuario() {
     telefono: "",
     fechaInicio: "",
     metodoPago: "Efectivo",
+    montoPago: "2500", // Valor predeterminado
   })
 
   const handleChange = (e) => {
@@ -44,8 +45,15 @@ export default function NuevoUsuario() {
     e.preventDefault()
     setError(null)
 
-    if (!formData.nombreApellido || !formData.dni || !formData.edad || !formData.fechaInicio) {
+    if (!formData.nombreApellido || !formData.dni || !formData.edad || !formData.fechaInicio || !formData.montoPago) {
       setError("Por favor complete todos los campos")
+      return
+    }
+
+    // Validar que el monto sea un número positivo
+    const monto = Number.parseFloat(formData.montoPago)
+    if (isNaN(monto) || monto <= 0) {
+      setError("El monto debe ser un número positivo")
       return
     }
 
@@ -53,15 +61,16 @@ export default function NuevoUsuario() {
       setIsSubmitting(true)
 
       // Crear el nuevo usuario con la fecha de vencimiento calculada
+      const { montoPago, ...datosUsuario } = formData
       const nuevoUsuario = {
-        ...formData,
+        ...datosUsuario,
         fechaVencimiento: calculateDueDate(formData.fechaInicio),
       }
 
       console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
 
       // Agregar el usuario usando la función del contexto
-      await agregarNuevoUsuario(nuevoUsuario)
+      await agregarNuevoUsuario(nuevoUsuario, monto)
 
       // Mostrar la alerta de éxito
       setAlertMessage("Listo! Ya sos parte del gimnasio.")
@@ -171,6 +180,25 @@ export default function NuevoUsuario() {
             style={{ fontSize: "16px" }}
           />
           <p className="text-xs text-gray-500 mt-1">Se calcula automáticamente (1 mes después de la fecha de inicio)</p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
+          <label className="block text-sm font-medium mb-1">Monto de Pago</label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+            <input
+              type="number"
+              name="montoPago"
+              value={formData.montoPago}
+              onChange={handleChange}
+              className="w-full p-3 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              required
+              min="1"
+              step="0.01"
+              disabled={isSubmitting}
+              style={{ fontSize: "16px" }}
+            />
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
