@@ -17,7 +17,7 @@ export default function PagosDelDia({ pagos = [] }: PagosDelDiaProps) {
   }
 
   if (!pagos || pagos.length === 0) {
-    return <div className="text-center py-8 text-gray-500">No se ha registrado ningún pago el día de la fecha.</div>
+    return <div className="text-center py-8 text-gray-500">No han ingresado pagos el día de la fecha.</div>
   }
 
   return (

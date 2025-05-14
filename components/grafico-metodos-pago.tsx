@@ -14,8 +14,12 @@ interface GraficoMetodosPagoProps {
 
 export default function GraficoMetodosPago({ datos }: GraficoMetodosPagoProps) {
   // Verificar si hay datos para evitar errores de renderizado
-  if (!datos || datos.length === 0) {
-    return <div className="h-64 flex items-center justify-center text-gray-500">No hay datos disponibles</div>
+  if (!datos || datos.length === 0 || datos.every((item) => item.value === 0)) {
+    return (
+      <div className="h-64 flex items-center justify-center text-gray-500">
+        No han ingresado pagos el día de la fecha.
+      </div>
+    )
   }
 
   return (

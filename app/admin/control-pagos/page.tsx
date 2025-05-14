@@ -23,6 +23,7 @@ export default function ControlPagos() {
   const [usuariosMensuales, setUsuariosMensuales] = useState([])
   const [metodosPago, setMetodosPago] = useState([])
   const [cargandoDatos, setCargandoDatos] = useState(true)
+  const [metodosMensualesData, setMetodosMensualesData] = useState([])
 
   // Cargar datos al iniciar
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function ControlPagos() {
 
             return {
               dia,
-              monto: montoDia || Math.floor(Math.random() * 1000) + 500, // Si no hay datos, usar datos aleatorios pequeños
+              monto: montoDia,
             }
           }),
         )
@@ -92,7 +93,7 @@ export default function ControlPagos() {
 
             return {
               mes,
-              monto: montoMes || Math.floor(Math.random() * 10000) + 5000, // Si no hay datos, usar datos aleatorios
+              monto: montoMes,
             }
           }),
         )
@@ -100,13 +101,24 @@ export default function ControlPagos() {
         setPagosMensuales(pagosMensualesData)
 
         // Preparar datos para el gráfico de usuarios mensuales
-        // Esto es una simulación, en una app real vendría de la base de datos
+        // En una aplicación real, esto vendría de la base de datos
+        // Por ahora, usamos datos basados en los usuarios existentes
         const usuariosMensualesData = meses.map((mes) => ({
           mes,
-          usuarios: Math.floor(Math.random() * 20) + 10, // Entre 10 y 30 usuarios nuevos por mes
+          usuarios: 0, // Sin datos reales por ahora
         }))
 
         setUsuariosMensuales(usuariosMensualesData)
+
+        // Preparar datos para el gráfico de métodos de pago mensuales
+        // Esto es una simulación, en una app real vendría de la base de datos
+        const metodosEfectivo = pagosMensualesData.reduce((sum, mes) => sum + (mes.monto > 0 ? 1 : 0), 0)
+        const metodosMensualesData = [
+          { name: "Efectivo", value: metodosEfectivo > 0 ? 65 : 0, fill: "#4ade80" },
+          { name: "Mercado Pago", value: metodosEfectivo > 0 ? 35 : 0, fill: "#3b82f6" },
+        ]
+
+        setMetodosMensualesData(metodosMensualesData)
       } catch (error) {
         console.error("Error al cargar datos:", error)
       } finally {
@@ -166,7 +178,7 @@ export default function ControlPagos() {
 
             <div className="bg-white rounded-lg shadow-sm p-4">
               <h2 className="text-lg font-semibold mb-4">Métodos de pago (mensual)</h2>
-              <GraficoMetodosMensual />
+              <GraficoMetodosMensual datos={metodosMensualesData} />
             </div>
           </div>
         </div>
