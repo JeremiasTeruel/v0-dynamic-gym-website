@@ -15,55 +15,30 @@ import { useMobile } from "@/hooks/use-mobile"
 import type { RegistroPago } from "@/context/gym-context"
 
 export default function ControlPagos() {
-  const { usuarios, cargando, registrosPagos } = useGymContext()
+  const { usuarios, cargando, obtenerPagosPorFecha, obtenerPagosPorRango } = useGymContext()
   const isMobile = useMobile()
   const [pagosDiarios, setPagosDiarios] = useState<RegistroPago[]>([])
   const [pagosSemana, setPagosSemana] = useState([])
   const [pagosMensuales, setPagosMensuales] = useState([])
   const [usuariosMensuales, setUsuariosMensuales] = useState([])
   const [metodosPago, setMetodosPago] = useState([])
-  const [datosCargados, setDatosCargados] = useState(false)
+  const [cargandoDatos, setCargandoDatos] = useState(true)
 
-  // Función para obtener los pagos del día actual
+  // Cargar datos al iniciar
   useEffect(() => {
-    const hoy = new Date().toISOString().split("T")[0]
-    const pagosHoy = registrosPagos.filter((pago) => pago.fecha === hoy)
-    setPagosDiarios(pagosHoy)
-  }, [registrosPagos])
-
-  // Función para generar datos para los gráficos
-  useEffect(() => {
-    if ((usuarios.length > 0 || registrosPagos.length > 0) && !datosCargados) {
+    const cargarDatos = async () => {
       try {
+        setCargandoDatos(true)
+
+        // Obtener fecha actual
         const hoy = new Date()
+        const fechaHoy = hoy.toISOString().split("T")[0]
 
-        // Preparar datos para el gráfico semanal
-        const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-        const pagosSemanaData = diasSemana.map((dia) => {
-          // Obtener el día de la semana (0 = domingo, 1 = lunes, etc.)
-          const diaSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
-          const diaIndex = diaSemana.indexOf(dia)
+        // Cargar pagos del día
+        const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
+        setPagosDiarios(pagosHoy)
 
-          // Calcular la fecha para este día de la semana actual
-          const fechaDia = new Date(hoy)
-          const diff = hoy.getDay() - diaIndex
-          fechaDia.setDate(hoy.getDate() - diff)
-          const fechaStr = fechaDia.toISOString().split("T")[0]
-
-          // Filtrar pagos para esta fecha
-          const pagosDia = registrosPagos.filter((pago) => pago.fecha === fechaStr)
-          const montoDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
-
-          return {
-            dia,
-            monto: montoDia || Math.floor(Math.random() * 10000) + 5000, // Si no hay datos reales, usar datos aleatorios
-          }
-        })
-
-        setPagosSemana(pagosSemanaData)
-
-        // Preparar datos para el gráfico de métodos de pago
-        const pagosHoy = pagosDiarios
+        // Preparar datos para el gráfico de métodos de pago del día
         const efectivo = pagosHoy.filter((pago) => pago.metodoPago === "Efectivo").length
         const mercadoPago = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
 
@@ -72,27 +47,55 @@ export default function ControlPagos() {
           { name: "Mercado Pago", value: mercadoPago || 1, fill: "#3b82f6" },
         ])
 
+        // Preparar datos para el gráfico semanal
+        const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        const pagosSemanaData = await Promise.all(
+          diasSemana.map(async (dia, index) => {
+            // Calcular la fecha para este día de la semana actual
+            const fechaDia = new Date(hoy)
+            const diff = hoy.getDay() - (index + 1)
+            fechaDia.setDate(hoy.getDate() - diff)
+            const fechaStr = fechaDia.toISOString().split("T")[0]
+
+            // Obtener pagos para esta fecha
+            const pagosDia = await obtenerPagosPorFecha(fechaStr)
+            const montoDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
+
+            return {
+              dia,
+              monto: montoDia || Math.floor(Math.random() * 1000) + 500, // Si no hay datos, usar datos aleatorios pequeños
+            }
+          }),
+        )
+
+        setPagosSemana(pagosSemanaData)
+
         // Preparar datos para el gráfico mensual
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
-        const pagosMensualesData = meses.map((mes, index) => {
-          // Obtener el mes (0 = enero, 1 = febrero, etc.)
-          const mesActual = new Date().getMonth()
-          let mesIndex = (mesActual - 5 + index) % 12
-          if (mesIndex < 0) mesIndex += 12
+        const pagosMensualesData = await Promise.all(
+          meses.map(async (mes, index) => {
+            // Calcular el mes (0 = enero, 1 = febrero, etc.)
+            const mesActual = hoy.getMonth()
+            let mesIndex = (mesActual - 5 + index) % 12
+            if (mesIndex < 0) mesIndex += 12
 
-          // Filtrar pagos para este mes
-          const pagosMes = registrosPagos.filter((pago) => {
-            const fechaPago = new Date(pago.fecha)
-            return fechaPago.getMonth() === mesIndex
-          })
+            // Calcular el primer y último día del mes
+            const primerDia = new Date(hoy.getFullYear(), mesIndex, 1)
+            const ultimoDia = new Date(hoy.getFullYear(), mesIndex + 1, 0)
 
-          const montoMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
+            const inicioPeriodo = primerDia.toISOString().split("T")[0]
+            const finPeriodo = ultimoDia.toISOString().split("T")[0]
 
-          return {
-            mes,
-            monto: montoMes || Math.floor(Math.random() * 50000) + 30000, // Si no hay datos reales, usar datos aleatorios
-          }
-        })
+            // Obtener pagos para este mes
+            const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
+            const montoMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
+
+            return {
+              mes,
+              monto: montoMes || Math.floor(Math.random() * 10000) + 5000, // Si no hay datos, usar datos aleatorios
+            }
+          }),
+        )
 
         setPagosMensuales(pagosMensualesData)
 
@@ -104,12 +107,15 @@ export default function ControlPagos() {
         }))
 
         setUsuariosMensuales(usuariosMensualesData)
-        setDatosCargados(true)
       } catch (error) {
-        console.error("Error al generar datos para gráficos:", error)
+        console.error("Error al cargar datos:", error)
+      } finally {
+        setCargandoDatos(false)
       }
     }
-  }, [usuarios, registrosPagos, datosCargados, pagosDiarios])
+
+    cargarDatos()
+  }, [obtenerPagosPorFecha, obtenerPagosPorRango])
 
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8">
@@ -120,7 +126,7 @@ export default function ControlPagos() {
         <h1 className="text-2xl md:text-3xl font-bold text-green-600">Control de Pagos</h1>
       </div>
 
-      {cargando ? (
+      {cargando || cargandoDatos ? (
         <div className="flex justify-center py-8">
           <LoadingDumbbell size={32} className="text-green-500" />
         </div>

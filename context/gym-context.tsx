@@ -5,28 +5,30 @@ import type { Usuario } from "@/data/usuarios"
 
 // Definir la interfaz para un registro de pago
 export interface RegistroPago {
-  id: string
-  usuarioId: string
-  nombreUsuario: string
-  dni: string
+  id?: string
+  userNombre: string
+  userDni: string
   monto: number
-  metodoPago: string
   fecha: string
-  tipo: "nuevo" | "renovacion" // Para distinguir entre nuevos usuarios y renovaciones
+  metodoPago: string
 }
 
 interface GymContextType {
   usuarios: Usuario[]
   cargando: boolean
   error: string | null
-  registrosPagos: RegistroPago[]
+  pagos: RegistroPago[]
+  cargandoPagos: boolean
   buscarUsuario: (dni: string) => Promise<Usuario | null>
   agregarNuevoUsuario: (usuario: Omit<Usuario, "id">, montoPago: number) => Promise<void>
   actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string, montoPago: number) => Promise<void>
   actualizarUsuario: (id: string, datosActualizados: Partial<Usuario>) => Promise<void>
   eliminarUsuario: (id: string) => Promise<void>
   recargarUsuarios: () => Promise<void>
-  obtenerPagosDia: (fecha: string) => RegistroPago[]
+  registrarPago: (pago: Omit<RegistroPago, "id">) => Promise<void>
+  obtenerPagosPorFecha: (fecha: string) => Promise<RegistroPago[]>
+  obtenerPagosPorRango: (inicio: string, fin: string) => Promise<RegistroPago[]>
+  recargarPagos: () => Promise<void>
 }
 
 const GymContext = createContext<GymContextType | null>(null)
@@ -46,35 +48,12 @@ const ordenarUsuariosAlfabeticamente = (usuarios: Usuario[]): Usuario[] => {
   })
 }
 
-// Función para generar un ID único
-const generarId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2)
-}
-
 export function GymProvider({ children }) {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
-  const [registrosPagos, setRegistrosPagos] = useState<RegistroPago[]>([])
+  const [pagos, setPagos] = useState<RegistroPago[]>([])
   const [cargando, setCargando] = useState<boolean>(true)
+  const [cargandoPagos, setCargandoPagos] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-
-  // Cargar registros de pagos desde localStorage al iniciar
-  useEffect(() => {
-    const registrosGuardados = localStorage.getItem("gymRegistrosPagos")
-    if (registrosGuardados) {
-      try {
-        setRegistrosPagos(JSON.parse(registrosGuardados))
-      } catch (error) {
-        console.error("Error al cargar registros de pagos:", error)
-      }
-    }
-  }, [])
-
-  // Guardar registros de pagos en localStorage cuando cambian
-  useEffect(() => {
-    if (registrosPagos.length > 0) {
-      localStorage.setItem("gymRegistrosPagos", JSON.stringify(registrosPagos))
-    }
-  }, [registrosPagos])
 
   // Función para cargar todos los usuarios
   const cargarUsuarios = async () => {
@@ -112,9 +91,38 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Cargar usuarios al iniciar
+  // Función para cargar todos los pagos
+  const cargarPagos = async () => {
+    try {
+      setCargandoPagos(true)
+      setError(null)
+
+      console.log("Intentando cargar pagos...")
+
+      const response = await fetch("/api/pagos")
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error("Error en la respuesta:", errorData)
+        throw new Error(errorData.error || `Error al cargar pagos: ${response.status} ${response.statusText}`)
+      }
+
+      const pagosDB = await response.json()
+      console.log("Pagos cargados:", pagosDB.length)
+
+      setPagos(pagosDB)
+    } catch (err) {
+      console.error("Error al cargar pagos:", err)
+      setError(`Error al cargar pagos: ${err.message}. Por favor, intenta de nuevo.`)
+    } finally {
+      setCargandoPagos(false)
+    }
+  }
+
+  // Cargar usuarios y pagos al iniciar
   useEffect(() => {
     cargarUsuarios()
+    cargarPagos()
   }, [])
 
   // Función para buscar un usuario por DNI
@@ -134,6 +142,39 @@ export function GymProvider({ children }) {
       console.error("Error al buscar usuario:", err)
       setError("Error al buscar usuario. Por favor, intenta de nuevo.")
       return null
+    }
+  }
+
+  // Función para registrar un pago en la base de datos
+  const registrarPago = async (pago: Omit<RegistroPago, "id">): Promise<void> => {
+    try {
+      setError(null)
+
+      console.log("Enviando solicitud para registrar pago:", pago)
+
+      const response = await fetch("/api/pagos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(pago),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        console.error("Error en la respuesta del servidor:", data)
+        throw new Error(data.error || "Error al registrar pago")
+      }
+
+      console.log("Pago registrado exitosamente:", data)
+
+      // Actualizar la lista de pagos
+      setPagos((prevPagos) => [...prevPagos, data])
+    } catch (err) {
+      console.error("Error al registrar pago:", err)
+      setError(err.message || "Error al registrar pago. Por favor, intenta de nuevo.")
+      throw err
     }
   }
 
@@ -165,20 +206,15 @@ export function GymProvider({ children }) {
       const nuevosUsuarios = ordenarUsuariosAlfabeticamente([...usuarios, data])
       setUsuarios(nuevosUsuarios)
 
-      // Registrar el pago
+      // Registrar el pago en la base de datos
       const fechaActual = new Date().toISOString().split("T")[0]
-      const nuevoPago: RegistroPago = {
-        id: generarId(),
-        usuarioId: data.id,
-        nombreUsuario: data.nombreApellido,
-        dni: data.dni,
+      await registrarPago({
+        userNombre: data.nombreApellido,
+        userDni: data.dni,
         monto: montoPago,
-        metodoPago: usuario.metodoPago,
         fecha: fechaActual,
-        tipo: "nuevo",
-      }
-
-      setRegistrosPagos((prevRegistros) => [...prevRegistros, nuevoPago])
+        metodoPago: usuario.metodoPago,
+      })
     } catch (err) {
       console.error("Error al agregar usuario:", err)
       setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
@@ -215,23 +251,18 @@ export function GymProvider({ children }) {
       const nuevosUsuarios = usuarios.map((u) => (u.dni === dni ? data : u))
       setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
 
-      // Registrar el pago
+      // Registrar el pago en la base de datos
       const fechaActual = new Date().toISOString().split("T")[0]
       const usuarioActualizado = nuevosUsuarios.find((u) => u.dni === dni)
 
       if (usuarioActualizado) {
-        const nuevoPago: RegistroPago = {
-          id: generarId(),
-          usuarioId: usuarioActualizado.id,
-          nombreUsuario: usuarioActualizado.nombreApellido,
-          dni: usuarioActualizado.dni,
+        await registrarPago({
+          userNombre: usuarioActualizado.nombreApellido,
+          userDni: usuarioActualizado.dni,
           monto: montoPago,
-          metodoPago: metodoPago,
           fecha: fechaActual,
-          tipo: "renovacion",
-        }
-
-        setRegistrosPagos((prevRegistros) => [...prevRegistros, nuevoPago])
+          metodoPago: metodoPago,
+        })
       }
     } catch (err) {
       console.error("Error al actualizar pago:", err)
@@ -304,9 +335,45 @@ export function GymProvider({ children }) {
     await cargarUsuarios()
   }
 
+  // Función para recargar pagos
+  const recargarPagos = async (): Promise<void> => {
+    await cargarPagos()
+  }
+
   // Función para obtener los pagos de un día específico
-  const obtenerPagosDia = (fecha: string): RegistroPago[] => {
-    return registrosPagos.filter((pago) => pago.fecha === fecha)
+  const obtenerPagosPorFecha = async (fecha: string): Promise<RegistroPago[]> => {
+    try {
+      const response = await fetch(`/api/pagos/fecha/${fecha}`)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "Error al obtener pagos por fecha")
+      }
+
+      return await response.json()
+    } catch (err) {
+      console.error(`Error al obtener pagos para la fecha ${fecha}:`, err)
+      setError(`Error al obtener pagos. Por favor, intenta de nuevo.`)
+      return []
+    }
+  }
+
+  // Función para obtener los pagos por rango de fechas
+  const obtenerPagosPorRango = async (inicio: string, fin: string): Promise<RegistroPago[]> => {
+    try {
+      const response = await fetch(`/api/pagos/rango?inicio=${inicio}&fin=${fin}`)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "Error al obtener pagos por rango de fechas")
+      }
+
+      return await response.json()
+    } catch (err) {
+      console.error(`Error al obtener pagos entre ${inicio} y ${fin}:`, err)
+      setError(`Error al obtener pagos. Por favor, intenta de nuevo.`)
+      return []
+    }
   }
 
   return (
@@ -315,14 +382,18 @@ export function GymProvider({ children }) {
         usuarios,
         cargando,
         error,
-        registrosPagos,
+        pagos,
+        cargandoPagos,
         buscarUsuario,
         agregarNuevoUsuario,
         actualizarPago,
         actualizarUsuario,
         eliminarUsuario,
         recargarUsuarios,
-        obtenerPagosDia,
+        registrarPago,
+        obtenerPagosPorFecha,
+        obtenerPagosPorRango,
+        recargarPagos,
       }}
     >
       {children}
