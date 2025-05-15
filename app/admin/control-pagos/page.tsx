@@ -15,7 +15,7 @@ import { useMobile } from "@/hooks/use-mobile"
 import type { RegistroPago } from "@/context/gym-context"
 
 export default function ControlPagos() {
-  const { usuarios, cargando, obtenerPagosPorFecha, obtenerPagosPorRango } = useGymContext()
+  const { usuarios, cargando, obtenerPagosPorFecha, obtenerPagosPorRango, obtenerUsuariosPorMes } = useGymContext()
   const isMobile = useMobile()
   const [pagosDiarios, setPagosDiarios] = useState<RegistroPago[]>([])
   const [pagosSemana, setPagosSemana] = useState([])
@@ -101,12 +101,18 @@ export default function ControlPagos() {
         setPagosMensuales(pagosMensualesData)
 
         // Preparar datos para el gráfico de usuarios mensuales
-        // En una aplicación real, esto vendría de la base de datos
-        // Por ahora, usamos datos basados en los usuarios existentes
-        const usuariosMensualesData = meses.map((mes) => ({
-          mes,
-          usuarios: 0, // Sin datos reales por ahora
-        }))
+        const usuariosPorMes = await obtenerUsuariosPorMes(hoy.getFullYear().toString())
+        console.log("Usuarios por mes:", usuariosPorMes)
+
+        // Crear un array con todos los meses y asignar valores de usuarios
+        const usuariosMensualesData = meses.map((mes) => {
+          // Buscar si hay datos para este mes
+          const datosMes = usuariosPorMes.find((item) => item.mes === mes)
+          return {
+            mes,
+            usuarios: datosMes ? datosMes.usuarios : 0,
+          }
+        })
 
         setUsuariosMensuales(usuariosMensualesData)
 
@@ -127,7 +133,7 @@ export default function ControlPagos() {
     }
 
     cargarDatos()
-  }, [obtenerPagosPorFecha, obtenerPagosPorRango])
+  }, [obtenerPagosPorFecha, obtenerPagosPorRango, obtenerUsuariosPorMes])
 
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8">
