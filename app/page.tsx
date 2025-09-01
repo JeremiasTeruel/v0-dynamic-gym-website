@@ -49,6 +49,14 @@ export default function Home() {
     }
   }
 
+  // Función para manejar la tecla Enter
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      handleSearch()
+    }
+  }
+
   const isPaymentDue = (dueDate) => {
     const today = new Date()
     const paymentDate = new Date(dueDate)
@@ -92,9 +100,11 @@ export default function Home() {
                 placeholder="Ingrese el DNI del usuario"
                 value={searchDni}
                 onChange={(e) => setSearchDni(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isSearching}
                 style={{ fontSize: "16px" }}
+                autoFocus
               />
               <button
                 onClick={handleSearch}
@@ -107,6 +117,17 @@ export default function Home() {
               >
                 {isSearching ? "Buscando..." : "Buscar"}
               </button>
+            </div>
+
+            {/* Indicador visual de que Enter funciona */}
+            <div className="text-center mb-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                💡 Presiona{" "}
+                <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
+                  Enter
+                </kbd>{" "}
+                para buscar
+              </p>
             </div>
 
             {foundUser && (
