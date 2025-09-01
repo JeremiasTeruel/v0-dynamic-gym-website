@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
 import { useMobile } from "@/hooks/use-mobile"
+import { ACTIVIDADES_OPCIONES } from "@/data/usuarios"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
@@ -25,6 +26,7 @@ export default function NuevoUsuario() {
     telefono: "",
     fechaInicio: "",
     metodoPago: "Efectivo",
+    actividad: "Normal",
     montoPago: "2500", // Valor predeterminado
   })
 
@@ -158,6 +160,24 @@ export default function NuevoUsuario() {
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Actividad</label>
+          <select
+            name="actividad"
+            value={formData.actividad}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            disabled={isSubmitting}
+            style={{ fontSize: "16px" }}
+          >
+            {ACTIVIDADES_OPCIONES.map((actividad) => (
+              <option key={actividad} value={actividad}>
+                {actividad}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">

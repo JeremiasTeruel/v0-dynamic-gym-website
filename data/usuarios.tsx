@@ -8,6 +8,7 @@ export interface Usuario {
   fechaInicio: string
   fechaVencimiento: string
   metodoPago: string
+  actividad: string
 }
 
 // NOTA: En una aplicación real, estos datos estarían en una base de datos
@@ -26,6 +27,7 @@ export const usuariosIniciales: Usuario[] = [
     fechaInicio: "2023-01-15",
     fechaVencimiento: "2023-02-15",
     metodoPago: "Efectivo",
+    actividad: "Normal",
   },
   {
     id: "2",
@@ -35,6 +37,7 @@ export const usuariosIniciales: Usuario[] = [
     fechaInicio: "2023-03-10",
     fechaVencimiento: "2023-04-10",
     metodoPago: "Mercado Pago",
+    actividad: "Familiar",
   },
 ]
 
@@ -141,3 +144,8 @@ export const importarDatos = (datosJSON: string): Usuario[] => {
     throw new Error("El formato de los datos importados no es válido")
   }
 }
+
+// Opciones de actividades disponibles
+export const ACTIVIDADES_OPCIONES = ["Normal", "Familiar", "BJJ", "MMA", "Boxeo", "Convenio"] as const
+
+export type ActividadTipo = (typeof ACTIVIDADES_OPCIONES)[number]

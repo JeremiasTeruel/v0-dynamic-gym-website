@@ -280,6 +280,7 @@ export default function Admin() {
                           <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
                           <th className="p-3 text-left text-gray-900 dark:text-gray-100">Teléfono</th>
                           <th className="p-3 text-left text-gray-900 dark:text-gray-100">Edad</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
                           <th className="p-3 text-left text-gray-900 dark:text-gray-100">Fecha Inicio</th>
                           <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
                           <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
@@ -289,7 +290,7 @@ export default function Admin() {
                       <tbody>
                         {usuariosFiltrados.length === 0 ? (
                           <tr>
-                            <td colSpan={9} className="p-4 text-center text-gray-500 dark:text-gray-400">
+                            <td colSpan={10} className="p-4 text-center text-gray-500 dark:text-gray-400">
                               No hay usuarios registrados
                             </td>
                           </tr>
@@ -301,6 +302,11 @@ export default function Admin() {
                               <td className="p-3">{usuario.dni}</td>
                               <td className="p-3">{usuario.telefono || "-"}</td>
                               <td className="p-3">{usuario.edad}</td>
+                              <td className="p-3">
+                                <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
+                                  {usuario.actividad || "Normal"}
+                                </span>
+                              </td>
                               <td className="p-3">{formatDate(usuario.fechaInicio)}</td>
                               <td className="p-3">{formatDate(usuario.fechaVencimiento)}</td>
                               <td className="p-3">

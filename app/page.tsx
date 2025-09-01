@@ -114,15 +114,28 @@ export default function Home() {
                 <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
                   {foundUser.nombreApellido}
                 </h2>
-                <p className="mb-1 text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">DNI:</span> {foundUser.dni}
-                </p>
-                <p className="mb-1 text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Teléfono:</span> {foundUser.telefono}
-                </p>
-                <p className="mb-1 text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Edad:</span> {foundUser.edad} años
-                </p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">DNI:</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.dni}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Teléfono:</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.telefono || "-"}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Edad:</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.edad} años</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Actividad:</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.actividad || "Normal"}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Inicio:</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1">{formatDate(foundUser.fechaInicio)}</span>
+                  </div>
+                </div>
                 <div className="flex items-center mt-3">
                   <span className="font-medium mr-2 text-gray-700 dark:text-gray-300">Estado de cuota:</span>
                   {isPaymentDue(foundUser.fechaVencimiento) ? (

@@ -127,9 +127,16 @@ export default function PagarCuota() {
             )}
           </div>
           {userFound && (
-            <p className="text-sm text-green-600 mt-1 dark:text-green-400">
-              Usuario encontrado: {userFound.nombreApellido}
-            </p>
+            <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md">
+              <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                Usuario encontrado: {userFound.nombreApellido}
+              </p>
+              <div className="text-xs text-green-700 dark:text-green-400 mt-1 grid grid-cols-2 gap-2">
+                <div>Edad: {userFound.edad} años</div>
+                <div>Actividad: {userFound.actividad || "Normal"}</div>
+                <div className="col-span-2">Teléfono: {userFound.telefono || "No registrado"}</div>
+              </div>
+            </div>
           )}
           {formData.dni.length > 5 && !userFound && !isSearching && (
             <p className="text-sm text-red-500 mt-1 dark:text-red-400">Usuario no encontrado</p>
@@ -143,7 +150,7 @@ export default function PagarCuota() {
             name="fechaPago"
             value={formData.fechaPago}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
@@ -175,7 +182,7 @@ export default function PagarCuota() {
               name="montoPago"
               value={formData.montoPago}
               onChange={handleChange}
-              className="w-full p-3 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               required
               min="1"
               step="0.01"
@@ -191,7 +198,7 @@ export default function PagarCuota() {
             name="metodoPago"
             value={formData.metodoPago}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           >
