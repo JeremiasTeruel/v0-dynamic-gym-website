@@ -1,19 +1,50 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
+import { DollarSign } from "lucide-react"
+import CerrarCajaModal from "@/components/cerrar-caja-modal"
+import Alert from "@/components/alert"
 import type { RegistroPago } from "@/context/gym-context"
 
 interface PagosDelDiaProps {
   pagos: RegistroPago[]
+  onCerrarCaja?: () => Promise<void>
 }
 
-export default function PagosDelDia({ pagos = [] }: PagosDelDiaProps) {
+export default function PagosDelDia({ pagos = [], onCerrarCaja }: PagosDelDiaProps) {
+  const [modalAbierto, setModalAbierto] = useState(false)
+  const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
+    mensaje: "",
+    visible: false,
+    tipo: "success",
+  })
+
   const totalDelDia = useMemo(() => {
     return pagos.reduce((sum, pago) => sum + pago.monto, 0)
   }, [pagos])
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
+  }
+
+  const handleCerrarCaja = async () => {
+    try {
+      if (onCerrarCaja) {
+        await onCerrarCaja()
+        setAlertaInfo({
+          mensaje: "Caja cerrada correctamente. Los ingresos se han registrado en los reportes.",
+          visible: true,
+          tipo: "success",
+        })
+      }
+    } catch (error) {
+      console.error("Error al cerrar caja:", error)
+      setAlertaInfo({
+        mensaje: "Error al cerrar la caja. Por favor, intenta de nuevo.",
+        visible: true,
+        tipo: "error",
+      })
+    }
   }
 
   if (!pagos || pagos.length === 0) {
@@ -63,10 +94,47 @@ export default function PagosDelDia({ pagos = [] }: PagosDelDiaProps) {
         </table>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-        <span className="font-bold text-lg text-gray-900 dark:text-gray-100">Total del día:</span>
-        <span className="font-bold text-xl text-green-600 dark:text-green-400">{formatMonto(totalDelDia)}</span>
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center mb-4">
+          <span className="font-bold text-lg text-gray-900 dark:text-gray-100">Total del día:</span>
+          <span className="font-bold text-xl text-green-600 dark:text-green-400">{formatMonto(totalDelDia)}</span>
+        </div>
+
+        {/* Botón Cerrar Caja */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => setModalAbierto(true)}
+            className="flex items-center px-6 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={totalDelDia === 0}
+          >
+            <DollarSign className="h-5 w-5 mr-2" />
+            Cerrar Caja
+          </button>
+        </div>
+
+        {totalDelDia === 0 && (
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+            No hay ingresos para cerrar la caja
+          </p>
+        )}
       </div>
+
+      {/* Modal de Cerrar Caja */}
+      <CerrarCajaModal
+        isOpen={modalAbierto}
+        onClose={() => setModalAbierto(false)}
+        onConfirm={handleCerrarCaja}
+        pagosDia={pagos}
+        totalDia={totalDelDia}
+      />
+
+      {/* Alerta */}
+      <Alert
+        message={alertaInfo.mensaje}
+        isOpen={alertaInfo.visible}
+        onClose={() => setAlertaInfo((prev) => ({ ...prev, visible: false }))}
+        type={alertaInfo.tipo}
+      />
     </div>
   )
 }

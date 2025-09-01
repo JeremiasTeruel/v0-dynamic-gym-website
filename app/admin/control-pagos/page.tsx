@@ -26,107 +26,189 @@ export default function ControlPagos() {
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [metodosMensualesData, setMetodosMensualesData] = useState([])
 
-  // Cargar datos al iniciar
-  useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        setCargandoDatos(true)
+  // Función para cerrar caja
+  const cerrarCaja = async () => {
+    try {
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
 
-        // Obtener fecha actual
-        const hoy = new Date()
-        const fechaHoy = hoy.toISOString().split("T")[0]
+      // Calcular totales por método de pago
+      const totalEfectivo = pagosDiarios
+        .filter((pago) => pago.metodoPago === "Efectivo")
+        .reduce((sum, pago) => sum + pago.monto, 0)
 
-        // Cargar pagos del día
-        const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
-        setPagosDiarios(pagosHoy)
+      const totalMercadoPago = pagosDiarios
+        .filter((pago) => pago.metodoPago === "Mercado Pago")
+        .reduce((sum, pago) => sum + pago.monto, 0)
 
-        // Preparar datos para el gráfico de métodos de pago del día
-        const efectivo = pagosHoy.filter((pago) => pago.metodoPago === "Efectivo").length
-        const mercadoPago = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
+      const totalGeneral = totalEfectivo + totalMercadoPago
 
-        setMetodosPago([
-          { name: "Efectivo", value: efectivo || 1, fill: "#4ade80" },
-          { name: "Mercado Pago", value: mercadoPago || 1, fill: "#3b82f6" },
-        ])
+      // Registrar el cierre de caja
+      const response = await fetch("/api/caja/cerrar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fecha: fechaHoy,
+          totalEfectivo,
+          totalMercadoPago,
+          totalGeneral,
+          cantidadPagos: pagosDiarios.length,
+        }),
+      })
 
-        // Preparar datos para el gráfico semanal
-        const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-        const pagosSemanaData = await Promise.all(
-          diasSemana.map(async (dia, index) => {
-            // Calcular la fecha para este día de la semana actual
-            const fechaDia = new Date(hoy)
-            const diff = hoy.getDay() - (index + 1)
-            fechaDia.setDate(hoy.getDate() - diff)
-            const fechaStr = fechaDia.toISOString().split("T")[0]
-
-            // Obtener pagos para esta fecha
-            const pagosDia = await obtenerPagosPorFecha(fechaStr)
-            const montoDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
-
-            return {
-              dia,
-              monto: montoDia,
-            }
-          }),
-        )
-
-        setPagosSemana(pagosSemanaData)
-
-        // Preparar datos para el gráfico mensual
-        const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
-        const pagosMensualesData = await Promise.all(
-          meses.map(async (mes, index) => {
-            // Calcular el mes (0 = enero, 1 = febrero, etc.)
-            const mesActual = hoy.getMonth()
-            let mesIndex = (mesActual - 5 + index) % 12
-            if (mesIndex < 0) mesIndex += 12
-
-            // Calcular el primer y último día del mes
-            const primerDia = new Date(hoy.getFullYear(), mesIndex, 1)
-            const ultimoDia = new Date(hoy.getFullYear(), mesIndex + 1, 0)
-
-            const inicioPeriodo = primerDia.toISOString().split("T")[0]
-            const finPeriodo = ultimoDia.toISOString().split("T")[0]
-
-            // Obtener pagos para este mes
-            const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
-            const montoMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
-
-            return {
-              mes,
-              monto: montoMes,
-            }
-          }),
-        )
-
-        setPagosMensuales(pagosMensualesData)
-
-        // Preparar datos para el gráfico de usuarios mensuales
-        // En una aplicación real, esto vendría de la base de datos
-        // Por ahora, usamos datos basados en los usuarios existentes
-        const usuariosMensualesData = meses.map((mes) => ({
-          mes,
-          usuarios: 0, // Sin datos reales por ahora
-        }))
-
-        setUsuariosMensuales(usuariosMensualesData)
-
-        // Preparar datos para el gráfico de métodos de pago mensuales
-        // Esto es una simulación, en una app real vendría de la base de datos
-        const metodosEfectivo = pagosMensualesData.reduce((sum, mes) => sum + (mes.monto > 0 ? 1 : 0), 0)
-        const metodosMensualesData = [
-          { name: "Efectivo", value: metodosEfectivo > 0 ? 65 : 0, fill: "#4ade80" },
-          { name: "Mercado Pago", value: metodosEfectivo > 0 ? 35 : 0, fill: "#3b82f6" },
-        ]
-
-        setMetodosMensualesData(metodosMensualesData)
-      } catch (error) {
-        console.error("Error al cargar datos:", error)
-      } finally {
-        setCargandoDatos(false)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al cerrar caja")
       }
-    }
 
+      console.log("Caja cerrada exitosamente")
+
+      // Recargar datos para actualizar los gráficos
+      await cargarDatos()
+    } catch (error) {
+      console.error("Error al cerrar caja:", error)
+      throw error
+    }
+  }
+
+  // Cargar datos al iniciar
+  const cargarDatos = async () => {
+    try {
+      setCargandoDatos(true)
+
+      // Obtener fecha actual
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      // Cargar pagos del día
+      const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
+      setPagosDiarios(pagosHoy)
+
+      // Preparar datos para el gráfico de métodos de pago del día
+      const efectivo = pagosHoy.filter((pago) => pago.metodoPago === "Efectivo").length
+      const mercadoPago = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
+
+      setMetodosPago([
+        { name: "Efectivo", value: efectivo || 1, fill: "#4ade80" },
+        { name: "Mercado Pago", value: mercadoPago || 1, fill: "#3b82f6" },
+      ])
+
+      // Preparar datos para el gráfico semanal (incluyendo cierres de caja)
+      const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+      const pagosSemanaData = await Promise.all(
+        diasSemana.map(async (dia, index) => {
+          // Calcular la fecha para este día de la semana actual
+          const fechaDia = new Date(hoy)
+          const diff = hoy.getDay() - (index + 1)
+          fechaDia.setDate(hoy.getDate() - diff)
+          const fechaStr = fechaDia.toISOString().split("T")[0]
+
+          // Obtener pagos para esta fecha
+          const pagosDia = await obtenerPagosPorFecha(fechaStr)
+          let montoDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
+
+          // Si es el día actual y hay pagos, incluir los pagos actuales
+          if (fechaStr === fechaHoy && pagosHoy.length > 0) {
+            montoDia = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
+          }
+
+          // Verificar si hay un cierre de caja para este día
+          try {
+            const cierresResponse = await fetch("/api/caja/cerrar")
+            if (cierresResponse.ok) {
+              const cierres = await cierresResponse.json()
+              const cierreDia = cierres.find((cierre) => cierre.fecha === fechaStr)
+              if (cierreDia) {
+                montoDia = cierreDia.totalGeneral
+              }
+            }
+          } catch (error) {
+            console.error("Error al obtener cierres de caja:", error)
+          }
+
+          return {
+            dia,
+            monto: montoDia,
+          }
+        }),
+      )
+
+      setPagosSemana(pagosSemanaData)
+
+      // Preparar datos para el gráfico mensual (incluyendo cierres de caja)
+      const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
+      const pagosMensualesData = await Promise.all(
+        meses.map(async (mes, index) => {
+          // Calcular el mes (0 = enero, 1 = febrero, etc.)
+          const mesActual = hoy.getMonth()
+          let mesIndex = (mesActual - 5 + index) % 12
+          if (mesIndex < 0) mesIndex += 12
+
+          // Calcular el primer y último día del mes
+          const primerDia = new Date(hoy.getFullYear(), mesIndex, 1)
+          const ultimoDia = new Date(hoy.getFullYear(), mesIndex + 1, 0)
+
+          const inicioPeriodo = primerDia.toISOString().split("T")[0]
+          const finPeriodo = ultimoDia.toISOString().split("T")[0]
+
+          // Obtener pagos para este mes
+          const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
+          let montoMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
+
+          // Agregar cierres de caja del mes
+          try {
+            const cierresResponse = await fetch("/api/caja/cerrar")
+            if (cierresResponse.ok) {
+              const cierres = await cierresResponse.json()
+              const cierresMes = cierres.filter((cierre) => {
+                const fechaCierre = new Date(cierre.fecha)
+                return fechaCierre >= primerDia && fechaCierre <= ultimoDia
+              })
+              const montoCierres = cierresMes.reduce((sum, cierre) => sum + cierre.totalGeneral, 0)
+              montoMes += montoCierres
+            }
+          } catch (error) {
+            console.error("Error al obtener cierres de caja para el mes:", error)
+          }
+
+          return {
+            mes,
+            monto: montoMes,
+          }
+        }),
+      )
+
+      setPagosMensuales(pagosMensualesData)
+
+      // Preparar datos para el gráfico de usuarios mensuales
+      // En una aplicación real, esto vendría de la base de datos
+      // Por ahora, usamos datos basados en los usuarios existentes
+      const usuariosMensualesData = meses.map((mes) => ({
+        mes,
+        usuarios: 0, // Sin datos reales por ahora
+      }))
+
+      setUsuariosMensuales(usuariosMensualesData)
+
+      // Preparar datos para el gráfico de métodos de pago mensuales
+      // Esto es una simulación, en una app real vendría de la base de datos
+      const metodosEfectivo = pagosMensualesData.reduce((sum, mes) => sum + (mes.monto > 0 ? 1 : 0), 0)
+      const metodosMensualesData = [
+        { name: "Efectivo", value: metodosEfectivo > 0 ? 65 : 0, fill: "#4ade80" },
+        { name: "Mercado Pago", value: metodosEfectivo > 0 ? 35 : 0, fill: "#3b82f6" },
+      ]
+
+      setMetodosMensualesData(metodosMensualesData)
+    } catch (error) {
+      console.error("Error al cargar datos:", error)
+    } finally {
+      setCargandoDatos(false)
+    }
+  }
+
+  useEffect(() => {
     cargarDatos()
   }, [obtenerPagosPorFecha, obtenerPagosPorRango])
 
@@ -153,7 +235,7 @@ export default function ControlPagos() {
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Pagos del día</h2>
-              <PagosDelDia pagos={pagosDiarios} />
+              <PagosDelDia pagos={pagosDiarios} onCerrarCaja={cerrarCaja} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
