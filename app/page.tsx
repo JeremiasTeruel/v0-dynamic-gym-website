@@ -69,7 +69,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="w-full max-w-6xl flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">Dynamic Gym</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">High Performance Gym</h1>
         <div className="flex items-center space-x-3">
           <ThemeToggle />
           <Link href="/admin" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">

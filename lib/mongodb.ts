@@ -7,7 +7,7 @@ if (typeof window !== "undefined") {
 
 // Usar una cadena de conexión directa para evitar problemas con las variables de entorno
 const uri =
-  "mongodb+srv://gymadmin:gympassword123@cluster0.dtczv4t.mongodb.net/dynamicGym?retryWrites=true&w=majority&appName=Cluster0"
+  "mongodb+srv://gymadmin:gympassword123@cluster0.dtczv4t.mongodb.net/highPerformanceGym?retryWrites=true&w=majority&appName=Cluster0"
 
 // Imprimir información de depuración (sin mostrar la contraseña completa)
 const uriForLogging = uri.replace(/\/\/([^:]+):([^@]+)@/, "//***:***@")
@@ -45,7 +45,7 @@ export async function getMongoDb() {
       const client = await clientPromise
       console.log("Cliente conectado, obteniendo base de datos...")
       // Especificar explícitamente el nombre de la base de datos
-      db = client.db("dynamicGym")
+      db = client.db("highPerformanceGym")
       console.log("Conexión a MongoDB establecida correctamente")
     }
     return db

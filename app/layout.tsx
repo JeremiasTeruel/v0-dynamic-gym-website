@@ -5,8 +5,8 @@ import { ThemeProvider } from "@/context/theme-context"
 import MobileNav from "@/components/mobile-nav"
 
 export const metadata = {
-  title: "Dynamic Gym",
-  description: "Sistema de gestión para Dynamic Gym",
+  title: "High Performance Gym",
+  description: "Sistema de gestión para High Performance Gym",
     generator: 'v0.app'
 }
 
