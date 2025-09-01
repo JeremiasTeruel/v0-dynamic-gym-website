@@ -21,7 +21,7 @@ export default function PagarCuota() {
     dni: "",
     fechaPago: new Date().toISOString().split("T")[0],
     metodoPago: "Efectivo",
-    montoPago: "2500", // Valor predeterminado
+    montoPago: "40.000", // Valor predeterminado
   })
 
   const [userFound, setUserFound] = useState(null)

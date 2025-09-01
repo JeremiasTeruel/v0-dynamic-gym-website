@@ -6,7 +6,7 @@ import MobileNav from "@/components/mobile-nav"
 export const metadata = {
   title: "Dynamic Gym",
   description: "Sistema de gestión para Dynamic Gym",
-    generator: 'v0.dev'
+    generator: 'v0.app'
 }
 
 export default function RootLayout({

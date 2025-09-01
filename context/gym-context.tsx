@@ -29,7 +29,6 @@ interface GymContextType {
   obtenerPagosPorFecha: (fecha: string) => Promise<RegistroPago[]>
   obtenerPagosPorRango: (inicio: string, fin: string) => Promise<RegistroPago[]>
   recargarPagos: () => Promise<void>
-  obtenerUsuariosPorMes: (year?: string) => Promise<any[]>
 }
 
 const GymContext = createContext<GymContextType | null>(null)
@@ -377,25 +376,6 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para obtener usuarios registrados por mes
-  const obtenerUsuariosPorMes = async (year?: string): Promise<any[]> => {
-    try {
-      const yearParam = year ? `?year=${year}` : ""
-      const response = await fetch(`/api/usuarios/por-mes${yearParam}`)
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || "Error al obtener usuarios por mes")
-      }
-
-      return await response.json()
-    } catch (err) {
-      console.error(`Error al obtener usuarios por mes:`, err)
-      setError(`Error al obtener datos de usuarios. Por favor, intenta de nuevo.`)
-      return []
-    }
-  }
-
   return (
     <GymContext.Provider
       value={{
@@ -414,7 +394,6 @@ export function GymProvider({ children }) {
         obtenerPagosPorFecha,
         obtenerPagosPorRango,
         recargarPagos,
-        obtenerUsuariosPorMes,
       }}
     >
       {children}
