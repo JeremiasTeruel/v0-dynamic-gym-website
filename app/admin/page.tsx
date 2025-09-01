@@ -10,6 +10,7 @@ import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
+import ThemeToggle from "@/components/theme-toggle"
 
 export default function Admin() {
   const { usuarios, cargando, error, eliminarUsuario, actualizarUsuario, recargarUsuarios } = useGymContext()
@@ -154,15 +155,20 @@ export default function Admin() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
-      <h1 className="text-3xl md:text-4xl font-bold text-green-600 mb-6 md:mb-10">Administración - Dynamic Gym</h1>
+    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">
+          Administración - Dynamic Gym
+        </h1>
+        <ThemeToggle />
+      </div>
 
       <div className="w-full max-w-6xl">
         {/* Barra de navegación de administración */}
         <div className="mb-8 flex flex-wrap gap-4 justify-center">
           <Link
             href="/admin/control-pagos"
-            className="flex items-center gap-2 bg-white px-4 py-3 rounded-lg shadow-sm text-green-600 font-medium hover:bg-green-50 transition-colors"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-green-600 font-medium hover:bg-green-50 transition-colors"
           >
             <BarChart className="h-5 w-5" />
             Control de Pagos
@@ -170,30 +176,30 @@ export default function Admin() {
 
           <Link
             href="/"
-            className="flex items-center gap-2 bg-gray-500 px-4 py-3 rounded-lg shadow-sm text-white font-medium hover:bg-gray-600 transition-colors"
+            className="flex items-center gap-2 bg-gray-500 dark:bg-gray-600 px-4 py-3 rounded-lg shadow-sm text-white font-medium hover:bg-gray-700 transition-colors"
           >
             Volver al Inicio
           </Link>
         </div>
 
         {/* Barra de búsqueda optimizada para móviles */}
-        <div className="sticky top-0 bg-white z-10 p-2 md:p-0 md:static md:bg-transparent mb-4 rounded-lg shadow-sm md:shadow-none">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 z-10 p-2 md:p-0 md:static md:bg-transparent mb-4 rounded-lg shadow-sm md:shadow-none">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
+              <Search className="h-5 w-5 text-gray-400 dark:text-gray-400" />
             </div>
             <input
               type="text"
               placeholder="Buscar por nombre..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full p-3 pl-10 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               style={{ fontSize: "16px" }} // Evita zoom en iOS
             />
             {busqueda && (
               <button
                 onClick={limpiarBusqueda}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -209,13 +215,16 @@ export default function Admin() {
             <div className="flex items-center">
               <button
                 onClick={handleRecargar}
-                className="ml-2 p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500 focus:outline-none"
                 disabled={recargando || cargando}
                 title="Recargar usuarios"
               >
                 <RefreshCw className={`h-5 w-5 ${recargando ? "animate-spin" : ""}`} />
               </button>
-              <Link href="/" className="md:hidden ml-2 p-2 text-gray-500 hover:text-gray-700">
+              <Link
+                href="/"
+                className="md:hidden ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500"
+              >
                 <X className="h-5 w-5" />
               </Link>
             </div>
@@ -234,8 +243,10 @@ export default function Admin() {
           <>
             {busqueda && usuariosFiltrados.length === 0 ? (
               <div className="text-center py-8 border rounded-md">
-                <p className="text-gray-500">No se encontraron usuarios que coincidan con "{busqueda}"</p>
-                <button onClick={limpiarBusqueda} className="mt-2 text-green-600 hover:underline">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No se encontraron usuarios que coincidan con "{busqueda}"
+                </p>
+                <button onClick={limpiarBusqueda} className="mt-2 text-green-600 dark:text-green-400 hover:underline">
                   Limpiar búsqueda
                 </button>
               </div>
@@ -260,31 +271,31 @@ export default function Admin() {
 
                 {/* Tabla para escritorio */}
                 {!isMobile && (
-                  <div className="border rounded-md overflow-hidden overflow-x-auto">
+                  <div className="border dark:border-gray-600 rounded-md overflow-hidden overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-100">
+                      <thead className="bg-gray-100 dark:bg-gray-800">
                         <tr>
-                          <th className="p-3 text-left">ID</th>
-                          <th className="p-3 text-left">Nombre y Apellido</th>
-                          <th className="p-3 text-left">DNI</th>
-                          <th className="p-3 text-left">Teléfono</th>
-                          <th className="p-3 text-left">Edad</th>
-                          <th className="p-3 text-left">Fecha Inicio</th>
-                          <th className="p-3 text-left">Vencimiento</th>
-                          <th className="p-3 text-left">Estado</th>
-                          <th className="p-3 text-left">Acciones</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">ID</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Nombre y Apellido</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Teléfono</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Edad</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Fecha Inicio</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
+                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
                         {usuariosFiltrados.length === 0 ? (
                           <tr>
-                            <td colSpan={9} className="p-4 text-center text-gray-500">
+                            <td colSpan={9} className="p-4 text-center text-gray-500 dark:text-gray-400">
                               No hay usuarios registrados
                             </td>
                           </tr>
                         ) : (
                           usuariosFiltrados.map((usuario) => (
-                            <tr key={usuario.id} className="border-t border-gray-200">
+                            <tr key={usuario.id} className="border-t border-gray-200 dark:border-gray-600">
                               <td className="p-3">{usuario.id.substring(0, 8)}...</td>
                               <td className="p-3">{usuario.nombreApellido}</td>
                               <td className="p-3">{usuario.dni}</td>
@@ -294,12 +305,12 @@ export default function Admin() {
                               <td className="p-3">{formatDate(usuario.fechaVencimiento)}</td>
                               <td className="p-3">
                                 {isPaymentDue(usuario.fechaVencimiento) ? (
-                                  <div className="flex items-center text-red-500">
+                                  <div className="flex items-center text-red-500 dark:text-red-400">
                                     <XCircle className="h-5 w-5 mr-1" />
                                     <span>Vencida</span>
                                   </div>
                                 ) : (
-                                  <div className="flex items-center text-green-500">
+                                  <div className="flex items-center text-green-500 dark:text-green-400">
                                     <CheckCircle className="h-5 w-5 mr-1" />
                                     <span>Al día</span>
                                   </div>
@@ -309,19 +320,19 @@ export default function Admin() {
                                 <div className="flex space-x-2">
                                   <button
                                     onClick={() => handleEditar(usuario)}
-                                    className="text-blue-500 hover:text-blue-700 focus:outline-none"
+                                    className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500 focus:outline-none"
                                     title="Editar usuario"
                                   >
                                     <Edit className="h-5 w-5" />
                                   </button>
                                   <button
                                     onClick={() => handleEliminar(usuario.id)}
-                                    className="text-red-500 hover:text-red-700 focus:outline-none"
+                                    className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 focus:outline-none"
                                     disabled={eliminando === usuario.id}
                                     title="Eliminar usuario"
                                   >
                                     {eliminando === usuario.id ? (
-                                      <LoadingDumbbell size={20} className="text-red-500" />
+                                      <LoadingDumbbell size={20} className="text-red-500 dark:text-red-400" />
                                     ) : (
                                       <Trash2 className="h-5 w-5" />
                                     )}
@@ -341,7 +352,7 @@ export default function Admin() {
         )}
 
         <div className="mt-6">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {busqueda
               ? `Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios (ordenados alfabéticamente)`
               : `Total de usuarios registrados: ${usuarios.length} (ordenados alfabéticamente)`}

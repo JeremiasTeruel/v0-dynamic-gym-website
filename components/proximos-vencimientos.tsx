@@ -53,35 +53,35 @@ export default function ProximosVencimientos({ usuarios }: ProximosVencimientosP
 
   // Función para determinar el color basado en los días restantes
   const getColorClass = (diasRestantes: number): string => {
-    if (diasRestantes <= 3) return "bg-red-100 text-red-800"
-    if (diasRestantes <= 7) return "bg-yellow-100 text-yellow-800"
-    return "bg-green-100 text-green-800"
+    if (diasRestantes <= 3) return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+    if (diasRestantes <= 7) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+    return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
   }
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-semibold mb-4 flex items-center">
-        <Clock className="h-5 w-5 mr-2 text-green-600" />
+      <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-gray-100">
+        <Clock className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
         Próximos vencimientos
       </h2>
 
       {proximosVencimientos.length === 0 ? (
-        <div className="text-center py-6 bg-white rounded-lg shadow-sm">
-          <p className="text-gray-500">No hay vencimientos próximos</p>
+        <div className="text-center py-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <p className="text-gray-500 dark:text-gray-400">No hay vencimientos próximos</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
           {/* Vista para móviles */}
           {isMobile && (
             <div className="md:hidden">
               {proximosVencimientos.map((usuario) => {
                 const diasRestantes = calcularDiasRestantes(usuario.fechaVencimiento)
                 return (
-                  <div key={usuario.id} className="border-b last:border-b-0 p-3">
+                  <div key={usuario.id} className="border-b last:border-b-0 border-gray-200 dark:border-gray-700 p-3">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-medium">{usuario.nombreApellido}</p>
-                        <div className="flex items-center text-sm text-gray-600 mt-1">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{usuario.nombreApellido}</p>
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mt-1">
                           <Calendar className="h-4 w-4 mr-1" />
                           <span>{formatDate(usuario.fechaVencimiento)}</span>
                         </div>
@@ -101,29 +101,33 @@ export default function ProximosVencimientos({ usuarios }: ProximosVencimientosP
           {/* Vista para escritorio */}
           {!isMobile && (
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Usuario
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Fecha Vencimiento
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Días Restantes
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {proximosVencimientos.map((usuario) => {
                   const diasRestantes = calcularDiasRestantes(usuario.fechaVencimiento)
                   return (
                     <tr key={usuario.id}>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{usuario.nombreApellido}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {usuario.nombreApellido}
+                        </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{formatDate(usuario.fechaVencimiento)}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {formatDate(usuario.fechaVencimiento)}
+                        </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span

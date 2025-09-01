@@ -7,6 +7,7 @@ import { useGymContext } from "@/context/gym-context"
 import { useMobile } from "@/hooks/use-mobile"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
+import ThemeToggle from "@/components/theme-toggle"
 
 export default function PagarCuota() {
   const router = useRouter()
@@ -93,77 +94,88 @@ export default function PagarCuota() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
-      <h1 className="text-3xl md:text-4xl font-bold text-green-600 mb-6 md:mb-10">Pagar Cuota</h1>
+    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="w-full max-w-md flex justify-between items-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">Pagar Cuota</h1>
+        <ThemeToggle />
+      </div>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 md:space-y-6">
         {(errorLocal || error) && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative dark:bg-red-900 dark:border-red-700 dark:text-red-300">
             {errorLocal || error}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">DNI</label>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">DNI</label>
           <div className="flex">
             <input
               type="text"
               name="dni"
               value={formData.dni}
               onChange={handleChange}
-              className="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               required
               disabled={isSubmitting}
               style={{ fontSize: "16px" }}
             />
             {isSearching && (
               <div className="ml-2 flex items-center">
-                <LoadingDumbbell size={20} className="text-green-500" />
+                <LoadingDumbbell size={20} className="text-green-500 dark:text-green-400" />
               </div>
             )}
           </div>
-          {userFound && <p className="text-sm text-green-600 mt-1">Usuario encontrado: {userFound.nombreApellido}</p>}
+          {userFound && (
+            <p className="text-sm text-green-600 mt-1 dark:text-green-400">
+              Usuario encontrado: {userFound.nombreApellido}
+            </p>
+          )}
           {formData.dni.length > 5 && !userFound && !isSearching && (
-            <p className="text-sm text-red-500 mt-1">Usuario no encontrado</p>
+            <p className="text-sm text-red-500 mt-1 dark:text-red-400">Usuario no encontrado</p>
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Fecha de Pago</label>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Fecha de Pago</label>
           <input
             type="date"
             name="fechaPago"
             value={formData.fechaPago}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Nueva Fecha de Vencimiento</label>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+            Nueva Fecha de Vencimiento
+          </label>
           <input
             type="date"
             value={calculateNewDueDate(formData.fechaPago)}
-            className="w-full p-3 border border-gray-300 rounded-md bg-gray-100"
+            className="w-full p-3 border border-gray-300 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600"
             disabled
             style={{ fontSize: "16px" }}
           />
-          <p className="text-xs text-gray-500 mt-1">Se calcula automáticamente (1 mes después de la fecha de pago)</p>
+          <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
+            Se calcula automáticamente (1 mes después de la fecha de pago)
+          </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Monto de Pago</label>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Monto de Pago</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">$</span>
             <input
               type="number"
               name="montoPago"
               value={formData.montoPago}
               onChange={handleChange}
-              className="w-full p-3 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full p-3 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
               required
               min="1"
               step="0.01"
@@ -173,13 +185,13 @@ export default function PagarCuota() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Método de Pago</label>
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Método de Pago</label>
           <select
             name="metodoPago"
             value={formData.metodoPago}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           >
@@ -190,10 +202,10 @@ export default function PagarCuota() {
 
         {/* Botones fijos en la parte inferior para móviles */}
         {isMobile ? (
-          <div className="fixed bottom-20 left-0 right-0 bg-white border-t p-4 flex justify-between z-10">
+          <div className="fixed bottom-20 left-0 right-0 bg-white border-t p-4 flex justify-between z-10 dark:bg-gray-800 dark:border-gray-700">
             <Link
               href="/"
-              className="bg-gray-300 text-gray-700 px-6 py-3 rounded-md w-5/12 flex items-center justify-center"
+              className="bg-gray-300 text-gray-700 px-6 py-3 rounded-md w-5/12 flex items-center justify-center dark:bg-gray-700 dark:text-gray-300"
             >
               Cancelar
             </Link>
@@ -202,7 +214,7 @@ export default function PagarCuota() {
               type="submit"
               className={`bg-green-600 text-white px-6 py-3 rounded-md w-5/12 flex items-center justify-center ${
                 isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              } dark:bg-green-500 dark:text-gray-900`}
               disabled={isSubmitting || !userFound}
             >
               {isSubmitting ? <LoadingDumbbell size={20} className="mr-2" /> : null}
@@ -213,7 +225,7 @@ export default function PagarCuota() {
           <div className="flex justify-between pt-4">
             <Link
               href="/"
-              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:scale-105 transition-transform"
+              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:scale-105 transition-transform dark:bg-gray-700 dark:text-gray-300"
             >
               Cancelar
             </Link>
@@ -222,7 +234,7 @@ export default function PagarCuota() {
               type="submit"
               className={`bg-green-600 text-white px-6 py-2 rounded-md transition-transform ${
                 isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
-              }`}
+              } dark:bg-green-500 dark:text-gray-900`}
               disabled={isSubmitting || !userFound}
             >
               {isSubmitting ? <LoadingDumbbell size={20} className="mr-2 inline" /> : null}

@@ -11,6 +11,7 @@ import GraficoMetodosPago from "@/components/grafico-metodos-pago"
 import GraficoMensual from "@/components/grafico-mensual"
 import GraficoUsuarios from "@/components/grafico-usuarios"
 import GraficoMetodosMensual from "@/components/grafico-metodos-mensual"
+import ThemeToggle from "@/components/theme-toggle"
 import { useMobile } from "@/hooks/use-mobile"
 import type { RegistroPago } from "@/context/gym-context"
 
@@ -130,12 +131,16 @@ export default function ControlPagos() {
   }, [obtenerPagosPorFecha, obtenerPagosPorRango])
 
   return (
-    <main className="flex min-h-screen flex-col p-4 md:p-8">
+    <main className="flex min-h-screen flex-col p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="flex items-center mb-6">
-        <Link href="/admin" className="mr-4 text-gray-500 hover:text-gray-700">
+        <Link
+          href="/admin"
+          className="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+        >
           <ArrowLeft className="h-6 w-6" />
         </Link>
-        <h1 className="text-2xl md:text-3xl font-bold text-green-600">Control de Pagos</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 flex-1">Control de Pagos</h1>
+        <ThemeToggle />
       </div>
 
       {cargando || cargandoDatos ? (
@@ -146,19 +151,19 @@ export default function ControlPagos() {
         <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
           {/* Sección izquierda */}
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-xl font-semibold mb-4">Pagos del día</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Pagos del día</h2>
               <PagosDelDia pagos={pagosDiarios} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm p-4">
-                <h2 className="text-lg font-semibold mb-4">Ingresos semanales</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Ingresos semanales</h2>
                 <GraficoSemanal datos={pagosSemana} />
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-4">
-                <h2 className="text-lg font-semibold mb-4">Métodos de pago (hoy)</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (hoy)</h2>
                 <GraficoMetodosPago datos={metodosPago} />
               </div>
             </div>
@@ -166,18 +171,18 @@ export default function ControlPagos() {
 
           {/* Sección derecha */}
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-semibold mb-4">Ingresos mensuales</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Ingresos mensuales</h2>
               <GraficoMensual datos={pagosMensuales} />
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-semibold mb-4">Nuevos usuarios por mes</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nuevos usuarios por mes</h2>
               <GraficoUsuarios datos={usuariosMensuales} />
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-semibold mb-4">Métodos de pago (mensual)</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (mensual)</h2>
               <GraficoMetodosMensual datos={metodosMensualesData} />
             </div>
           </div>

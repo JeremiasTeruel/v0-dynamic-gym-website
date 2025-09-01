@@ -7,6 +7,7 @@ import { useGymContext } from "@/context/gym-context"
 import { useMobile } from "@/hooks/use-mobile"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
+import ThemeToggle from "@/components/theme-toggle"
 
 export default function NuevoUsuario() {
   const router = useRouter()
@@ -89,109 +90,116 @@ export default function NuevoUsuario() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 md:p-8">
-      <h1 className="text-3xl md:text-4xl font-bold text-green-600 mb-6 md:mb-10">Nuevo Usuario</h1>
+    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="w-full max-w-md flex justify-between items-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">Nuevo Usuario</h1>
+        <ThemeToggle />
+      </div>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 md:space-y-6">
         {(error || contextError) && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative">
             {error || contextError}
           </div>
         )}
 
         {/* Campos de formulario optimizados para móviles */}
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Nombre y Apellido</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nombre y Apellido</label>
           <input
             type="text"
             name="nombreApellido"
             value={formData.nombreApellido}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">DNI</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">DNI</label>
           <input
             type="text"
             name="dni"
             value={formData.dni}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Edad</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Edad</label>
           <input
             type="number"
             name="edad"
             value={formData.edad}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Teléfono</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Teléfono</label>
           <input
             type="tel"
             name="telefono"
             value={formData.telefono}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Fecha de Inicio</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Fecha de Inicio</label>
           <input
             type="date"
             name="fechaInicio"
             value={formData.fechaInicio}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Fecha de Vencimiento de Cuota</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+            Fecha de Vencimiento de Cuota
+          </label>
           <input
             type="date"
             value={formData.fechaInicio ? calculateDueDate(formData.fechaInicio) : ""}
-            className="w-full p-3 border border-gray-300 rounded-md bg-gray-100"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100"
             disabled
             style={{ fontSize: "16px" }}
           />
-          <p className="text-xs text-gray-500 mt-1">Se calcula automáticamente (1 mes después de la fecha de inicio)</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Se calcula automáticamente (1 mes después de la fecha de inicio)
+          </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Monto de Pago</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Monto de Pago</label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">$</span>
             <input
               type="number"
               name="montoPago"
               value={formData.montoPago}
               onChange={handleChange}
-              className="w-full p-3 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               required
               min="1"
               step="0.01"
@@ -201,13 +209,13 @@ export default function NuevoUsuario() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none">
-          <label className="block text-sm font-medium mb-1">Método de Pago</label>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Método de Pago</label>
           <select
             name="metodoPago"
             value={formData.metodoPago}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           >
@@ -218,18 +226,18 @@ export default function NuevoUsuario() {
 
         {/* Botones fijos en la parte inferior para móviles */}
         {isMobile ? (
-          <div className="fixed bottom-20 left-0 right-0 bg-white border-t p-4 flex justify-between z-10">
+          <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex justify-between z-10">
             <Link
               href="/"
-              className="bg-gray-300 text-gray-700 px-6 py-3 rounded-md w-5/12 flex items-center justify-center"
+              className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-md w-5/12 flex items-center justify-center hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
             >
               Cancelar
             </Link>
 
             <button
               type="submit"
-              className={`bg-green-600 text-white px-6 py-3 rounded-md w-5/12 flex items-center justify-center ${
-                isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+              className={`bg-green-600 dark:bg-green-700 text-white px-6 py-3 rounded-md w-5/12 flex items-center justify-center transition-colors ${
+                isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-green-700 dark:hover:bg-green-600"
               }`}
               disabled={isSubmitting}
             >
@@ -241,15 +249,17 @@ export default function NuevoUsuario() {
           <div className="flex justify-between pt-4">
             <Link
               href="/"
-              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:scale-105 transition-transform"
+              className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-md hover:scale-105 transition-transform hover:bg-gray-400 dark:hover:bg-gray-500"
             >
               Cancelar
             </Link>
 
             <button
               type="submit"
-              className={`bg-green-600 text-white px-6 py-2 rounded-md transition-transform ${
-                isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
+              className={`bg-green-600 dark:bg-green-700 text-white px-6 py-2 rounded-md transition-transform ${
+                isSubmitting
+                  ? "opacity-70 cursor-not-allowed"
+                  : "hover:scale-105 hover:bg-green-700 dark:hover:bg-green-600"
               }`}
               disabled={isSubmitting}
             >

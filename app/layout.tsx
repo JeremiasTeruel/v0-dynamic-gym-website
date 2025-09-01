@@ -1,6 +1,7 @@
 import type React from "react"
 import "./globals.css"
 import { GymProvider } from "@/context/gym-context"
+import { ThemeProvider } from "@/context/theme-context"
 import MobileNav from "@/components/mobile-nav"
 
 export const metadata = {
@@ -16,11 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>
-        <GymProvider>
-          <div className="pb-20 md:pb-0">{children}</div>
-          <MobileNav />
-        </GymProvider>
+      <body className="bg-white dark:bg-gray-900 transition-colors duration-200">
+        <ThemeProvider>
+          <GymProvider>
+            <div className="pb-20 md:pb-0">{children}</div>
+            <MobileNav />
+          </GymProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
