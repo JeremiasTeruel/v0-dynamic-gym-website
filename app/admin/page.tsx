@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart } from "lucide-react"
+import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart, Package } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
 import PinModal from "@/components/pin-modal"
+import StockBebidasModal from "@/components/stock-bebidas-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
@@ -19,6 +20,7 @@ export default function Admin() {
   const [recargando, setRecargando] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [stockModalAbierto, setStockModalAbierto] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
   const [pinAction, setPinAction] = useState<{ type: "delete" | "edit"; data: any } | null>(null)
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
@@ -196,6 +198,14 @@ export default function Admin() {
             <BarChart className="h-5 w-5" />
             Control de Pagos
           </Link>
+
+          <button
+            onClick={() => setStockModalAbierto(true)}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-blue-600 font-medium hover:bg-blue-50 transition-colors"
+          >
+            <Package className="h-5 w-5" />
+            Stock de Bebidas
+          </button>
 
           <Link
             href="/"
@@ -405,6 +415,9 @@ export default function Admin() {
         }}
         onSave={handleGuardarEdicion}
       />
+
+      {/* Modal de Stock de Bebidas */}
+      <StockBebidasModal isOpen={stockModalAbierto} onClose={() => setStockModalAbierto(false)} />
 
       {/* Modal de PIN */}
       <PinModal
