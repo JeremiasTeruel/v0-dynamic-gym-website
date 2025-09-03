@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ShoppingCart, Minus, Plus } from "lucide-react"
+import { X, ShoppingCart, Minus, Plus, CreditCard, Banknote } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import Alert from "@/components/alert"
@@ -24,6 +24,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
   const [bebidas, setBebidas] = useState<Bebida[]>([])
   const [bebidaSeleccionada, setBebidaSeleccionada] = useState<string>("")
   const [cantidad, setCantidad] = useState(1)
+  const [metodoPago, setMetodoPago] = useState("Efectivo")
   const [cargandoBebidas, setCargandoBebidas] = useState(false)
   const [procesandoVenta, setProcesandoVenta] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
@@ -41,6 +42,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
       // Reset form
       setBebidaSeleccionada("")
       setCantidad(1)
+      setMetodoPago("Efectivo")
       setError(null)
     }
   }, [isOpen])
@@ -112,6 +114,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
           bebidaId: bebidaSeleccionada,
           cantidad: cantidad,
           precioTotal: precioTotal,
+          metodoPago: metodoPago,
         }),
       })
 
@@ -127,7 +130,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
       )
 
       setAlertaInfo({
-        mensaje: `Venta realizada exitosamente. ${bebidaActual?.nombre} x${cantidad} - ${formatMonto(precioTotal)}`,
+        mensaje: `Venta realizada exitosamente. ${bebidaActual?.nombre} x${cantidad} - ${formatMonto(precioTotal)} (${metodoPago})`,
         visible: true,
         tipo: "success",
       })
@@ -135,6 +138,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
       // Reset form
       setBebidaSeleccionada("")
       setCantidad(1)
+      setMetodoPago("Efectivo")
 
       // Cerrar modal después de un breve delay
       setTimeout(() => {
@@ -274,6 +278,42 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
                   </div>
                 )}
 
+                {/* Selección de método de pago */}
+                {bebidaActual && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Método de Pago
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setMetodoPago("Efectivo")}
+                        className={`flex items-center justify-center p-3 border-2 rounded-lg transition-all ${
+                          metodoPago === "Efectivo"
+                            ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
+                            : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-green-300 dark:hover:border-green-600"
+                        }`}
+                        disabled={procesandoVenta}
+                      >
+                        <Banknote className="h-5 w-5 mr-2" />
+                        <span className="font-medium">Efectivo</span>
+                      </button>
+
+                      <button
+                        onClick={() => setMetodoPago("Mercado Pago")}
+                        className={`flex items-center justify-center p-3 border-2 rounded-lg transition-all ${
+                          metodoPago === "Mercado Pago"
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                            : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-600"
+                        }`}
+                        disabled={procesandoVenta}
+                      >
+                        <CreditCard className="h-5 w-5 mr-2" />
+                        <span className="font-medium">Mercado Pago</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Precio total */}
                 {bebidaActual && (
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
@@ -285,6 +325,19 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {cantidad} x {formatMonto(bebidaActual.precio)}
                       </p>
+                      <div className="flex items-center justify-center mt-2">
+                        {metodoPago === "Efectivo" ? (
+                          <div className="flex items-center text-green-600 dark:text-green-400">
+                            <Banknote className="h-4 w-4 mr-1" />
+                            <span className="text-sm font-medium">Efectivo</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-blue-600 dark:text-blue-400">
+                            <CreditCard className="h-4 w-4 mr-1" />
+                            <span className="text-sm font-medium">Mercado Pago</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -331,7 +384,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
         title="Confirmar Venta de Bebida"
-        description={`Esta acción registrará la venta de ${bebidaActual?.nombre} x${cantidad} por un total de ${formatMonto(precioTotal)}. Ingrese el PIN de seguridad para continuar.`}
+        description={`Esta acción registrará la venta de ${bebidaActual?.nombre} x${cantidad} por un total de ${formatMonto(precioTotal)} (${metodoPago}). Ingrese el PIN de seguridad para continuar.`}
       />
 
       {/* Alerta */}

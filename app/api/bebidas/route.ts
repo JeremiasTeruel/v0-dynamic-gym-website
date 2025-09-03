@@ -112,11 +112,11 @@ export async function GET() {
 // POST para registrar una venta y actualizar stock
 export async function POST(request: Request) {
   try {
-    const { bebidaId, cantidad, precioTotal } = await request.json()
-    console.log("API: Datos recibidos para venta de bebida:", { bebidaId, cantidad, precioTotal })
+    const { bebidaId, cantidad, precioTotal, metodoPago } = await request.json()
+    console.log("API: Datos recibidos para venta de bebida:", { bebidaId, cantidad, precioTotal, metodoPago })
 
     // Validar que los campos requeridos estén presentes
-    if (!bebidaId || !cantidad || !precioTotal) {
+    if (!bebidaId || !cantidad || !precioTotal || !metodoPago) {
       console.error("API ERROR: Faltan campos requeridos")
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
     }
@@ -154,6 +154,7 @@ export async function POST(request: Request) {
       cantidad: cantidad,
       precioUnitario: bebida.precio,
       precioTotal: precioTotal,
+      metodoPago: metodoPago,
       fecha: new Date(),
       stockAnterior: bebida.stock,
       stockNuevo: nuevoStock,

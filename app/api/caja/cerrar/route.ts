@@ -7,14 +7,28 @@ const COLLECTION = "cierres_caja"
 // POST para registrar un cierre de caja
 export async function POST(request: Request) {
   try {
-    const { fecha, totalEfectivo, totalMercadoPago, totalGeneral, cantidadPagos } = await request.json()
+    const {
+      fecha,
+      totalEfectivo,
+      totalMercadoPago,
+      totalBebidas,
+      totalBebidasEfectivo,
+      totalBebidasMercadoPago,
+      totalGeneral,
+      cantidadPagos,
+      cantidadVentasBebidas,
+    } = await request.json()
 
     console.log("API: Datos recibidos para cerrar caja:", {
       fecha,
       totalEfectivo,
       totalMercadoPago,
+      totalBebidas,
+      totalBebidasEfectivo,
+      totalBebidasMercadoPago,
       totalGeneral,
       cantidadPagos,
+      cantidadVentasBebidas,
     })
 
     // Validar que los campos requeridos estén presentes
@@ -38,8 +52,12 @@ export async function POST(request: Request) {
       fecha: new Date(fecha),
       totalEfectivo: Number.parseFloat(totalEfectivo) || 0,
       totalMercadoPago: Number.parseFloat(totalMercadoPago) || 0,
+      totalBebidas: Number.parseFloat(totalBebidas) || 0,
+      totalBebidasEfectivo: Number.parseFloat(totalBebidasEfectivo) || 0,
+      totalBebidasMercadoPago: Number.parseFloat(totalBebidasMercadoPago) || 0,
       totalGeneral: Number.parseFloat(totalGeneral),
       cantidadPagos: Number.parseInt(cantidadPagos) || 0,
+      cantidadVentasBebidas: Number.parseInt(cantidadVentasBebidas) || 0,
       fechaCierre: new Date(),
     }
 

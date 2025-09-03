@@ -1,36 +1,68 @@
 "use client"
 
 import { useState } from "react"
-import { X, DollarSign, CreditCard, Banknote } from "lucide-react"
+import { X, DollarSign, CreditCard, Banknote, ShoppingCart } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import type { RegistroPago } from "@/context/gym-context"
+
+interface VentaBebida {
+  id: string
+  nombreBebida: string
+  cantidad: number
+  precioUnitario: number
+  precioTotal: number
+  metodoPago: string
+  fecha: string
+}
 
 interface CerrarCajaModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => Promise<void>
   pagosDia: RegistroPago[]
+  ventasBebidas?: VentaBebida[]
   totalDia: number
 }
 
-export default function CerrarCajaModal({ isOpen, onClose, onConfirm, pagosDia, totalDia }: CerrarCajaModalProps) {
+export default function CerrarCajaModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  pagosDia,
+  ventasBebidas = [],
+  totalDia,
+}: CerrarCajaModalProps) {
   const [isClosing, setIsClosing] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
 
   if (!isOpen) return null
 
-  // Calcular totales por método de pago
-  const totalEfectivo = pagosDia
+  // Calcular totales por método de pago (cuotas)
+  const totalEfectivoCuotas = pagosDia
     .filter((pago) => pago.metodoPago === "Efectivo")
     .reduce((sum, pago) => sum + pago.monto, 0)
 
-  const totalMercadoPago = pagosDia
+  const totalMercadoPagoCuotas = pagosDia
     .filter((pago) => pago.metodoPago === "Mercado Pago")
     .reduce((sum, pago) => sum + pago.monto, 0)
 
-  const cantidadEfectivo = pagosDia.filter((pago) => pago.metodoPago === "Efectivo").length
-  const cantidadMercadoPago = pagosDia.filter((pago) => pago.metodoPago === "Mercado Pago").length
+  // Calcular totales por método de pago (bebidas)
+  const totalEfectivoBebidas = ventasBebidas
+    .filter((venta) => venta.metodoPago === "Efectivo")
+    .reduce((sum, venta) => sum + venta.precioTotal, 0)
+
+  const totalMercadoPagoBebidas = ventasBebidas
+    .filter((venta) => venta.metodoPago === "Mercado Pago")
+    .reduce((sum, venta) => sum + venta.precioTotal, 0)
+
+  // Totales combinados por método de pago
+  const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoBebidas
+  const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoBebidas
+
+  // Totales por tipo de ingreso
+  const totalCuotas = totalEfectivoCuotas + totalMercadoPagoCuotas
+  const totalBebidas = totalEfectivoBebidas + totalMercadoPagoBebidas
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
@@ -66,7 +98,7 @@ export default function CerrarCajaModal({ isOpen, onClose, onConfirm, pagosDia, 
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
@@ -95,50 +127,119 @@ export default function CerrarCajaModal({ isOpen, onClose, onConfirm, pagosDia, 
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total del día</p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatMonto(totalDia)}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {pagosDia.length} {pagosDia.length === 1 ? "transacción" : "transacciones"}
+                  {pagosDia.length + ventasBebidas.length}{" "}
+                  {pagosDia.length + ventasBebidas.length === 1 ? "transacción" : "transacciones"}
                 </p>
               </div>
             </div>
 
-            {/* Desglose por método de pago */}
+            {/* Desglose por tipo de ingreso */}
             <div className="space-y-4 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose por método de pago</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose de ingresos</h3>
 
-              {/* Efectivo */}
-              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                <div className="flex items-center">
-                  <Banknote className="h-8 w-8 text-green-600 dark:text-green-400 mr-3" />
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Efectivo</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {cantidadEfectivo} {cantidadEfectivo === 1 ? "pago" : "pagos"}
-                    </p>
+              {/* Cuotas */}
+              {totalCuotas > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Cuotas</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {pagosDia.length} {pagosDia.length === 1 ? "pago" : "pagos"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{formatMonto(totalCuotas)}</p>
+                    </div>
+                  </div>
+
+                  {/* Desglose por método de pago de cuotas */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {formatMonto(totalEfectivoCuotas)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {formatMonto(totalMercadoPagoCuotas)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-green-700 dark:text-green-300">{formatMonto(totalEfectivo)}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {totalDia > 0 ? Math.round((totalEfectivo / totalDia) * 100) : 0}%
-                  </p>
-                </div>
-              </div>
+              )}
 
-              {/* Mercado Pago */}
-              <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center">
-                  <CreditCard className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">Mercado Pago</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {cantidadMercadoPago} {cantidadMercadoPago === 1 ? "pago" : "pagos"}
-                    </p>
+              {/* Bebidas */}
+              {totalBebidas > 0 && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <ShoppingCart className="h-6 w-6 text-green-600 dark:text-green-400 mr-2" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Bebidas</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {ventasBebidas.length} {ventasBebidas.length === 1 ? "venta" : "ventas"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                        {formatMonto(totalBebidas)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Desglose por método de pago de bebidas */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {formatMonto(totalEfectivoBebidas)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                        {formatMonto(totalMercadoPagoBebidas)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{formatMonto(totalMercadoPago)}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {totalDia > 0 ? Math.round((totalMercadoPago / totalDia) * 100) : 0}%
-                  </p>
+              )}
+
+              {/* Resumen final por método de pago */}
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Resumen por método de pago</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
+                    <div className="flex items-center">
+                      <Banknote className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Efectivo</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-green-700 dark:text-green-300">{formatMonto(totalEfectivoFinal)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {totalDia > 0 ? Math.round((totalEfectivoFinal / totalDia) * 100) : 0}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
+                    <div className="flex items-center">
+                      <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Mercado Pago</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-blue-700 dark:text-blue-300">{formatMonto(totalMercadoPagoFinal)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {totalDia > 0 ? Math.round((totalMercadoPagoFinal / totalDia) * 100) : 0}%
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -191,7 +292,7 @@ export default function CerrarCajaModal({ isOpen, onClose, onConfirm, pagosDia, 
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
         title="Cerrar Caja"
-        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)}. Los ingresos se registrarán en los reportes. Ingrese el PIN de seguridad para continuar.`}
+        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)} (Cuotas: ${formatMonto(totalCuotas)}, Bebidas: ${formatMonto(totalBebidas)}). Los ingresos se registrarán en los reportes. Ingrese el PIN de seguridad para continuar.`}
       />
     </>
   )
