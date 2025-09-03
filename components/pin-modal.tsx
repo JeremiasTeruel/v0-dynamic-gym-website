@@ -15,7 +15,7 @@ interface PinModalProps {
 }
 
 // PIN de seguridad - Cambiar aquí para modificar el PIN
-const SECURITY_PIN = "1234"
+const SECURITY_PIN = "0102"
 
 export default function PinModal({ isOpen, onClose, onSuccess, title, description }: PinModalProps) {
   const [pin, setPin] = useState("")
