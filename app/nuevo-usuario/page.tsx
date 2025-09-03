@@ -9,6 +9,7 @@ import { ACTIVIDADES_OPCIONES } from "@/data/usuarios"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
+import PinModal from "@/components/pin-modal"
 
 export default function NuevoUsuario() {
   const router = useRouter()
@@ -17,6 +18,8 @@ export default function NuevoUsuario() {
   const [alertMessage, setAlertMessage] = useState("Listo! Ya sos parte del gimnasio.")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pendingFormData, setPendingFormData] = useState(null)
   const isMobile = useMobile()
 
   const [formData, setFormData] = useState({
@@ -60,20 +63,28 @@ export default function NuevoUsuario() {
       return
     }
 
+    // Guardar los datos del formulario y mostrar modal de PIN
+    setPendingFormData({ formData, monto })
+    setShowPinModal(true)
+  }
+
+  const handlePinSuccess = async () => {
+    if (!pendingFormData) return
+
     try {
       setIsSubmitting(true)
 
       // Crear el nuevo usuario con la fecha de vencimiento calculada
-      const { montoPago, ...datosUsuario } = formData
+      const { montoPago, ...datosUsuario } = pendingFormData.formData
       const nuevoUsuario = {
         ...datosUsuario,
-        fechaVencimiento: calculateDueDate(formData.fechaInicio),
+        fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
       }
 
       console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
 
       // Agregar el usuario usando la función del contexto
-      await agregarNuevoUsuario(nuevoUsuario, monto)
+      await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto)
 
       // Mostrar la alerta de éxito
       setAlertMessage("Listo! Ya sos parte del gimnasio.")
@@ -88,7 +99,13 @@ export default function NuevoUsuario() {
       setShowAlert(true)
     } finally {
       setIsSubmitting(false)
+      setPendingFormData(null)
     }
+  }
+
+  const handlePinClose = () => {
+    setShowPinModal(false)
+    setPendingFormData(null)
   }
 
   return (
@@ -292,6 +309,15 @@ export default function NuevoUsuario() {
         {/* Espacio adicional en la parte inferior para móviles */}
         {isMobile && <div className="h-24"></div>}
       </form>
+
+      {/* Modal de PIN */}
+      <PinModal
+        isOpen={showPinModal}
+        onClose={handlePinClose}
+        onSuccess={handlePinSuccess}
+        title="Agregar Nuevo Usuario"
+        description="Esta acción creará un nuevo usuario en el sistema. Ingrese el PIN de seguridad para continuar."
+      />
 
       <Alert
         message={alertMessage}

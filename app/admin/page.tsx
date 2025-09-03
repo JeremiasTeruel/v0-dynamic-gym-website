@@ -6,6 +6,7 @@ import { useGymContext } from "@/context/gym-context"
 import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
+import PinModal from "@/components/pin-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
@@ -18,6 +19,8 @@ export default function Admin() {
   const [recargando, setRecargando] = useState(false)
   const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pinAction, setPinAction] = useState<{ type: "delete" | "edit"; data: any } | null>(null)
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",
     visible: false,
@@ -84,25 +87,13 @@ export default function Admin() {
   }
 
   const handleEliminar = async (id: string) => {
+    const usuario = usuarios.find((u) => u.id === id)
+    if (!usuario) return
+
     if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-      try {
-        setEliminando(id)
-        await eliminarUsuario(id)
-        setAlertaInfo({
-          mensaje: "Usuario eliminado correctamente",
-          visible: true,
-          tipo: "success",
-        })
-      } catch (error) {
-        console.error("Error al eliminar usuario:", error)
-        setAlertaInfo({
-          mensaje: "Error al eliminar usuario. Por favor, intenta de nuevo.",
-          visible: true,
-          tipo: "error",
-        })
-      } finally {
-        setEliminando(null)
-      }
+      // Configurar acción de PIN para eliminar
+      setPinAction({ type: "delete", data: { id, nombre: usuario.nombreApellido } })
+      setShowPinModal(true)
     }
   }
 
@@ -150,6 +141,38 @@ export default function Admin() {
     }
   }
 
+  const handlePinSuccess = async () => {
+    if (!pinAction) return
+
+    if (pinAction.type === "delete") {
+      try {
+        setEliminando(pinAction.data.id)
+        await eliminarUsuario(pinAction.data.id)
+        setAlertaInfo({
+          mensaje: "Usuario eliminado correctamente",
+          visible: true,
+          tipo: "success",
+        })
+      } catch (error) {
+        console.error("Error al eliminar usuario:", error)
+        setAlertaInfo({
+          mensaje: "Error al eliminar usuario. Por favor, intenta de nuevo.",
+          visible: true,
+          tipo: "error",
+        })
+      } finally {
+        setEliminando(null)
+      }
+    }
+
+    setPinAction(null)
+  }
+
+  const handlePinClose = () => {
+    setShowPinModal(false)
+    setPinAction(null)
+  }
+
   const limpiarBusqueda = () => {
     setBusqueda("")
   }
@@ -176,7 +199,7 @@ export default function Admin() {
 
           <Link
             href="/"
-            className="flex items-center gap-2 bg-gray-500 dark:bg-gray-600 px-4 py-3 rounded-lg shadow-sm text-white font-medium hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 bg-gray-500 dark:bg-gray-600 px-4 py-3 rounded-lg shadow-sm text-white font-medium hover:bg-gray-700 dark:hover:bg-gray-500"
           >
             Volver al Inicio
           </Link>
@@ -221,6 +244,12 @@ export default function Admin() {
               >
                 <RefreshCw className={`h-5 w-5 ${recargando ? "animate-spin" : ""}`} />
               </button>
+              <Link
+                href="/"
+                className="ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500"
+              >
+                Volver al Inicio
+              </Link>
               <Link
                 href="/"
                 className="md:hidden ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500"
@@ -375,6 +404,19 @@ export default function Admin() {
           setUsuarioEditando(null)
         }}
         onSave={handleGuardarEdicion}
+      />
+
+      {/* Modal de PIN */}
+      <PinModal
+        isOpen={showPinModal}
+        onClose={handlePinClose}
+        onSuccess={handlePinSuccess}
+        title={pinAction?.type === "delete" ? "Eliminar Usuario" : "Acción Administrativa"}
+        description={
+          pinAction?.type === "delete"
+            ? `Esta acción eliminará permanentemente a ${pinAction.data.nombre} del sistema. Ingrese el PIN de seguridad para continuar.`
+            : "Ingrese el PIN de seguridad para realizar esta acción."
+        }
       />
 
       {/* Alerta */}

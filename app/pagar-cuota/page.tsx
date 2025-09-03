@@ -8,6 +8,7 @@ import { useMobile } from "@/hooks/use-mobile"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
+import PinModal from "@/components/pin-modal"
 
 export default function PagarCuota() {
   const router = useRouter()
@@ -16,6 +17,8 @@ export default function PagarCuota() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [errorLocal, setErrorLocal] = useState<string | null>(null)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pendingPaymentData, setPendingPaymentData] = useState(null)
   const isMobile = useMobile()
 
   const [formData, setFormData] = useState({
@@ -74,12 +77,30 @@ export default function PagarCuota() {
       return
     }
 
+    // Guardar los datos del pago y mostrar modal de PIN
+    const newDueDate = calculateNewDueDate(formData.fechaPago)
+    setPendingPaymentData({
+      dni: formData.dni,
+      newDueDate,
+      metodoPago: formData.metodoPago,
+      monto,
+    })
+    setShowPinModal(true)
+  }
+
+  const handlePinSuccess = async () => {
+    if (!pendingPaymentData) return
+
     try {
       setIsSubmitting(true)
-      const newDueDate = calculateNewDueDate(formData.fechaPago)
 
       // Actualizar el pago usando la función del contexto
-      await actualizarPago(formData.dni, newDueDate, formData.metodoPago, monto)
+      await actualizarPago(
+        pendingPaymentData.dni,
+        pendingPaymentData.newDueDate,
+        pendingPaymentData.metodoPago,
+        pendingPaymentData.monto,
+      )
 
       // Mostrar la alerta de éxito
       setShowAlert(true)
@@ -90,7 +111,13 @@ export default function PagarCuota() {
       setErrorLocal("Error al actualizar pago. Por favor, intenta de nuevo.")
     } finally {
       setIsSubmitting(false)
+      setPendingPaymentData(null)
     }
+  }
+
+  const handlePinClose = () => {
+    setShowPinModal(false)
+    setPendingPaymentData(null)
   }
 
   return (
@@ -253,6 +280,15 @@ export default function PagarCuota() {
         {/* Espacio adicional en la parte inferior para móviles */}
         {isMobile && <div className="h-24"></div>}
       </form>
+
+      {/* Modal de PIN */}
+      <PinModal
+        isOpen={showPinModal}
+        onClose={handlePinClose}
+        onSuccess={handlePinSuccess}
+        title="Procesar Pago de Cuota"
+        description={`Esta acción actualizará el pago de cuota para ${userFound?.nombreApellido || "el usuario"}. Ingrese el PIN de seguridad para continuar.`}
+      />
 
       <Alert
         message="Listo! Datos actualizados."
