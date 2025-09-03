@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Settings } from "lucide-react"
+import { CheckCircle, XCircle, Settings, ShoppingCart } from "lucide-react"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
+import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import ProximosVencimientos from "@/components/proximos-vencimientos"
 import CuotasVencidas from "@/components/cuotas-vencidas"
@@ -17,6 +18,7 @@ export default function Home() {
   const [foundUser, setFoundUser] = useState(null)
   const [showAlert, setShowAlert] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const isMobile = useMobile()
@@ -189,6 +191,14 @@ export default function Home() {
                 >
                   Pagar cuota mensual
                 </Link>
+
+                <button
+                  onClick={() => setShowVentaBebidasModal(true)}
+                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-green-600 dark:text-green-400 text-center font-medium hover:bg-green-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700 flex items-center justify-center"
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Venta de bebidas
+                </button>
               </div>
             )}
           </div>
@@ -209,6 +219,9 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {/* Modal de Venta de Bebidas */}
+      <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
 
       <Alert
         message="Usuario no encontrado."
