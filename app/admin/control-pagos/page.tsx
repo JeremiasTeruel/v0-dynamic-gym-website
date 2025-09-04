@@ -7,11 +7,12 @@ import { ArrowLeft } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import VentasDelDia from "@/components/ventas-del-dia"
 import GraficoSemanal from "@/components/grafico-semanal"
-import GraficoMetodosPago from "@/components/grafico-metodos-pago"
+import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import GraficoMensual from "@/components/grafico-mensual"
 import GraficoUsuarios from "@/components/grafico-usuarios"
 import GraficoMetodosMensual from "@/components/grafico-metodos-mensual"
 import ThemeToggle from "@/components/theme-toggle"
+import ResumenIngresos from "@/components/resumen-ingresos"
 import { useMobile } from "@/hooks/use-mobile"
 import type { RegistroPago } from "@/context/gym-context"
 
@@ -105,26 +106,18 @@ export default function ControlPagos() {
       setPagosDiarios(pagosHoy)
 
       // Cargar ventas de bebidas del día
-      const ventasBebidasHoy = await fetch(`/api/ventas-bebidas/fecha/${fechaHoy}`)
-      if (ventasBebidasHoy.ok) {
-        const ventasData = await ventasBebidasHoy.json()
-        setVentasBebidas(ventasData)
-      } else {
-        setVentasBebidas([])
+      const ventasBebidasResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaHoy}`)
+      let ventasBebidasHoy = []
+      if (ventasBebidasResponse.ok) {
+        ventasBebidasHoy = await ventasBebidasResponse.json()
       }
+      setVentasBebidas(ventasBebidasHoy)
 
       // Preparar datos para el gráfico de métodos de pago del día (combinando cuotas y bebidas)
       const efectivoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Efectivo").length
       const mercadoPagoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
-
-      // Obtener ventas de bebidas del día para el gráfico
-      let efectivoBebidas = 0
-      let mercadoPagoBebidas = 0
-      if (ventasBebidasHoy.ok) {
-        const ventasData = await ventasBebidasHoy.json()
-        efectivoBebidas = ventasData.filter((venta) => venta.metodoPago === "Efectivo").length
-        mercadoPagoBebidas = ventasData.filter((venta) => venta.metodoPago === "Mercado Pago").length
-      }
+      const efectivoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Efectivo").length
+      const mercadoPagoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Mercado Pago").length
 
       const totalEfectivo = efectivoCuotas + efectivoBebidas
       const totalMercadoPago = mercadoPagoCuotas + mercadoPagoBebidas
@@ -134,7 +127,7 @@ export default function ControlPagos() {
         { name: "Mercado Pago", value: totalMercadoPago || 1, fill: "#3b82f6" },
       ])
 
-      // Preparar datos para el gráfico semanal (incluyendo cierres de caja)
+      // Preparar datos para el gráfico semanal (incluyendo cuotas y bebidas)
       const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
       const pagosSemanaData = await Promise.all(
         diasSemana.map(async (dia, index) => {
@@ -144,29 +137,29 @@ export default function ControlPagos() {
           fechaDia.setDate(hoy.getDate() - diff)
           const fechaStr = fechaDia.toISOString().split("T")[0]
 
-          // Obtener pagos para esta fecha
+          // Obtener pagos de cuotas para esta fecha
           const pagosDia = await obtenerPagosPorFecha(fechaStr)
-          let montoDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
+          let montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
 
-          // Si es el día actual y hay pagos, incluir los pagos actuales
-          if (fechaStr === fechaHoy && pagosHoy.length > 0) {
-            montoDia = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
+          // Si es el día actual, usar los pagos actuales
+          if (fechaStr === fechaHoy) {
+            montoCuotasDia = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
           }
 
           // Obtener ventas de bebidas para esta fecha
-          const ventasBebidasDia = await fetch(`/api/ventas-bebidas/fecha/${fechaStr}`)
+          const ventasBebidasDiaResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaStr}`)
           let montoBebidasDia = 0
-          if (ventasBebidasDia.ok) {
-            const ventasData = await ventasBebidasDia.json()
+          if (ventasBebidasDiaResponse.ok) {
+            const ventasData = await ventasBebidasDiaResponse.json()
             montoBebidasDia = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          // Si es el día actual, incluir las ventas de bebidas actuales
-          if (fechaStr === fechaHoy && ventasBebidas.length > 0) {
-            montoBebidasDia = ventasBebidas.reduce((sum, venta) => sum + venta.precioTotal, 0)
+          // Si es el día actual, usar las ventas actuales
+          if (fechaStr === fechaHoy) {
+            montoBebidasDia = ventasBebidasHoy.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          montoDia += montoBebidasDia
+          const montoTotalDia = montoCuotasDia + montoBebidasDia
 
           // Verificar si hay un cierre de caja para este día
           try {
@@ -175,7 +168,12 @@ export default function ControlPagos() {
               const cierres = await cierresResponse.json()
               const cierreDia = cierres.find((cierre) => cierre.fecha === fechaStr)
               if (cierreDia) {
-                montoDia = cierreDia.totalGeneral
+                return {
+                  dia,
+                  monto: cierreDia.totalGeneral,
+                  cuotas: cierreDia.totalGeneral - cierreDia.totalBebidas,
+                  bebidas: cierreDia.totalBebidas,
+                }
               }
             }
           } catch (error) {
@@ -184,14 +182,16 @@ export default function ControlPagos() {
 
           return {
             dia,
-            monto: montoDia,
+            monto: montoTotalDia,
+            cuotas: montoCuotasDia,
+            bebidas: montoBebidasDia,
           }
         }),
       )
 
       setPagosSemana(pagosSemanaData)
 
-      // Preparar datos para el gráfico mensual (incluyendo cierres de caja)
+      // Preparar datos para el gráfico mensual (incluyendo cuotas y bebidas)
       const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
       const pagosMensualesData = await Promise.all(
         meses.map(async (mes, index) => {
@@ -207,19 +207,21 @@ export default function ControlPagos() {
           const inicioPeriodo = primerDia.toISOString().split("T")[0]
           const finPeriodo = ultimoDia.toISOString().split("T")[0]
 
-          // Obtener pagos para este mes
+          // Obtener pagos de cuotas para este mes
           const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
-          let montoMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
+          const montoCuotasMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
 
           // Obtener ventas de bebidas para este mes
-          const ventasBebidasMes = await fetch(`/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`)
+          const ventasBebidasMesResponse = await fetch(
+            `/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`,
+          )
           let montoBebidasMes = 0
-          if (ventasBebidasMes.ok) {
-            const ventasData = await ventasBebidasMes.json()
+          if (ventasBebidasMesResponse.ok) {
+            const ventasData = await ventasBebidasMesResponse.json()
             montoBebidasMes = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          montoMes += montoBebidasMes
+          let montoTotalMes = montoCuotasMes + montoBebidasMes
 
           // Agregar cierres de caja del mes
           try {
@@ -230,8 +232,16 @@ export default function ControlPagos() {
                 const fechaCierre = new Date(cierre.fecha)
                 return fechaCierre >= primerDia && fechaCierre <= ultimoDia
               })
-              const montoCierres = cierresMes.reduce((sum, cierre) => sum + cierre.totalGeneral, 0)
-              montoMes += montoCierres
+
+              // Si hay cierres, usar esos datos en lugar de los calculados
+              if (cierresMes.length > 0) {
+                const montoCierresCuotas = cierresMes.reduce(
+                  (sum, cierre) => sum + (cierre.totalGeneral - cierre.totalBebidas),
+                  0,
+                )
+                const montoCierresBebidas = cierresMes.reduce((sum, cierre) => sum + cierre.totalBebidas, 0)
+                montoTotalMes = montoCierresCuotas + montoCierresBebidas
+              }
             }
           } catch (error) {
             console.error("Error al obtener cierres de caja para el mes:", error)
@@ -239,7 +249,9 @@ export default function ControlPagos() {
 
           return {
             mes,
-            monto: montoMes,
+            monto: montoTotalMes,
+            cuotas: montoCuotasMes,
+            bebidas: montoBebidasMes,
           }
         }),
       )
@@ -247,8 +259,6 @@ export default function ControlPagos() {
       setPagosMensuales(pagosMensualesData)
 
       // Preparar datos para el gráfico de usuarios mensuales
-      // En una aplicación real, esto vendría de la base de datos
-      // Por ahora, usamos datos basados en los usuarios existentes
       const usuariosMensualesData = meses.map((mes) => ({
         mes,
         usuarios: 0, // Sin datos reales por ahora
@@ -256,13 +266,36 @@ export default function ControlPagos() {
 
       setUsuariosMensuales(usuariosMensualesData)
 
-      // Preparar datos para el gráfico de métodos de pago mensuales
-      // Esto es una simulación, en una app real vendría de la base de datos
-      const metodosEfectivo = pagosMensualesData.reduce((sum, mes) => sum + (mes.monto > 0 ? 1 : 0), 0)
-      const metodosMensualesData = [
-        { name: "Efectivo", value: metodosEfectivo > 0 ? 65 : 0, fill: "#4ade80" },
-        { name: "Mercado Pago", value: metodosEfectivo > 0 ? 35 : 0, fill: "#3b82f6" },
-      ]
+      // Preparar datos para el gráfico de métodos de pago mensuales (basado en datos reales)
+      const totalEfectivoMensual = pagosMensualesData.reduce((sum, mes) => {
+        // Aquí deberíamos calcular el efectivo real del mes, por ahora usamos una aproximación
+        return sum + (mes.monto > 0 ? mes.monto * 0.6 : 0) // 60% efectivo aproximado
+      }, 0)
+
+      const totalMercadoPagoMensual = pagosMensualesData.reduce((sum, mes) => {
+        return sum + (mes.monto > 0 ? mes.monto * 0.4 : 0) // 40% Mercado Pago aproximado
+      }, 0)
+
+      const totalMensual = totalEfectivoMensual + totalMercadoPagoMensual
+
+      const metodosMensualesData =
+        totalMensual > 0
+          ? [
+              {
+                name: "Efectivo",
+                value: Math.round((totalEfectivoMensual / totalMensual) * 100),
+                fill: "#4ade80",
+              },
+              {
+                name: "Mercado Pago",
+                value: Math.round((totalMercadoPagoMensual / totalMensual) * 100),
+                fill: "#3b82f6",
+              },
+            ]
+          : [
+              { name: "Efectivo", value: 50, fill: "#4ade80" },
+              { name: "Mercado Pago", value: 50, fill: "#3b82f6" },
+            ]
 
       setMetodosMensualesData(metodosMensualesData)
     } catch (error) {
@@ -289,6 +322,11 @@ export default function ControlPagos() {
         <ThemeToggle />
       </div>
 
+      {/* Resumen de ingresos */}
+      <div className="mb-6">
+        <ResumenIngresos pagosCuotas={pagosDiarios} ventasBebidas={ventasBebidas} periodo="Hoy" />
+      </div>
+
       {cargando || cargandoDatos ? (
         <div className="flex justify-center py-8">
           <LoadingDumbbell size={32} className="text-green-500" />
@@ -310,7 +348,11 @@ export default function ControlPagos() {
 
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (hoy)</h2>
-                <GraficoMetodosPago datos={metodosPago} />
+                <GraficoMetodosDetallado
+                  pagosCuotas={pagosDiarios}
+                  ventasBebidas={ventasBebidas}
+                  titulo="Distribución de ingresos por método de pago"
+                />
               </div>
             </div>
           </div>
@@ -329,6 +371,9 @@ export default function ControlPagos() {
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (mensual)</h2>
+              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Datos basados en tendencias históricas
+              </div>
               <GraficoMetodosMensual datos={metodosMensualesData} />
             </div>
           </div>

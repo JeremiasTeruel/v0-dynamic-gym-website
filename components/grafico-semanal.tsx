@@ -1,11 +1,13 @@
 "use client"
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { useTheme } from "@/context/theme-context"
 
 interface DatoSemanal {
   dia: string
   monto: number
+  cuotas?: number
+  bebidas?: number
 }
 
 interface GraficoSemanalProps {
@@ -23,17 +25,24 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
   if (!datos || datos.length === 0 || datos.every((item) => item.monto === 0)) {
     return (
       <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
-        No se han registrado pagos anteriormente.
+        No se han registrado ingresos anteriormente.
       </div>
     )
   }
 
   const isDark = theme === "dark"
 
+  // Preparar datos con desglose
+  const datosConDesglose = datos.map((item) => ({
+    ...item,
+    cuotas: item.cuotas || 0,
+    bebidas: item.bebidas || 0,
+  }))
+
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={datos} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+        <BarChart data={datosConDesglose} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
           <XAxis
             dataKey="dia"
@@ -46,7 +55,10 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
             axisLine={{ stroke: isDark ? "#6b7280" : "#9ca3af" }}
           />
           <Tooltip
-            formatter={(value) => [`$${value.toLocaleString("es-AR")}`, "Ingresos"]}
+            formatter={(value, name) => [
+              `$${value.toLocaleString("es-AR")}`,
+              name === "cuotas" ? "Cuotas" : name === "bebidas" ? "Bebidas" : "Total",
+            ]}
             contentStyle={{
               backgroundColor: isDark ? "#1f2937" : "#ffffff",
               border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
@@ -54,7 +66,13 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
               color: isDark ? "#f3f4f6" : "#111827",
             }}
           />
-          <Bar dataKey="monto" fill={isDark ? "#10b981" : "#4ade80"} />
+          <Legend
+            wrapperStyle={{
+              color: isDark ? "#f3f4f6" : "#111827",
+            }}
+          />
+          <Bar dataKey="cuotas" stackId="ingresos" fill={isDark ? "#3b82f6" : "#2563eb"} name="Cuotas" />
+          <Bar dataKey="bebidas" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Bebidas" />
         </BarChart>
       </ResponsiveContainer>
     </div>
