@@ -292,7 +292,7 @@ export default function CerrarCajaModal({
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
         title="Cerrar Caja"
-        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)} (Cuotas: ${formatMonto(totalCuotas)}, Bebidas: ${formatMonto(totalBebidas)}). Los ingresos se registrarán en los reportes. Ingrese el PIN de seguridad para continuar.`}
+        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)}. Desglose: Cuotas ${formatMonto(totalCuotas)} (Efectivo: ${formatMonto(totalEfectivoCuotas)}, MP: ${formatMonto(totalMercadoPagoCuotas)}), Bebidas ${formatMonto(totalBebidas)} (Efectivo: ${formatMonto(totalEfectivoBebidas)}, MP: ${formatMonto(totalMercadoPagoBebidas)}). Ingrese el PIN de seguridad para continuar.`}
       />
     </>
   )

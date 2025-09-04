@@ -11,24 +11,32 @@ export async function POST(request: Request) {
       fecha,
       totalEfectivo,
       totalMercadoPago,
+      totalCuotas,
+      totalCuotasEfectivo,
+      totalCuotasMercadoPago,
       totalBebidas,
       totalBebidasEfectivo,
       totalBebidasMercadoPago,
       totalGeneral,
       cantidadPagos,
       cantidadVentasBebidas,
+      detalleVentasBebidas,
     } = await request.json()
 
     console.log("API: Datos recibidos para cerrar caja:", {
       fecha,
       totalEfectivo,
       totalMercadoPago,
+      totalCuotas,
+      totalCuotasEfectivo,
+      totalCuotasMercadoPago,
       totalBebidas,
       totalBebidasEfectivo,
       totalBebidasMercadoPago,
       totalGeneral,
       cantidadPagos,
       cantidadVentasBebidas,
+      detalleVentasBebidas,
     })
 
     // Validar que los campos requeridos estén presentes
@@ -50,14 +58,27 @@ export async function POST(request: Request) {
     // Preparar el documento para insertar
     const cierreParaInsertar = {
       fecha: new Date(fecha),
+      // Totales generales por método de pago
       totalEfectivo: Number.parseFloat(totalEfectivo) || 0,
       totalMercadoPago: Number.parseFloat(totalMercadoPago) || 0,
+      totalGeneral: Number.parseFloat(totalGeneral),
+
+      // Totales de cuotas
+      totalCuotas: Number.parseFloat(totalCuotas) || 0,
+      totalCuotasEfectivo: Number.parseFloat(totalCuotasEfectivo) || 0,
+      totalCuotasMercadoPago: Number.parseFloat(totalCuotasMercadoPago) || 0,
+      cantidadPagos: Number.parseInt(cantidadPagos) || 0,
+
+      // Totales de bebidas
       totalBebidas: Number.parseFloat(totalBebidas) || 0,
       totalBebidasEfectivo: Number.parseFloat(totalBebidasEfectivo) || 0,
       totalBebidasMercadoPago: Number.parseFloat(totalBebidasMercadoPago) || 0,
-      totalGeneral: Number.parseFloat(totalGeneral),
-      cantidadPagos: Number.parseInt(cantidadPagos) || 0,
       cantidadVentasBebidas: Number.parseInt(cantidadVentasBebidas) || 0,
+
+      // Detalle de ventas de bebidas (opcional)
+      detalleVentasBebidas: detalleVentasBebidas || [],
+
+      // Metadatos
       fechaCierre: new Date(),
     }
 

@@ -55,8 +55,19 @@ export default function ControlPagos() {
       // Totales combinados
       const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoBebidas
       const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoBebidas
+      const totalCuotas = totalEfectivoCuotas + totalMercadoPagoCuotas
       const totalBebidas = totalEfectivoBebidas + totalMercadoPagoBebidas
       const totalGeneral = totalEfectivoFinal + totalMercadoPagoFinal
+
+      // Preparar detalle de ventas de bebidas para el registro
+      const detalleVentasBebidas = ventasBebidas.map((venta) => ({
+        nombreBebida: venta.nombreBebida,
+        cantidad: venta.cantidad,
+        precioUnitario: venta.precioUnitario,
+        precioTotal: venta.precioTotal,
+        metodoPago: venta.metodoPago,
+        fecha: venta.fecha,
+      }))
 
       // Registrar el cierre de caja
       const response = await fetch("/api/caja/cerrar", {
@@ -66,14 +77,25 @@ export default function ControlPagos() {
         },
         body: JSON.stringify({
           fecha: fechaHoy,
+          // Totales generales
           totalEfectivo: totalEfectivoFinal,
           totalMercadoPago: totalMercadoPagoFinal,
+          totalGeneral,
+
+          // Totales de cuotas
+          totalCuotas,
+          totalCuotasEfectivo: totalEfectivoCuotas,
+          totalCuotasMercadoPago: totalMercadoPagoCuotas,
+          cantidadPagos: pagosDiarios.length,
+
+          // Totales de bebidas
           totalBebidas,
           totalBebidasEfectivo: totalEfectivoBebidas,
           totalBebidasMercadoPago: totalMercadoPagoBebidas,
-          totalGeneral,
-          cantidadPagos: pagosDiarios.length,
           cantidadVentasBebidas: ventasBebidas.length,
+
+          // Detalle de ventas
+          detalleVentasBebidas,
         }),
       })
 

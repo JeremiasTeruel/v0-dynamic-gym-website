@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart, Package } from "lucide-react"
+import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart, Package, FileText } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
 import PinModal from "@/components/pin-modal"
 import StockBebidasModal from "@/components/stock-bebidas-modal"
+import ReporteCierreCaja from "@/components/reporte-cierre-caja"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
@@ -31,6 +32,7 @@ export default function Admin() {
   const [busqueda, setBusqueda] = useState("")
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<Usuario[]>([])
   const [usuariosOrdenados, setUsuariosOrdenados] = useState<Usuario[]>([])
+  const [reporteModalAbierto, setReporteModalAbierto] = useState(false)
   const isMobile = useMobile()
 
   // Ordenar usuarios alfabéticamente
@@ -205,6 +207,14 @@ export default function Admin() {
           >
             <Package className="h-5 w-5" />
             Stock de Bebidas
+          </button>
+
+          <button
+            onClick={() => setReporteModalAbierto(true)}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-purple-600 font-medium hover:bg-purple-50 transition-colors"
+          >
+            <FileText className="h-5 w-5" />
+            Reportes de Caja
           </button>
 
           <Link
@@ -418,6 +428,9 @@ export default function Admin() {
 
       {/* Modal de Stock de Bebidas */}
       <StockBebidasModal isOpen={stockModalAbierto} onClose={() => setStockModalAbierto(false)} />
+
+      {/* Modal de Reportes de Cierre de Caja */}
+      <ReporteCierreCaja isOpen={reporteModalAbierto} onClose={() => setReporteModalAbierto(false)} />
 
       {/* Modal de PIN */}
       <PinModal
