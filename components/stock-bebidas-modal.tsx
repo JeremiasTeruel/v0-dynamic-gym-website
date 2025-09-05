@@ -7,6 +7,7 @@ import { X, Package, Edit, Trash2, Plus, Search } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import Alert from "@/components/alert"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 interface Bebida {
   id: string
@@ -37,6 +38,7 @@ export default function StockBebidasModal({ isOpen, onClose }: StockBebidasModal
     visible: false,
     tipo: "success",
   })
+  const { getSoundEnabled } = useSoundPreferences()
 
   const [formulario, setFormulario] = useState({
     nombre: "",
@@ -184,6 +186,12 @@ export default function StockBebidasModal({ isOpen, onClose }: StockBebidasModal
         }
 
         setBebidas((prev) => [...prev, data].sort((a, b) => a.nombre.localeCompare(b.nombre)))
+
+        // Reproducir sonido de éxito si está habilitado
+        if (getSoundEnabled()) {
+          await soundGenerator.playOperationCompleteSound()
+        }
+
         setAlertaInfo({
           mensaje: "Bebida creada exitosamente",
           visible: true,
@@ -215,6 +223,12 @@ export default function StockBebidasModal({ isOpen, onClose }: StockBebidasModal
             .map((bebida) => (bebida.id === pinAction.data.bebidaId ? data : bebida))
             .sort((a, b) => a.nombre.localeCompare(b.nombre)),
         )
+
+        // Reproducir sonido de éxito si está habilitado
+        if (getSoundEnabled()) {
+          await soundGenerator.playSuccessSound()
+        }
+
         setAlertaInfo({
           mensaje: "Bebida actualizada exitosamente",
           visible: true,
@@ -235,6 +249,12 @@ export default function StockBebidasModal({ isOpen, onClose }: StockBebidasModal
         setBebidas((prev) =>
           prev.map((bebida) => (bebida.id === pinAction.data.id ? { ...bebida, activo: false } : bebida)),
         )
+
+        // Reproducir sonido de eliminación si está habilitado
+        if (getSoundEnabled()) {
+          await soundGenerator.playDeleteSound()
+        }
+
         setAlertaInfo({
           mensaje: "Bebida desactivada exitosamente",
           visible: true,
@@ -253,6 +273,11 @@ export default function StockBebidasModal({ isOpen, onClose }: StockBebidasModal
     } catch (error) {
       console.error("Error en operación:", error)
       setError(error.message || "Error al procesar la operación")
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
     } finally {
       setGuardando(false)
       setPinAction(null)

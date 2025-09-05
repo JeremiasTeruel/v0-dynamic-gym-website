@@ -10,6 +10,7 @@ import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import PinModal from "@/components/pin-modal"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 export default function NuevoUsuario() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function NuevoUsuario() {
   const [showPinModal, setShowPinModal] = useState(false)
   const [pendingFormData, setPendingFormData] = useState(null)
   const isMobile = useMobile()
+  const { getSoundEnabled } = useSoundPreferences()
 
   const [formData, setFormData] = useState({
     nombreApellido: "",
@@ -86,6 +88,11 @@ export default function NuevoUsuario() {
       // Agregar el usuario usando la función del contexto
       await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto)
 
+      // Reproducir sonido de éxito si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playOperationCompleteSound()
+      }
+
       // Mostrar la alerta de éxito
       setAlertMessage("Listo! Ya sos parte del gimnasio.")
       setShowAlert(true)
@@ -96,6 +103,12 @@ export default function NuevoUsuario() {
       console.error("Error al crear usuario:", err)
       setError(err.message || "Error al crear usuario. Por favor, intenta de nuevo.")
       setAlertMessage("Error al crear usuario: " + err.message)
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
+
       setShowAlert(true)
     } finally {
       setIsSubmitting(false)

@@ -5,6 +5,7 @@ import { X, ShoppingCart, Minus, Plus, CreditCard, Banknote } from "lucide-react
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import Alert from "@/components/alert"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 interface Bebida {
   id: string
@@ -34,6 +35,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
     visible: false,
     tipo: "success",
   })
+  const { getSoundEnabled } = useSoundPreferences()
 
   // Cargar bebidas cuando se abre el modal
   useEffect(() => {
@@ -129,6 +131,11 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
         prev.map((bebida) => (bebida.id === bebidaSeleccionada ? { ...bebida, stock: data.stockNuevo } : bebida)),
       )
 
+      // Reproducir sonido de éxito si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playSuccessSound()
+      }
+
       setAlertaInfo({
         mensaje: `Venta realizada exitosamente. ${bebidaActual?.nombre} x${cantidad} - ${formatMonto(precioTotal)} (${metodoPago})`,
         visible: true,
@@ -147,6 +154,11 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
     } catch (error) {
       console.error("Error al procesar venta:", error)
       setError(error.message || "Error al procesar la venta")
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
     } finally {
       setProcesandoVenta(false)
     }

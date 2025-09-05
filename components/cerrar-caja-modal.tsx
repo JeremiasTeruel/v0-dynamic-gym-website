@@ -4,6 +4,7 @@ import { useState } from "react"
 import { X, DollarSign, CreditCard, Banknote, ShoppingCart } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 import type { RegistroPago } from "@/context/gym-context"
 
 interface VentaBebida {
@@ -35,6 +36,7 @@ export default function CerrarCajaModal({
 }: CerrarCajaModalProps) {
   const [isClosing, setIsClosing] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
+  const { getSoundEnabled } = useSoundPreferences()
 
   if (!isOpen) return null
 
@@ -76,9 +78,20 @@ export default function CerrarCajaModal({
     try {
       setIsClosing(true)
       await onConfirm()
+
+      // Reproducir sonido de operación completada si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playOperationCompleteSound()
+      }
+
       onClose()
     } catch (error) {
       console.error("Error al cerrar caja:", error)
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
     } finally {
       setIsClosing(false)
     }

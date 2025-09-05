@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { ACTIVIDADES_OPCIONES } from "@/data/usuarios"
 import PinModal from "@/components/pin-modal"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 import type { Usuario } from "@/data/usuarios"
 
 interface EditarUsuarioModalProps {
@@ -18,6 +19,7 @@ export default function EditarUsuarioModal({ usuario, isOpen, onClose, onSave }:
   const [error, setError] = useState<string | null>(null)
   const [showPinModal, setShowPinModal] = useState(false)
   const [pendingUserData, setPendingUserData] = useState<Usuario | null>(null)
+  const { getSoundEnabled } = useSoundPreferences()
 
   useEffect(() => {
     if (usuario) {
@@ -68,10 +70,21 @@ export default function EditarUsuarioModal({ usuario, isOpen, onClose, onSave }:
     try {
       setIsSubmitting(true)
       await onSave(pendingUserData)
+
+      // Reproducir sonido de éxito si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playSuccessSound()
+      }
+
       onClose()
     } catch (err) {
       console.error("Error al actualizar usuario:", err)
       setError(err.message || "Error al actualizar usuario. Por favor, intenta de nuevo.")
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
     } finally {
       setIsSubmitting(false)
       setPendingUserData(null)

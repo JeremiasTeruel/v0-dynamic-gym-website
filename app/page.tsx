@@ -12,7 +12,7 @@ import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import ProximosVencimientos from "@/components/proximos-vencimientos"
 import CuotasVencidas from "@/components/cuotas-vencidas"
-import { soundGenerator } from "@/utils/sound-utils"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
@@ -24,20 +24,18 @@ export default function Home() {
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const isMobile = useMobile()
+  const { getSoundEnabled, setSoundEnabled: saveSoundEnabled } = useSoundPreferences()
 
   // Cargar preferencia de sonido desde localStorage
   useEffect(() => {
-    const savedSoundPreference = localStorage.getItem("gym-sound-enabled")
-    if (savedSoundPreference !== null) {
-      setSoundEnabled(JSON.parse(savedSoundPreference))
-    }
+    setSoundEnabled(getSoundEnabled())
   }, [])
 
   // Guardar preferencia de sonido
   const toggleSound = () => {
     const newSoundEnabled = !soundEnabled
     setSoundEnabled(newSoundEnabled)
-    localStorage.setItem("gym-sound-enabled", JSON.stringify(newSoundEnabled))
+    saveSoundEnabled(newSoundEnabled)
   }
 
   const handleSearch = async () => {

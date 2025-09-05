@@ -9,6 +9,7 @@ import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import PinModal from "@/components/pin-modal"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 export default function PagarCuota() {
   const router = useRouter()
@@ -20,6 +21,7 @@ export default function PagarCuota() {
   const [showPinModal, setShowPinModal] = useState(false)
   const [pendingPaymentData, setPendingPaymentData] = useState(null)
   const isMobile = useMobile()
+  const { getSoundEnabled } = useSoundPreferences()
 
   const [formData, setFormData] = useState({
     dni: "",
@@ -102,6 +104,11 @@ export default function PagarCuota() {
         pendingPaymentData.monto,
       )
 
+      // Reproducir sonido de éxito si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playSuccessSound()
+      }
+
       // Mostrar la alerta de éxito
       setShowAlert(true)
 
@@ -109,6 +116,11 @@ export default function PagarCuota() {
     } catch (error) {
       console.error("Error al actualizar pago:", error)
       setErrorLocal("Error al actualizar pago. Por favor, intenta de nuevo.")
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
     } finally {
       setIsSubmitting(false)
       setPendingPaymentData(null)

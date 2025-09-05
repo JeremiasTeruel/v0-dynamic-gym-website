@@ -1,116 +1,130 @@
-// Utilidades para generar sonidos usando Web Audio API
-export class SoundGenerator {
+// Generador de sonidos usando Web Audio API
+class SoundGenerator {
   private audioContext: AudioContext | null = null
 
-  constructor() {
-    // Inicializar AudioContext solo en el cliente
-    if (typeof window !== "undefined") {
+  private async getAudioContext(): Promise<AudioContext> {
+    if (!this.audioContext) {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    }
+
+    // Reactivar el contexto si está suspendido
+    if (this.audioContext.state === "suspended") {
+      await this.audioContext.resume()
+    }
+
+    return this.audioContext
+  }
+
+  private async playTone(
+    frequency: number,
+    duration: number,
+    type: OscillatorType = "sine",
+    volume = 0.3,
+  ): Promise<void> {
+    try {
+      const audioContext = await this.getAudioContext()
+
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime)
+      oscillator.type = type
+
+      // Configurar volumen con fade out
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + duration)
+
+      return new Promise((resolve) => {
+        oscillator.onended = () => resolve()
+      })
+    } catch (error) {
+      console.warn("Error al reproducir sonido:", error)
     }
   }
 
-  // Sonido de éxito (cuota al día) - tono agradable
-  async playSuccessSound() {
-    if (!this.audioContext) return
-
+  // Sonido de éxito - dos tonos ascendentes suaves (para cuotas al día, operaciones exitosas)
+  async playSuccessSound(): Promise<void> {
     try {
-      // Reanudar el contexto si está suspendido
-      if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume()
-      }
-
-      const oscillator = this.audioContext.createOscillator()
-      const gainNode = this.audioContext.createGain()
-
-      oscillator.connect(gainNode)
-      gainNode.connect(this.audioContext.destination)
-
-      // Configurar el sonido de éxito (dos tonos ascendentes)
-      oscillator.frequency.setValueAtTime(523.25, this.audioContext.currentTime) // C5
-      oscillator.frequency.setValueAtTime(659.25, this.audioContext.currentTime + 0.1) // E5
-
-      // Configurar el volumen con fade out
-      gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3)
-
-      oscillator.type = "sine"
-      oscillator.start(this.audioContext.currentTime)
-      oscillator.stop(this.audioContext.currentTime + 0.3)
+      await this.playTone(523.25, 0.15, "sine", 0.3) // C5
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      await this.playTone(659.25, 0.3, "sine", 0.3) // E5
     } catch (error) {
       console.warn("Error al reproducir sonido de éxito:", error)
     }
   }
 
-  // Sonido de alarma (cuota vencida) - tono de advertencia
-  async playAlarmSound() {
-    if (!this.audioContext) return
-
+  // Sonido de alarma - tres pitidos para cuotas vencidas o errores
+  async playAlarmSound(): Promise<void> {
     try {
-      // Reanudar el contexto si está suspendido
-      if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume()
-      }
-
-      // Crear tres pitidos de alarma
       for (let i = 0; i < 3; i++) {
-        setTimeout(() => {
-          this.createAlarmBeep(i * 0.2)
-        }, i * 200)
+        await this.playTone(800, 0.15, "square", 0.4)
+        if (i < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 200))
+        }
       }
     } catch (error) {
       console.warn("Error al reproducir sonido de alarma:", error)
     }
   }
 
-  private createAlarmBeep(delay: number) {
-    if (!this.audioContext) return
-
-    const oscillator = this.audioContext.createOscillator()
-    const gainNode = this.audioContext.createGain()
-
-    oscillator.connect(gainNode)
-    gainNode.connect(this.audioContext.destination)
-
-    // Configurar el pitido de alarma (frecuencia alta y molesta)
-    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime + delay)
-    oscillator.type = "square" // Sonido más áspero
-
-    // Configurar el volumen
-    gainNode.gain.setValueAtTime(0.4, this.audioContext.currentTime + delay)
-    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + delay + 0.15)
-
-    oscillator.start(this.audioContext.currentTime + delay)
-    oscillator.stop(this.audioContext.currentTime + delay + 0.15)
-  }
-
-  // Sonido de búsqueda (opcional) - tono neutro
-  async playSearchSound() {
-    if (!this.audioContext) return
-
+  // Sonido de búsqueda - tono neutro
+  async playSearchSound(): Promise<void> {
     try {
-      if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume()
-      }
-
-      const oscillator = this.audioContext.createOscillator()
-      const gainNode = this.audioContext.createGain()
-
-      oscillator.connect(gainNode)
-      gainNode.connect(this.audioContext.destination)
-
-      oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime) // A4
-      oscillator.type = "sine"
-
-      gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1)
-
-      oscillator.start(this.audioContext.currentTime)
-      oscillator.stop(this.audioContext.currentTime + 0.1)
+      await this.playTone(440, 0.1, "sine", 0.2) // A4
     } catch (error) {
       console.warn("Error al reproducir sonido de búsqueda:", error)
     }
   }
+
+  // Sonido de operación completada - tono de confirmación más largo
+  async playOperationCompleteSound(): Promise<void> {
+    try {
+      await this.playTone(523.25, 0.2, "sine", 0.35) // C5
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      await this.playTone(659.25, 0.2, "sine", 0.35) // E5
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      await this.playTone(783.99, 0.4, "sine", 0.35) // G5
+    } catch (error) {
+      console.warn("Error al reproducir sonido de operación completada:", error)
+    }
+  }
+
+  // Sonido de eliminación - tono descendente
+  async playDeleteSound(): Promise<void> {
+    try {
+      await this.playTone(659.25, 0.15, "sine", 0.3) // E5
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      await this.playTone(523.25, 0.15, "sine", 0.3) // C5
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      await this.playTone(392.0, 0.3, "sine", 0.3) // G4
+    } catch (error) {
+      console.warn("Error al reproducir sonido de eliminación:", error)
+    }
+  }
 }
 
-// Instancia singleton del generador de sonidos
+// Instancia singleton
 export const soundGenerator = new SoundGenerator()
+
+// Hook para manejar preferencias de sonido
+export const useSoundPreferences = () => {
+  const getSoundEnabled = (): boolean => {
+    if (typeof window === "undefined") return true
+    const saved = localStorage.getItem("gym-sound-enabled")
+    return saved !== null ? JSON.parse(saved) : true
+  }
+
+  const setSoundEnabled = (enabled: boolean): void => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("gym-sound-enabled", JSON.stringify(enabled))
+    }
+  }
+
+  return { getSoundEnabled, setSoundEnabled }
+}

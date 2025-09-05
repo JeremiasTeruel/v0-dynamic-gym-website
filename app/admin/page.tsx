@@ -14,6 +14,7 @@ import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
+import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 export default function Admin() {
   const { usuarios, cargando, error, eliminarUsuario, actualizarUsuario, recargarUsuarios } = useGymContext()
@@ -34,6 +35,7 @@ export default function Admin() {
   const [usuariosOrdenados, setUsuariosOrdenados] = useState<Usuario[]>([])
   const [reporteModalAbierto, setReporteModalAbierto] = useState(false)
   const isMobile = useMobile()
+  const { getSoundEnabled } = useSoundPreferences()
 
   // Ordenar usuarios alfabéticamente
   const ordenarUsuarios = (listaUsuarios: Usuario[]): Usuario[] => {
@@ -109,6 +111,12 @@ export default function Admin() {
   const handleGuardarEdicion = async (usuarioActualizado: Usuario) => {
     try {
       await actualizarUsuario(usuarioActualizado.id, usuarioActualizado)
+
+      // Reproducir sonido de éxito si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playSuccessSound()
+      }
+
       setAlertaInfo({
         mensaje: "Usuario actualizado correctamente",
         visible: true,
@@ -116,6 +124,12 @@ export default function Admin() {
       })
     } catch (error) {
       console.error("Error al actualizar usuario:", error)
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
+
       setAlertaInfo({
         mensaje: "Error al actualizar usuario. Por favor, intenta de nuevo.",
         visible: true,
@@ -128,6 +142,12 @@ export default function Admin() {
     try {
       setRecargando(true)
       await recargarUsuarios()
+
+      // Reproducir sonido de éxito si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playSuccessSound()
+      }
+
       setAlertaInfo({
         mensaje: "Datos recargados correctamente",
         visible: true,
@@ -135,6 +155,12 @@ export default function Admin() {
       })
     } catch (error) {
       console.error("Error al recargar usuarios:", error)
+
+      // Reproducir sonido de error si está habilitado
+      if (getSoundEnabled()) {
+        await soundGenerator.playAlarmSound()
+      }
+
       setAlertaInfo({
         mensaje: "Error al recargar datos. Por favor, intenta de nuevo.",
         visible: true,
@@ -152,6 +178,12 @@ export default function Admin() {
       try {
         setEliminando(pinAction.data.id)
         await eliminarUsuario(pinAction.data.id)
+
+        // Reproducir sonido de eliminación si está habilitado
+        if (getSoundEnabled()) {
+          await soundGenerator.playDeleteSound()
+        }
+
         setAlertaInfo({
           mensaje: "Usuario eliminado correctamente",
           visible: true,
@@ -159,6 +191,12 @@ export default function Admin() {
         })
       } catch (error) {
         console.error("Error al eliminar usuario:", error)
+
+        // Reproducir sonido de error si está habilitado
+        if (getSoundEnabled()) {
+          await soundGenerator.playAlarmSound()
+        }
+
         setAlertaInfo({
           mensaje: "Error al eliminar usuario. Por favor, intenta de nuevo.",
           visible: true,
