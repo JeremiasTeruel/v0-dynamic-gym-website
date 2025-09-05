@@ -21,7 +21,7 @@ interface CierreCaja {
   totalBebidasMercadoPago: number
   cantidadVentasBebidas: number
   detalleVentasBebidas: any[]
-  fechaCreacion: string
+  fechaCierre: string
 }
 
 interface ReporteCierreCajaProps {
@@ -52,10 +52,12 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
       setCargando(true)
       setError(null)
 
-      const response = await fetch("/api/caja/reportes")
+      // Corregir la ruta - usar /api/caja/cerrar en lugar de /api/caja/reportes
+      const response = await fetch("/api/caja/cerrar")
 
       if (!response.ok) {
-        throw new Error("Error al cargar reportes de caja")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || "Error al cargar reportes de caja")
       }
 
       const data = await response.json()
@@ -67,7 +69,7 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
       }
     } catch (error) {
       console.error("Error al cargar cierres:", error)
-      setError("Error al cargar los reportes de caja")
+      setError(error instanceof Error ? error.message : "Error al cargar los reportes de caja")
 
       // Reproducir sonido de error si está habilitado
       if (getSoundEnabled()) {
@@ -91,6 +93,10 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
     })
   }
 
+  const calcularPorcentaje = (parte: number, total: number) => {
+    return total > 0 ? Math.round((parte / total) * 100) : 0
+  }
+
   const exportarReporte = (cierre: CierreCaja) => {
     const contenido = `
 REPORTE DE CIERRE DE CAJA
@@ -98,13 +104,13 @@ High Performance Gym
 ========================
 
 Fecha: ${formatFecha(cierre.fecha)}
-Fecha de cierre: ${new Date(cierre.fechaCreacion).toLocaleString("es-ES")}
+Fecha de cierre: ${new Date(cierre.fechaCierre).toLocaleString("es-ES")}
 
 RESUMEN GENERAL
 ===============
 Total del día: ${formatMonto(cierre.totalGeneral)}
-Total Efectivo: ${formatMonto(cierre.totalEfectivo)} (${Math.round((cierre.totalEfectivo / cierre.totalGeneral) * 100)}%)
-Total Mercado Pago: ${formatMonto(cierre.totalMercadoPago)} (${Math.round((cierre.totalMercadoPago / cierre.totalGeneral) * 100)}%)
+Total Efectivo: ${formatMonto(cierre.totalEfectivo)} (${calcularPorcentaje(cierre.totalEfectivo, cierre.totalGeneral)}%)
+Total Mercado Pago: ${formatMonto(cierre.totalMercadoPago)} (${calcularPorcentaje(cierre.totalMercadoPago, cierre.totalGeneral)}%)
 
 CUOTAS DE MEMBRESÍA
 ==================
@@ -180,7 +186,7 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
           <div className="p-6">
             {error && (
               <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative mb-4">
-                {error}
+                <strong>Error:</strong> {error}
               </div>
             )}
 
@@ -229,9 +235,18 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                 <p className="text-gray-500 dark:text-gray-400">
                   {fechaFiltro ? "No hay cierres para la fecha seleccionada" : "No hay reportes de caja disponibles"}
                 </p>
+                {!fechaFiltro && (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                    Los reportes aparecerán aquí después de realizar el primer cierre de caja
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Mostrando {cierresFiltrados.length} de {cierres.length} reportes
+                </div>
+
                 {cierresFiltrados.map((cierre) => (
                   <div
                     key={cierre.id}
@@ -244,7 +259,7 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                           {formatFecha(cierre.fecha)}
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Cerrado el {new Date(cierre.fechaCreacion).toLocaleString("es-ES")}
+                          Cerrado el {new Date(cierre.fechaCierre).toLocaleString("es-ES")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
