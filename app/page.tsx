@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Settings, ShoppingCart } from "lucide-react"
+import { CheckCircle, XCircle, Settings, ShoppingCart, Volume2, VolumeX } from "lucide-react"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
@@ -12,6 +12,7 @@ import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import ProximosVencimientos from "@/components/proximos-vencimientos"
 import CuotasVencidas from "@/components/cuotas-vencidas"
+import { soundGenerator } from "@/utils/sound-utils"
 
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
@@ -19,9 +20,25 @@ export default function Home() {
   const [showAlert, setShowAlert] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(true)
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const isMobile = useMobile()
+
+  // Cargar preferencia de sonido desde localStorage
+  useEffect(() => {
+    const savedSoundPreference = localStorage.getItem("gym-sound-enabled")
+    if (savedSoundPreference !== null) {
+      setSoundEnabled(JSON.parse(savedSoundPreference))
+    }
+  }, [])
+
+  // Guardar preferencia de sonido
+  const toggleSound = () => {
+    const newSoundEnabled = !soundEnabled
+    setSoundEnabled(newSoundEnabled)
+    localStorage.setItem("gym-sound-enabled", JSON.stringify(newSoundEnabled))
+  }
 
   const handleSearch = async () => {
     if (!searchDni.trim() || isSearching) return
@@ -29,11 +46,27 @@ export default function Home() {
     setIsSearching(true)
 
     try {
+      // Reproducir sonido de búsqueda si está habilitado
+      if (soundEnabled) {
+        await soundGenerator.playSearchSound()
+      }
+
       // Buscar usuario por DNI
       const usuario = await buscarUsuario(searchDni.trim())
 
       if (usuario) {
         setFoundUser(usuario)
+
+        // Reproducir sonido según el estado de la cuota
+        if (soundEnabled) {
+          if (isPaymentDue(usuario.fechaVencimiento)) {
+            // Cuota vencida - sonido de alarma
+            await soundGenerator.playAlarmSound()
+          } else {
+            // Cuota al día - sonido de éxito
+            await soundGenerator.playSuccessSound()
+          }
+        }
 
         // Configurar un temporizador para limpiar la pantalla después de 5 segundos
         setTimeout(() => {
@@ -43,9 +76,19 @@ export default function Home() {
       } else {
         setFoundUser(null)
         setShowAlert(true)
+
+        // Reproducir sonido de alarma para usuario no encontrado
+        if (soundEnabled) {
+          await soundGenerator.playAlarmSound()
+        }
       }
     } catch (error) {
       console.error("Error al buscar usuario:", error)
+
+      // Reproducir sonido de error
+      if (soundEnabled) {
+        await soundGenerator.playAlarmSound()
+      }
     } finally {
       setIsSearching(false)
     }
@@ -81,6 +124,16 @@ export default function Home() {
       <div className="w-full max-w-6xl flex justify-between items-center mb-6">
         <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">High Performance Gym</h1>
         <div className="flex items-center space-x-3">
+          {/* Control de sonido */}
+          <button
+            onClick={toggleSound}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title={soundEnabled ? "Desactivar sonidos" : "Activar sonidos"}
+          >
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            <span className="sr-only">{soundEnabled ? "Desactivar sonidos" : "Activar sonidos"}</span>
+          </button>
+
           <ThemeToggle />
           <Link href="/admin" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
             <Settings className="h-6 w-6" />
@@ -121,7 +174,7 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Indicador visual de que Enter funciona */}
+            {/* Indicador visual de que Enter funciona y estado del sonido */}
             <div className="text-center mb-4">
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 💡 Presiona{" "}
@@ -130,10 +183,20 @@ export default function Home() {
                 </kbd>{" "}
                 para buscar
               </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                🔊 Sonidos: {soundEnabled ? "Activados" : "Desactivados"}
+                {soundEnabled && " • ✅ Cuota al día • ⚠️ Cuota vencida"}
+              </p>
             </div>
 
             {foundUser && (
-              <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 mb-6 shadow-sm bg-white dark:bg-gray-800">
+              <div
+                className={`border rounded-md p-4 mb-6 shadow-sm transition-all duration-300 ${
+                  isPaymentDue(foundUser.fechaVencimiento)
+                    ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 animate-pulse"
+                    : "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20"
+                }`}
+              >
                 <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
                   {foundUser.nombreApellido}
                 </h2>
@@ -162,14 +225,14 @@ export default function Home() {
                 <div className="flex items-center mt-3">
                   <span className="font-medium mr-2 text-gray-700 dark:text-gray-300">Estado de cuota:</span>
                   {isPaymentDue(foundUser.fechaVencimiento) ? (
-                    <div className="flex items-center text-red-500 dark:text-red-400">
+                    <div className="flex items-center text-red-600 dark:text-red-400 font-semibold">
                       <XCircle className="h-5 w-5 mr-1" />
-                      <span>Vencida el {formatDate(foundUser.fechaVencimiento)}</span>
+                      <span>⚠️ VENCIDA el {formatDate(foundUser.fechaVencimiento)}</span>
                     </div>
                   ) : (
-                    <div className="flex items-center text-green-500 dark:text-green-400">
+                    <div className="flex items-center text-green-600 dark:text-green-400 font-semibold">
                       <CheckCircle className="h-5 w-5 mr-1" />
-                      <span>Al día hasta {formatDate(foundUser.fechaVencimiento)}</span>
+                      <span>✅ AL DÍA hasta {formatDate(foundUser.fechaVencimiento)}</span>
                     </div>
                   )}
                 </div>
