@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { X, DollarSign, CreditCard, Banknote, ShoppingCart } from "lucide-react"
+import { useState, useMemo } from "react"
+import { X, DollarSign, CreditCard, Banknote, ShoppingCart, Shuffle, UserPlus } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 import type { RegistroPago } from "@/context/gym-context"
+import type { Usuario } from "@/data/usuarios"
 
 interface VentaBebida {
   id: string
@@ -14,16 +15,19 @@ interface VentaBebida {
   precioUnitario: number
   precioTotal: number
   metodoPago: string
+  montoEfectivo?: number
+  montoMercadoPago?: number
   fecha: string
 }
 
 interface CerrarCajaModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => Promise<void>
+  onConfirm: (cantidadNuevosUsuarios: number, detalleNuevosUsuarios: any[]) => Promise<void>
   pagosDia: RegistroPago[]
   ventasBebidas?: VentaBebida[]
   totalDia: number
+  usuarios: Usuario[]
 }
 
 export default function CerrarCajaModal({
@@ -33,10 +37,20 @@ export default function CerrarCajaModal({
   pagosDia,
   ventasBebidas = [],
   totalDia,
+  usuarios,
 }: CerrarCajaModalProps) {
   const [isClosing, setIsClosing] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
   const { getSoundEnabled } = useSoundPreferences()
+
+  // Calcular nuevos usuarios del día
+  const nuevosUsuariosHoy = useMemo(() => {
+    const hoy = new Date().toISOString().split("T")[0]
+    return usuarios.filter((usuario) => {
+      const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
+      return fechaInicio === hoy
+    })
+  }, [usuarios])
 
   if (!isOpen) return null
 
@@ -49,6 +63,14 @@ export default function CerrarCajaModal({
     .filter((pago) => pago.metodoPago === "Mercado Pago")
     .reduce((sum, pago) => sum + pago.monto, 0)
 
+  const totalMixtoEfectivoCuotas = pagosDia
+    .filter((pago) => pago.metodoPago === "Mixto")
+    .reduce((sum, pago) => sum + (pago.montoEfectivo || 0), 0)
+
+  const totalMixtoMercadoPagoCuotas = pagosDia
+    .filter((pago) => pago.metodoPago === "Mixto")
+    .reduce((sum, pago) => sum + (pago.montoMercadoPago || 0), 0)
+
   // Calcular totales por método de pago (bebidas)
   const totalEfectivoBebidas = ventasBebidas
     .filter((venta) => venta.metodoPago === "Efectivo")
@@ -58,13 +80,25 @@ export default function CerrarCajaModal({
     .filter((venta) => venta.metodoPago === "Mercado Pago")
     .reduce((sum, venta) => sum + venta.precioTotal, 0)
 
+  const totalMixtoEfectivoBebidas = ventasBebidas
+    .filter((venta) => venta.metodoPago === "Mixto")
+    .reduce((sum, venta) => sum + (venta.montoEfectivo || 0), 0)
+
+  const totalMixtoMercadoPagoBebidas = ventasBebidas
+    .filter((venta) => venta.metodoPago === "Mixto")
+    .reduce((sum, venta) => sum + (venta.montoMercadoPago || 0), 0)
+
   // Totales combinados por método de pago
   const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoBebidas
   const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoBebidas
+  const totalMixtoEfectivoFinal = totalMixtoEfectivoCuotas + totalMixtoEfectivoBebidas
+  const totalMixtoMercadoPagoFinal = totalMixtoMercadoPagoCuotas + totalMixtoMercadoPagoBebidas
 
   // Totales por tipo de ingreso
-  const totalCuotas = totalEfectivoCuotas + totalMercadoPagoCuotas
-  const totalBebidas = totalEfectivoBebidas + totalMercadoPagoBebidas
+  const totalCuotas =
+    totalEfectivoCuotas + totalMercadoPagoCuotas + totalMixtoEfectivoCuotas + totalMixtoMercadoPagoCuotas
+  const totalBebidas =
+    totalEfectivoBebidas + totalMercadoPagoBebidas + totalMixtoEfectivoBebidas + totalMixtoMercadoPagoBebidas
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
@@ -77,9 +111,17 @@ export default function CerrarCajaModal({
   const handlePinSuccess = async () => {
     try {
       setIsClosing(true)
-      await onConfirm()
 
-      // Reproducir sonido de operación completada si está habilitado
+      // Preparar detalle de nuevos usuarios
+      const detalleNuevosUsuarios = nuevosUsuariosHoy.map((usuario) => ({
+        nombre: usuario.nombreApellido,
+        dni: usuario.dni,
+        actividad: usuario.actividad,
+        fechaInicio: usuario.fechaInicio,
+      }))
+
+      await onConfirm(nuevosUsuariosHoy.length, detalleNuevosUsuarios)
+
       if (getSoundEnabled()) {
         await soundGenerator.playOperationCompleteSound()
       }
@@ -88,7 +130,6 @@ export default function CerrarCajaModal({
     } catch (error) {
       console.error("Error al cerrar caja:", error)
 
-      // Reproducir sonido de error si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playAlarmSound()
       }
@@ -107,6 +148,8 @@ export default function CerrarCajaModal({
     month: "long",
     day: "numeric",
   })
+
+  const hayPagosMixtos = totalMixtoEfectivoFinal > 0 || totalMixtoMercadoPagoFinal > 0
 
   return (
     <>
@@ -150,6 +193,44 @@ export default function CerrarCajaModal({
             <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose de ingresos</h3>
 
+              {/* Nuevos Usuarios */}
+              {nuevosUsuariosHoy.length > 0 && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <UserPlus className="h-6 w-6 text-orange-600 dark:text-orange-400 mr-2" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Nuevos Usuarios</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {nuevosUsuariosHoy.length}{" "}
+                          {nuevosUsuariosHoy.length === 1 ? "usuario nuevo" : "usuarios nuevos"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                        {nuevosUsuariosHoy.length}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lista de nuevos usuarios */}
+                  <div className="mt-2 space-y-1">
+                    {nuevosUsuariosHoy.slice(0, 3).map((usuario) => (
+                      <div key={usuario.id} className="text-xs text-gray-600 dark:text-gray-400 flex justify-between">
+                        <span>{usuario.nombreApellido}</span>
+                        <span className="text-orange-600 dark:text-orange-400">{usuario.actividad}</span>
+                      </div>
+                    ))}
+                    {nuevosUsuariosHoy.length > 3 && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        y {nuevosUsuariosHoy.length - 3} más...
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Cuotas */}
               {totalCuotas > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
@@ -171,17 +252,33 @@ export default function CerrarCajaModal({
                   {/* Desglose por método de pago de cuotas */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💵 Efectivo:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalEfectivoCuotas)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💳 Mercado Pago:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalMercadoPagoCuotas)}
                       </span>
                     </div>
+                    {(totalMixtoEfectivoCuotas > 0 || totalMixtoMercadoPagoCuotas > 0) && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (Efec):</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {formatMonto(totalMixtoEfectivoCuotas)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (MP):</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {formatMonto(totalMixtoMercadoPagoCuotas)}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -209,17 +306,33 @@ export default function CerrarCajaModal({
                   {/* Desglose por método de pago de bebidas */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💵 Efectivo:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalEfectivoBebidas)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💳 Mercado Pago:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalMercadoPagoBebidas)}
                       </span>
                     </div>
+                    {(totalMixtoEfectivoBebidas > 0 || totalMixtoMercadoPagoBebidas > 0) && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (Efec):</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {formatMonto(totalMixtoEfectivoBebidas)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (MP):</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {formatMonto(totalMixtoMercadoPagoBebidas)}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -253,6 +366,31 @@ export default function CerrarCajaModal({
                       </p>
                     </div>
                   </div>
+
+                  {hayPagosMixtos && (
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg col-span-2">
+                      <div className="flex items-center">
+                        <Shuffle className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-2" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Pagos Mixtos</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Efectivo</p>
+                            <p className="font-bold text-green-700 dark:text-green-300">
+                              {formatMonto(totalMixtoEfectivoFinal)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">MP</p>
+                            <p className="font-bold text-blue-700 dark:text-blue-300">
+                              {formatMonto(totalMixtoMercadoPagoFinal)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -305,7 +443,7 @@ export default function CerrarCajaModal({
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
         title="Cerrar Caja"
-        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)}. Desglose: Cuotas ${formatMonto(totalCuotas)} (Efectivo: ${formatMonto(totalEfectivoCuotas)}, MP: ${formatMonto(totalMercadoPagoCuotas)}), Bebidas ${formatMonto(totalBebidas)} (Efectivo: ${formatMonto(totalEfectivoBebidas)}, MP: ${formatMonto(totalMercadoPagoBebidas)}). Ingrese el PIN de seguridad para continuar.`}
+        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)} y registrará ${nuevosUsuariosHoy.length} ${nuevosUsuariosHoy.length === 1 ? "nuevo usuario" : "nuevos usuarios"}. Ingrese el PIN de seguridad para continuar.`}
       />
     </>
   )

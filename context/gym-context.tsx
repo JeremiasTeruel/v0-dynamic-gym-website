@@ -3,7 +3,6 @@
 import { createContext, useContext, useState, useEffect } from "react"
 import type { Usuario } from "@/data/usuarios"
 
-// Definir la interfaz para un registro de pago
 export interface RegistroPago {
   id?: string
   userNombre: string
@@ -11,6 +10,8 @@ export interface RegistroPago {
   monto: number
   fecha: string
   metodoPago: string
+  montoEfectivo?: number
+  montoMercadoPago?: number
 }
 
 interface GymContextType {
@@ -20,8 +21,20 @@ interface GymContextType {
   pagos: RegistroPago[]
   cargandoPagos: boolean
   buscarUsuario: (dni: string) => Promise<Usuario | null>
-  agregarNuevoUsuario: (usuario: Omit<Usuario, "id">, montoPago: number) => Promise<void>
-  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string, montoPago: number) => Promise<void>
+  agregarNuevoUsuario: (
+    usuario: Omit<Usuario, "id">,
+    montoPago: number,
+    montoEfectivo?: number,
+    montoMercadoPago?: number,
+  ) => Promise<void>
+  actualizarPago: (
+    dni: string,
+    nuevaFechaVencimiento: string,
+    metodoPago: string,
+    montoPago: number,
+    montoEfectivo?: number,
+    montoMercadoPago?: number,
+  ) => Promise<void>
   actualizarUsuario: (id: string, datosActualizados: Partial<Usuario>) => Promise<void>
   eliminarUsuario: (id: string) => Promise<void>
   recargarUsuarios: () => Promise<void>
@@ -33,7 +46,6 @@ interface GymContextType {
 
 const GymContext = createContext<GymContextType | null>(null)
 
-// Función para ordenar usuarios alfabéticamente
 const ordenarUsuariosAlfabeticamente = (usuarios: Usuario[]): Usuario[] => {
   return [...usuarios].sort((a, b) => {
     const nombreA = a.nombreApellido
@@ -55,7 +67,6 @@ export function GymProvider({ children }) {
   const [cargandoPagos, setCargandoPagos] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Función para cargar todos los usuarios
   const cargarUsuarios = async () => {
     try {
       setCargando(true)
@@ -80,7 +91,6 @@ export function GymProvider({ children }) {
       const usuariosDB = await response.json()
       console.log("Usuarios cargados:", usuariosDB.length)
 
-      // Ordenar usuarios alfabéticamente antes de guardarlos en el estado
       const usuariosOrdenados = ordenarUsuariosAlfabeticamente(usuariosDB)
       setUsuarios(usuariosOrdenados)
     } catch (err) {
@@ -91,7 +101,6 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para cargar todos los pagos
   const cargarPagos = async () => {
     try {
       setCargandoPagos(true)
@@ -119,13 +128,11 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Cargar usuarios y pagos al iniciar
   useEffect(() => {
     cargarUsuarios()
     cargarPagos()
   }, [])
 
-  // Función para buscar un usuario por DNI
   const buscarUsuario = async (dni: string): Promise<Usuario | null> => {
     try {
       const response = await fetch(`/api/usuarios/${dni}`)
@@ -145,7 +152,6 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para registrar un pago en la base de datos
   const registrarPago = async (pago: Omit<RegistroPago, "id">): Promise<void> => {
     try {
       setError(null)
@@ -169,7 +175,6 @@ export function GymProvider({ children }) {
 
       console.log("Pago registrado exitosamente:", data)
 
-      // Actualizar la lista de pagos
       setPagos((prevPagos) => [...prevPagos, data])
     } catch (err) {
       console.error("Error al registrar pago:", err)
@@ -178,8 +183,12 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para agregar un nuevo usuario con registro de pago
-  const agregarNuevoUsuario = async (usuario: Omit<Usuario, "id">, montoPago: number): Promise<void> => {
+  const agregarNuevoUsuario = async (
+    usuario: Omit<Usuario, "id">,
+    montoPago: number,
+    montoEfectivo?: number,
+    montoMercadoPago?: number,
+  ): Promise<void> => {
     try {
       setError(null)
 
@@ -202,11 +211,9 @@ export function GymProvider({ children }) {
 
       console.log("Usuario agregado exitosamente:", data)
 
-      // Agregar el nuevo usuario y reordenar la lista
       const nuevosUsuarios = ordenarUsuariosAlfabeticamente([...usuarios, data])
       setUsuarios(nuevosUsuarios)
 
-      // Registrar el pago en la base de datos
       const fechaActual = new Date().toISOString().split("T")[0]
       await registrarPago({
         userNombre: data.nombreApellido,
@@ -214,6 +221,8 @@ export function GymProvider({ children }) {
         monto: montoPago,
         fecha: fechaActual,
         metodoPago: usuario.metodoPago,
+        montoEfectivo: montoEfectivo || 0,
+        montoMercadoPago: montoMercadoPago || 0,
       })
     } catch (err) {
       console.error("Error al agregar usuario:", err)
@@ -222,12 +231,13 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para actualizar el pago de un usuario
   const actualizarPago = async (
     dni: string,
     nuevaFechaVencimiento: string,
     metodoPago: string,
     montoPago: number,
+    montoEfectivo?: number,
+    montoMercadoPago?: number,
   ): Promise<void> => {
     try {
       setError(null)
@@ -247,11 +257,9 @@ export function GymProvider({ children }) {
         throw new Error(data.error || "Error al actualizar pago")
       }
 
-      // Actualizar el usuario y reordenar la lista
       const nuevosUsuarios = usuarios.map((u) => (u.dni === dni ? data : u))
       setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
 
-      // Registrar el pago en la base de datos
       const fechaActual = new Date().toISOString().split("T")[0]
       const usuarioActualizado = nuevosUsuarios.find((u) => u.dni === dni)
 
@@ -262,6 +270,8 @@ export function GymProvider({ children }) {
           monto: montoPago,
           fecha: fechaActual,
           metodoPago: metodoPago,
+          montoEfectivo: montoEfectivo || 0,
+          montoMercadoPago: montoMercadoPago || 0,
         })
       }
     } catch (err) {
@@ -271,7 +281,6 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para actualizar un usuario
   const actualizarUsuario = async (id: string, datosActualizados: Partial<Usuario>): Promise<void> => {
     try {
       setError(null)
@@ -295,7 +304,6 @@ export function GymProvider({ children }) {
 
       console.log("Usuario actualizado exitosamente:", data)
 
-      // Actualizar el usuario y reordenar la lista
       const nuevosUsuarios = usuarios.map((u) => (u.id === id ? data : u))
       setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
     } catch (err) {
@@ -305,7 +313,6 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para eliminar un usuario
   const eliminarUsuario = async (id: string): Promise<void> => {
     try {
       setError(null)
@@ -321,7 +328,6 @@ export function GymProvider({ children }) {
         throw new Error(data.error || "Error al eliminar usuario")
       }
 
-      // Eliminar el usuario (no es necesario reordenar ya que solo se elimina)
       setUsuarios((prev) => prev.filter((u) => u.id !== id))
     } catch (err) {
       console.error("Error al eliminar usuario:", err)
@@ -330,17 +336,14 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para recargar usuarios
   const recargarUsuarios = async (): Promise<void> => {
     await cargarUsuarios()
   }
 
-  // Función para recargar pagos
   const recargarPagos = async (): Promise<void> => {
     await cargarPagos()
   }
 
-  // Función para obtener los pagos de un día específico
   const obtenerPagosPorFecha = async (fecha: string): Promise<RegistroPago[]> => {
     try {
       const response = await fetch(`/api/pagos/fecha/${fecha}`)
@@ -358,7 +361,6 @@ export function GymProvider({ children }) {
     }
   }
 
-  // Función para obtener los pagos por rango de fechas
   const obtenerPagosPorRango = async (inicio: string, fin: string): Promise<RegistroPago[]> => {
     try {
       const response = await fetch(`/api/pagos/rango?inicio=${inicio}&fin=${fin}`)

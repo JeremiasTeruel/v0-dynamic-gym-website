@@ -15,7 +15,6 @@ interface GraficoUsuariosProps {
 export default function GraficoUsuarios({ datos }: GraficoUsuariosProps) {
   const { theme } = useTheme()
 
-  // Verificar si hay datos para evitar errores de renderizado
   if (!datos || datos.length === 0 || datos.every((item) => item.usuarios === 0)) {
     return (
       <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
