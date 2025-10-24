@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, ShoppingCart, Minus, Plus, CreditCard, Banknote } from "lucide-react"
+import { X, ShoppingCart, Minus, Plus, CreditCard, Banknote, Split } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import Alert from "@/components/alert"
@@ -26,6 +26,8 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
   const [bebidaSeleccionada, setBebidaSeleccionada] = useState<string>("")
   const [cantidad, setCantidad] = useState(1)
   const [metodoPago, setMetodoPago] = useState("Efectivo")
+  const [montoEfectivo, setMontoEfectivo] = useState("0")
+  const [montoMercadoPago, setMontoMercadoPago] = useState("0")
   const [cargandoBebidas, setCargandoBebidas] = useState(false)
   const [procesandoVenta, setProcesandoVenta] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
@@ -45,6 +47,8 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
       setBebidaSeleccionada("")
       setCantidad(1)
       setMetodoPago("Efectivo")
+      setMontoEfectivo("0")
+      setMontoMercadoPago("0")
       setError(null)
     }
   }, [isOpen])
@@ -82,6 +86,18 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
     }
   }
 
+  const handleMontoMixtoChange = (tipo: "efectivo" | "mercadoPago", valor: string) => {
+    if (tipo === "efectivo") {
+      setMontoEfectivo(valor)
+    } else {
+      setMontoMercadoPago(valor)
+    }
+  }
+
+  const calcularTotalMixto = () => {
+    return (Number.parseFloat(montoEfectivo) || 0) + (Number.parseFloat(montoMercadoPago) || 0)
+  }
+
   const handleConfirmarVenta = () => {
     setError(null)
 
@@ -98,6 +114,25 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
     if (cantidad > stockDisponible) {
       setError("Cantidad superior al stock disponible")
       return
+    }
+
+    // Validar montos mixtos si el método de pago es Mixto
+    if (metodoPago === "Mixto") {
+      const efectivo = Number.parseFloat(montoEfectivo) || 0
+      const mercadoPago = Number.parseFloat(montoMercadoPago) || 0
+
+      if (efectivo <= 0 && mercadoPago <= 0) {
+        setError("Debe especificar al menos un monto en efectivo o Mercado Pago")
+        return
+      }
+
+      const totalMixto = efectivo + mercadoPago
+      if (Math.abs(totalMixto - precioTotal) > 0.01) {
+        setError(
+          `La suma de los montos (${formatMonto(totalMixto)}) debe ser igual al total (${formatMonto(precioTotal)})`,
+        )
+        return
+      }
     }
 
     setShowPinModal(true)
@@ -136,8 +171,16 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
         await soundGenerator.playSuccessSound()
       }
 
+      let mensajeVenta = `Venta realizada exitosamente. ${bebidaActual?.nombre} x${cantidad} - ${formatMonto(precioTotal)}`
+
+      if (metodoPago === "Mixto") {
+        mensajeVenta += ` (Efectivo: ${formatMonto(Number.parseFloat(montoEfectivo) || 0)}, Mercado Pago: ${formatMonto(Number.parseFloat(montoMercadoPago) || 0)})`
+      } else {
+        mensajeVenta += ` (${metodoPago})`
+      }
+
       setAlertaInfo({
-        mensaje: `Venta realizada exitosamente. ${bebidaActual?.nombre} x${cantidad} - ${formatMonto(precioTotal)} (${metodoPago})`,
+        mensaje: mensajeVenta,
         visible: true,
         tipo: "success",
       })
@@ -146,6 +189,8 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
       setBebidaSeleccionada("")
       setCantidad(1)
       setMetodoPago("Efectivo")
+      setMontoEfectivo("0")
+      setMontoMercadoPago("0")
 
       // Cerrar modal después de un breve delay
       setTimeout(() => {
@@ -296,32 +341,111 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Método de Pago
                     </label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                       <button
                         onClick={() => setMetodoPago("Efectivo")}
-                        className={`flex items-center justify-center p-3 border-2 rounded-lg transition-all ${
+                        className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition-all ${
                           metodoPago === "Efectivo"
                             ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
                             : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-green-300 dark:hover:border-green-600"
                         }`}
                         disabled={procesandoVenta}
                       >
-                        <Banknote className="h-5 w-5 mr-2" />
-                        <span className="font-medium">Efectivo</span>
+                        <Banknote className="h-5 w-5 mb-1" />
+                        <span className="text-xs font-medium">Efectivo</span>
                       </button>
 
                       <button
                         onClick={() => setMetodoPago("Mercado Pago")}
-                        className={`flex items-center justify-center p-3 border-2 rounded-lg transition-all ${
+                        className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition-all ${
                           metodoPago === "Mercado Pago"
                             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
                             : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-600"
                         }`}
                         disabled={procesandoVenta}
                       >
-                        <CreditCard className="h-5 w-5 mr-2" />
-                        <span className="font-medium">Mercado Pago</span>
+                        <CreditCard className="h-5 w-5 mb-1" />
+                        <span className="text-xs font-medium">Mercado Pago</span>
                       </button>
+
+                      <button
+                        onClick={() => setMetodoPago("Mixto")}
+                        className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition-all ${
+                          metodoPago === "Mixto"
+                            ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300"
+                            : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-purple-300 dark:hover:border-purple-600"
+                        }`}
+                        disabled={procesandoVenta}
+                      >
+                        <Split className="h-5 w-5 mb-1" />
+                        <span className="text-xs font-medium">Mixto</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Inputs para pago mixto */}
+                {bebidaActual && metodoPago === "Mixto" && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg shadow-sm p-4 border border-purple-200 dark:border-purple-800">
+                    <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-300 mb-3">
+                      Desglose de Pago Mixto
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                          Monto en Efectivo
+                        </label>
+                        <div className="relative">
+                          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
+                            $
+                          </span>
+                          <input
+                            type="number"
+                            value={montoEfectivo}
+                            onChange={(e) => handleMontoMixtoChange("efectivo", e.target.value)}
+                            className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            min="0"
+                            step="1"
+                            disabled={procesandoVenta}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                          Monto en Mercado Pago
+                        </label>
+                        <div className="relative">
+                          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
+                            $
+                          </span>
+                          <input
+                            type="number"
+                            value={montoMercadoPago}
+                            onChange={(e) => handleMontoMixtoChange("mercadoPago", e.target.value)}
+                            className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            min="0"
+                            step="1"
+                            disabled={procesandoVenta}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-purple-300 dark:border-purple-700">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total ingresado:</span>
+                          <span className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                            {formatMonto(calcularTotalMixto())}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total requerido:</span>
+                          <span className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                            {formatMonto(precioTotal)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -343,10 +467,15 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
                             <Banknote className="h-4 w-4 mr-1" />
                             <span className="text-sm font-medium">Efectivo</span>
                           </div>
-                        ) : (
+                        ) : metodoPago === "Mercado Pago" ? (
                           <div className="flex items-center text-blue-600 dark:text-blue-400">
                             <CreditCard className="h-4 w-4 mr-1" />
                             <span className="text-sm font-medium">Mercado Pago</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-purple-600 dark:text-purple-400">
+                            <Split className="h-4 w-4 mr-1" />
+                            <span className="text-sm font-medium">Pago Mixto</span>
                           </div>
                         )}
                       </div>
@@ -396,7 +525,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
         title="Confirmar Venta de Bebida"
-        description={`Esta acción registrará la venta de ${bebidaActual?.nombre} x${cantidad} por un total de ${formatMonto(precioTotal)} (${metodoPago}). Ingrese el PIN de seguridad para continuar.`}
+        description={`Esta acción registrará la venta de ${bebidaActual?.nombre} x${cantidad} por un total de ${formatMonto(precioTotal)}${metodoPago === "Mixto" ? ` (Efectivo: ${formatMonto(Number.parseFloat(montoEfectivo) || 0)}, Mercado Pago: ${formatMonto(Number.parseFloat(montoMercadoPago) || 0)})` : ` (${metodoPago})`}. Ingrese el PIN de seguridad para continuar.`}
       />
 
       {/* Alerta */}

@@ -43,6 +43,8 @@ export default function NuevoUsuario() {
     metodoPago: "Efectivo",
     actividad: "Normal",
     montoPago: "32000", // Valor predeterminado para Normal + Efectivo
+    montoEfectivo: "0",
+    montoMercadoPago: "0",
   })
 
   // Efecto para actualizar el monto cuando cambia la actividad o método de pago
@@ -60,6 +62,23 @@ export default function NuevoUsuario() {
       ...prev,
       [name]: value,
     }))
+  }
+
+  const handleMontoMixtoChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value }
+
+      // Calcular el total de montos mixtos
+      const efectivo = Number.parseFloat(newData.montoEfectivo) || 0
+      const mercadoPago = Number.parseFloat(newData.montoMercadoPago) || 0
+      const totalMixto = efectivo + mercadoPago
+
+      return {
+        ...newData,
+        montoPago: totalMixto.toString(),
+      }
+    })
   }
 
   const calculateDueDate = (startDate) => {
@@ -82,6 +101,22 @@ export default function NuevoUsuario() {
     if (isNaN(monto) || monto <= 0) {
       setError("El monto debe ser un número positivo")
       return
+    }
+
+    // Validar montos mixtos si el método de pago es Mixto
+    if (formData.metodoPago === "Mixto") {
+      const efectivo = Number.parseFloat(formData.montoEfectivo) || 0
+      const mercadoPago = Number.parseFloat(formData.montoMercadoPago) || 0
+
+      if (efectivo <= 0 && mercadoPago <= 0) {
+        setError("Debe especificar al menos un monto en efectivo o Mercado Pago")
+        return
+      }
+
+      if (efectivo + mercadoPago !== monto) {
+        setError("La suma de los montos debe ser igual al total")
+        return
+      }
     }
 
     // Guardar los datos del formulario y mostrar modal de PIN
@@ -215,8 +250,73 @@ export default function NuevoUsuario() {
           >
             <option value="Efectivo">Efectivo</option>
             <option value="Mercado Pago">Mercado Pago</option>
+            <option value="Mixto">Mixto (Efectivo + Mercado Pago)</option>
           </select>
         </div>
+
+        {/* Inputs para pago mixto */}
+        {formData.metodoPago === "Mixto" && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm p-4 border border-blue-200 dark:border-blue-800">
+            <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">Desglose de Pago Mixto</h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Monto en Efectivo
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    name="montoEfectivo"
+                    value={formData.montoEfectivo}
+                    onChange={handleMontoMixtoChange}
+                    className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    min="0"
+                    step="1"
+                    disabled={isSubmitting}
+                    style={{ fontSize: "16px" }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Monto en Mercado Pago
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    name="montoMercadoPago"
+                    value={formData.montoMercadoPago}
+                    onChange={handleMontoMixtoChange}
+                    className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    min="0"
+                    step="1"
+                    disabled={isSubmitting}
+                    style={{ fontSize: "16px" }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-blue-300 dark:border-blue-700">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total:</span>
+                  <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                    $
+                    {(Number.parseFloat(formData.montoEfectivo) || 0) +
+                      (Number.parseFloat(formData.montoMercadoPago) || 0)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
           <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Fecha de Inicio</label>
@@ -248,27 +348,31 @@ export default function NuevoUsuario() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Monto de Pago</label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">$</span>
-            <input
-              type="number"
-              name="montoPago"
-              value={formData.montoPago}
-              onChange={handleChange}
-              className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-              required
-              min="1"
-              step="1"
-              disabled={isSubmitting}
-              style={{ fontSize: "16px" }}
-            />
+        {formData.metodoPago !== "Mixto" && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Monto de Pago</label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
+                $
+              </span>
+              <input
+                type="number"
+                name="montoPago"
+                value={formData.montoPago}
+                onChange={handleChange}
+                className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                required
+                min="1"
+                step="1"
+                disabled={isSubmitting}
+                style={{ fontSize: "16px" }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Monto sugerido según actividad y método de pago
+            </p>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Monto sugerido según actividad y método de pago
-          </p>
-        </div>
+        )}
 
         {/* Botones fijos en la parte inferior para móviles */}
         {isMobile ? (
