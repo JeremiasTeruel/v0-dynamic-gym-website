@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
@@ -11,6 +11,18 @@ import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import PinModal from "@/components/pin-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
+
+// Función para calcular el monto según actividad y método de pago
+const calcularMontoPorActividad = (actividad: string, metodoPago: string): string => {
+  if (actividad === "Normal") {
+    return metodoPago === "Efectivo" ? "32000" : "40000"
+  } else if (actividad === "Familiar") {
+    return metodoPago === "Efectivo" ? "30000" : "38000"
+  } else {
+    // BJJ, MMA, Boxeo, Convenio
+    return metodoPago === "Efectivo" ? "28000" : "36000"
+  }
+}
 
 export default function NuevoUsuario() {
   const router = useRouter()
@@ -30,8 +42,17 @@ export default function NuevoUsuario() {
     fechaInicio: "",
     metodoPago: "Efectivo",
     actividad: "Normal",
-    montoPago: "2500", // Valor predeterminado
+    montoPago: "32000", // Valor predeterminado para Normal + Efectivo
   })
+
+  // Efecto para actualizar el monto cuando cambia la actividad o método de pago
+  useEffect(() => {
+    const nuevoMonto = calcularMontoPorActividad(formData.actividad, formData.metodoPago)
+    setFormData((prev) => ({
+      ...prev,
+      montoPago: nuevoMonto,
+    }))
+  }, [formData.actividad, formData.metodoPago])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -183,6 +204,21 @@ export default function NuevoUsuario() {
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Método de Pago</label>
+          <select
+            name="metodoPago"
+            value={formData.metodoPago}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            disabled={isSubmitting}
+            style={{ fontSize: "16px" }}
+          >
+            <option value="Efectivo">Efectivo</option>
+            <option value="Mercado Pago">Mercado Pago</option>
+          </select>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
           <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Fecha de Inicio</label>
           <input
             type="date"
@@ -224,26 +260,14 @@ export default function NuevoUsuario() {
               className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               required
               min="1"
-              step="0.01"
+              step="1"
               disabled={isSubmitting}
               style={{ fontSize: "16px" }}
             />
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Método de Pago</label>
-          <select
-            name="metodoPago"
-            value={formData.metodoPago}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            disabled={isSubmitting}
-            style={{ fontSize: "16px" }}
-          >
-            <option value="Efectivo">Efectivo</option>
-            <option value="Mercado Pago">Mercado Pago</option>
-          </select>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Monto sugerido según actividad y método de pago
+          </p>
         </div>
 
         {/* Botones fijos en la parte inferior para móviles */}
