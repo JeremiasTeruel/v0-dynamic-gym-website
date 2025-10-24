@@ -27,8 +27,6 @@ export default function NuevoUsuario() {
   const [formData, setFormData] = useState({
     nombreApellido: "",
     dni: "",
-    edad: "",
-    telefono: "",
     fechaInicio: "",
     metodoPago: "Efectivo",
     actividad: "Normal",
@@ -53,7 +51,7 @@ export default function NuevoUsuario() {
     e.preventDefault()
     setError(null)
 
-    if (!formData.nombreApellido || !formData.dni || !formData.edad || !formData.fechaInicio || !formData.montoPago) {
+    if (!formData.nombreApellido || !formData.dni || !formData.fechaInicio || !formData.montoPago) {
       setError("Por favor complete todos los campos")
       return
     }
@@ -80,6 +78,8 @@ export default function NuevoUsuario() {
       const { montoPago, ...datosUsuario } = pendingFormData.formData
       const nuevoUsuario = {
         ...datosUsuario,
+        edad: "", // Campo vacío por defecto
+        telefono: "", // Campo vacío por defecto
         fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
       }
 
@@ -156,34 +156,6 @@ export default function NuevoUsuario() {
             type="text"
             name="dni"
             value={formData.dni}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            required
-            disabled={isSubmitting}
-            style={{ fontSize: "16px" }}
-          />
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Edad</label>
-          <input
-            type="number"
-            name="edad"
-            value={formData.edad}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            required
-            disabled={isSubmitting}
-            style={{ fontSize: "16px" }}
-          />
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Teléfono</label>
-          <input
-            type="tel"
-            name="telefono"
-            value={formData.telefono}
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             required
