@@ -1,479 +1,202 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { useGymContext } from "@/context/gym-context"
-import { useMobile } from "@/hooks/use-mobile"
-import Alert from "@/components/alert"
-import LoadingDumbbell from "@/components/loading-dumbbell"
-import ThemeToggle from "@/components/theme-toggle"
-import PinModal from "@/components/pin-modal"
-import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
+import type React from "react"
 
-// Función para calcular el monto según actividad y método de pago
-const calcularMontoPorActividad = (actividad: string, metodoPago: string): string => {
-  if (actividad === "Dia") {
-    return "5000" // Precio fijo para pago por día
-  } else if (actividad === "Normal") {
-    return metodoPago === "Efectivo" ? "32000" : "40000"
-  } else if (actividad === "Familiar") {
-    return metodoPago === "Efectivo" ? "30000" : "38000"
-  } else {
-    // BJJ, MMA, Boxeo, Convenio
-    return metodoPago === "Efectivo" ? "28000" : "36000"
-  }
-}
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import { useGymContext } from "@/context/gym-context"
+import ThemeToggle from "@/components/theme-toggle"
+
+export const dynamic = "force-dynamic"
 
 export default function PagarCuota() {
   const router = useRouter()
-  const { buscarUsuario, actualizarPago, error } = useGymContext()
-  const [showAlert, setShowAlert] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSearching, setIsSearching] = useState(false)
-  const [errorLocal, setErrorLocal] = useState<string | null>(null)
-  const [showPinModal, setShowPinModal] = useState(false)
-  const [pendingPaymentData, setPendingPaymentData] = useState(null)
-  const isMobile = useMobile()
-  const { getSoundEnabled } = useSoundPreferences()
+  const searchParams = useSearchParams()
+  const dni = searchParams.get("dni")
+  const { registrarPago } = useGymContext()
 
-  const [formData, setFormData] = useState({
-    dni: "",
-    fechaPago: new Date().toISOString().split("T")[0],
-    metodoPago: "Efectivo",
-    montoPago: "32000", // Valor predeterminado para Normal + Efectivo
-    montoEfectivo: "0",
-    montoMercadoPago: "0",
-  })
+  const [usuario, setUsuario] = useState<any>(null)
+  const [cargando, setCargando] = useState(true)
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [metodoPago, setMetodoPago] = useState("efectivo")
+  const [monto, setMonto] = useState("")
 
-  const [userFound, setUserFound] = useState(null)
-
-  // Efecto para actualizar el monto cuando cambia la actividad del usuario o método de pago
   useEffect(() => {
-    if (userFound && userFound.actividad) {
-      const nuevoMonto = calcularMontoPorActividad(userFound.actividad, formData.metodoPago)
-      setFormData((prev) => ({
-        ...prev,
-        montoPago: nuevoMonto,
-      }))
+    if (dni) {
+      cargarUsuario(dni)
     }
-  }, [userFound, formData.metodoPago])
+  }, [dni])
 
-  const handleChange = async (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-
-    if (name === "dni" && value.length > 5) {
-      setIsSearching(true)
-      try {
-        const usuario = await buscarUsuario(value)
-        setUserFound(usuario)
-
-        // Actualizar el monto según la actividad del usuario encontrado
-        if (usuario && usuario.actividad) {
-          const nuevoMonto = calcularMontoPorActividad(usuario.actividad, formData.metodoPago)
-          setFormData((prev) => ({
-            ...prev,
-            montoPago: nuevoMonto,
-          }))
-        }
-      } catch (error) {
-        console.error("Error al buscar usuario:", error)
-        setUserFound(null)
-      } finally {
-        setIsSearching(false)
-      }
+  const cargarUsuario = async (dni: string) => {
+    try {
+      setCargando(true)
+      const response = await fetch(`/api/usuarios/${dni}`)
+      if (!response.ok) throw new Error("Usuario no encontrado")
+      const data = await response.json()
+      setUsuario(data)
+      setMonto(data.montoCuota?.toString() || "")
+    } catch (error) {
+      console.error("Error al cargar usuario:", error)
+      setError("No se pudo cargar el usuario")
+    } finally {
+      setCargando(false)
     }
   }
 
-  const handleMontoMixtoChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value }
-
-      // Calcular el total de montos mixtos
-      const efectivo = Number.parseFloat(newData.montoEfectivo) || 0
-      const mercadoPago = Number.parseFloat(newData.montoMercadoPago) || 0
-      const totalMixto = efectivo + mercadoPago
-
-      return {
-        ...newData,
-        montoPago: totalMixto.toString(),
-      }
-    })
-  }
-
-  const calculateNewDueDate = (paymentDate, actividad) => {
-    const date = new Date(paymentDate)
-
-    if (actividad === "Dia") {
-      // Para pago por día, vence al día siguiente en el mismo mes
-      date.setDate(date.getDate() + 1)
-    } else {
-      // Para otros tipos, vence un mes después
-      date.setMonth(date.getMonth() + 1)
-    }
-
-    return date.toISOString().split("T")[0]
-  }
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setErrorLocal(null)
-
-    if (!formData.dni || !formData.fechaPago || !formData.montoPago) {
-      setErrorLocal("Por favor complete todos los campos")
-      return
-    }
-
-    if (!userFound) {
-      setErrorLocal("Usuario no encontrado")
-      return
-    }
-
-    // Validar que el monto sea un número positivo
-    const monto = Number.parseFloat(formData.montoPago)
-    if (isNaN(monto) || monto <= 0) {
-      setErrorLocal("El monto debe ser un número positivo")
-      return
-    }
-
-    // Validar montos mixtos si el método de pago es Mixto
-    if (formData.metodoPago === "Mixto") {
-      const efectivo = Number.parseFloat(formData.montoEfectivo) || 0
-      const mercadoPago = Number.parseFloat(formData.montoMercadoPago) || 0
-
-      if (efectivo <= 0 && mercadoPago <= 0) {
-        setErrorLocal("Debe especificar al menos un monto en efectivo o Mercado Pago")
-        return
-      }
-
-      if (efectivo + mercadoPago !== monto) {
-        setErrorLocal("La suma de los montos debe ser igual al total")
-        return
-      }
-    }
-
-    // Guardar los datos del pago y mostrar modal de PIN
-    const newDueDate = calculateNewDueDate(formData.fechaPago, userFound.actividad)
-    setPendingPaymentData({
-      dni: formData.dni,
-      newDueDate,
-      metodoPago: formData.metodoPago,
-      monto,
-    })
-    setShowPinModal(true)
-  }
-
-  const handlePinSuccess = async () => {
-    if (!pendingPaymentData) return
+    setError(null)
+    setGuardando(true)
 
     try {
-      setIsSubmitting(true)
+      if (!usuario) throw new Error("Usuario no encontrado")
 
-      // Actualizar el pago usando la función del contexto
-      await actualizarPago(
-        pendingPaymentData.dni,
-        pendingPaymentData.newDueDate,
-        pendingPaymentData.metodoPago,
-        pendingPaymentData.monto,
-      )
+      await registrarPago({
+        usuarioId: usuario._id,
+        dni: usuario.dni,
+        nombre: usuario.nombre,
+        monto: Number.parseFloat(monto),
+        metodoPago,
+      })
 
-      // Reproducir sonido de éxito si está habilitado
-      if (getSoundEnabled()) {
-        await soundGenerator.playSuccessSound()
-      }
-
-      // Mostrar la alerta de éxito
-      setShowAlert(true)
-
-      console.log("Pago actualizado para:", userFound.nombreApellido)
+      router.push("/")
     } catch (error) {
-      console.error("Error al actualizar pago:", error)
-      setErrorLocal("Error al actualizar pago. Por favor, intenta de nuevo.")
-
-      // Reproducir sonido de error si está habilitado
-      if (getSoundEnabled()) {
-        await soundGenerator.playAlarmSound()
-      }
-    } finally {
-      setIsSubmitting(false)
-      setPendingPaymentData(null)
+      console.error("Error al registrar pago:", error)
+      setError("Error al registrar el pago. Por favor, intenta nuevamente.")
+      setGuardando(false)
     }
   }
 
-  const handlePinClose = () => {
-    setShowPinModal(false)
-    setPendingPaymentData(null)
+  if (cargando) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900">
+        <div className="text-green-600 dark:text-green-400">Cargando...</div>
+      </main>
+    )
   }
 
-  const esPagoPorDia = userFound?.actividad === "Dia"
+  if (!usuario) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900">
+        <div className="text-red-600 dark:text-red-400">Usuario no encontrado</div>
+        <Link href="/" className="mt-4 text-green-600 dark:text-green-400 hover:underline">
+          Volver al inicio
+        </Link>
+      </main>
+    )
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="w-full max-w-md flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">Pagar Cuota</h1>
-        <ThemeToggle />
-      </div>
+      <div className="w-full max-w-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+              <ArrowLeft className="h-6 w-6" />
+            </Link>
+            <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">Pagar Cuota</h1>
+          </div>
+          <ThemeToggle />
+        </div>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 md:space-y-6">
-        {(errorLocal || error) && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative dark:bg-red-900 dark:border-red-700 dark:text-red-300">
-            {errorLocal || error}
+        {error && (
+          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded relative mb-6">
+            {error}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">DNI</label>
-          <div className="flex">
-            <input
-              type="text"
-              name="dni"
-              value={formData.dni}
-              onChange={handleChange}
-              className="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              required
-              disabled={isSubmitting}
-              style={{ fontSize: "16px" }}
-            />
-            {isSearching && (
-              <div className="ml-2 flex items-center">
-                <LoadingDumbbell size={20} className="text-green-500 dark:text-green-400" />
-              </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">{usuario.nombre}</h2>
+          <div className="space-y-2 text-gray-700 dark:text-gray-300">
+            <p>
+              <span className="font-medium">DNI:</span> {usuario.dni}
+            </p>
+            {usuario.telefono && (
+              <p>
+                <span className="font-medium">Teléfono:</span> {usuario.telefono}
+              </p>
+            )}
+            {usuario.email && (
+              <p>
+                <span className="font-medium">Email:</span> {usuario.email}
+              </p>
             )}
           </div>
-          {userFound && (
-            <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md">
-              <p className="text-sm font-medium text-green-800 dark:text-green-300">
-                Usuario encontrado: {userFound.nombreApellido}
-              </p>
-              <div className="text-xs text-green-700 dark:text-green-400 mt-1 grid grid-cols-2 gap-2">
-                <div>Actividad: {userFound.actividad || "Normal"}</div>
-                {userFound.edad && <div>Edad: {userFound.edad} años</div>}
-                {userFound.telefono && <div className="col-span-2">Teléfono: {userFound.telefono}</div>}
-              </div>
-              {esPagoPorDia && (
-                <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded">
-                  <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-300">
-                    ⏰ Pago por Día - Vence al día siguiente
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-          {formData.dni.length > 5 && !userFound && !isSearching && (
-            <p className="text-sm text-red-500 mt-1 dark:text-red-400">Usuario no encontrado</p>
-          )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Método de Pago</label>
-          <select
-            name="metodoPago"
-            value={formData.metodoPago}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            disabled={isSubmitting || esPagoPorDia}
-            style={{ fontSize: "16px" }}
-          >
-            <option value="Efectivo">Efectivo</option>
-            <option value="Mercado Pago">Mercado Pago</option>
-            {!esPagoPorDia && <option value="Mixto">Mixto (Efectivo + Mercado Pago)</option>}
-          </select>
-          {esPagoPorDia && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              El pago por día tiene un precio fijo de $5.000
-            </p>
-          )}
-        </div>
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 space-y-4">
+          <div>
+            <label htmlFor="monto" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Monto
+            </label>
+            <input
+              type="number"
+              id="monto"
+              value={monto}
+              onChange={(e) => setMonto(e.target.value)}
+              required
+              min="0"
+              step="0.01"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
 
-        {/* Inputs para pago mixto */}
-        {formData.metodoPago === "Mixto" && !esPagoPorDia && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm p-4 border border-blue-200 dark:border-blue-800">
-            <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">Desglose de Pago Mixto</h3>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  Monto en Efectivo
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    name="montoEfectivo"
-                    value={formData.montoEfectivo}
-                    onChange={handleMontoMixtoChange}
-                    className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    min="0"
-                    step="1"
-                    disabled={isSubmitting}
-                    style={{ fontSize: "16px" }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  Monto en Mercado Pago
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    name="montoMercadoPago"
-                    value={formData.montoMercadoPago}
-                    onChange={handleMontoMixtoChange}
-                    className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    min="0"
-                    step="1"
-                    disabled={isSubmitting}
-                    style={{ fontSize: "16px" }}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-blue-300 dark:border-blue-700">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total:</span>
-                  <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                    $
-                    {(Number.parseFloat(formData.montoEfectivo) || 0) +
-                      (Number.parseFloat(formData.montoMercadoPago) || 0)}
-                  </span>
-                </div>
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Método de Pago</label>
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="efectivo"
+                  checked={metodoPago === "efectivo"}
+                  onChange={(e) => setMetodoPago(e.target.value)}
+                  className="mr-2"
+                />
+                <span className="dark:text-gray-300">Efectivo</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="transferencia"
+                  checked={metodoPago === "transferencia"}
+                  onChange={(e) => setMetodoPago(e.target.value)}
+                  className="mr-2"
+                />
+                <span className="dark:text-gray-300">Transferencia</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="mercadopago"
+                  checked={metodoPago === "mercadopago"}
+                  onChange={(e) => setMetodoPago(e.target.value)}
+                  className="mr-2"
+                />
+                <span className="dark:text-gray-300">Mercado Pago</span>
+              </label>
             </div>
           </div>
-        )}
 
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Fecha de Pago</label>
-          <input
-            type="date"
-            name="fechaPago"
-            value={formData.fechaPago}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            required
-            disabled={isSubmitting}
-            style={{ fontSize: "16px" }}
-          />
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-4 md:p-0 md:shadow-none dark:bg-gray-800 dark:border-gray-700">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-            Nueva Fecha de Vencimiento
-          </label>
-          <input
-            type="date"
-            value={userFound ? calculateNewDueDate(formData.fechaPago, userFound.actividad) : ""}
-            className="w-full p-3 border border-gray-300 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            disabled
-            style={{ fontSize: "16px" }}
-          />
-          <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-            {esPagoPorDia
-              ? "Se calcula automáticamente (1 día después de la fecha de pago)"
-              : "Se calcula automáticamente (1 mes después de la fecha de pago)"}
-          </p>
-        </div>
-
-        {formData.metodoPago !== "Mixto" && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
-            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Monto de Pago</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 dark:text-gray-400">
-                $
-              </span>
-              <input
-                type="number"
-                name="montoPago"
-                value={formData.montoPago}
-                onChange={handleChange}
-                className="w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                required
-                min="1"
-                step="1"
-                disabled={isSubmitting || esPagoPorDia}
-                style={{ fontSize: "16px" }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {esPagoPorDia ? "Precio fijo por día: $5.000" : "Monto sugerido según actividad y método de pago"}
-            </p>
-          </div>
-        )}
-
-        {/* Botones fijos en la parte inferior para móviles */}
-        {isMobile ? (
-          <div className="fixed bottom-20 left-0 right-0 bg-white border-t p-4 flex justify-between z-10 dark:bg-gray-800 dark:border-gray-700">
+          <div className="flex gap-4 pt-4">
+            <button
+              type="submit"
+              disabled={guardando}
+              className="flex-1 bg-green-600 dark:bg-green-700 text-white py-2 px-4 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {guardando ? "Procesando..." : "Registrar Pago"}
+            </button>
             <Link
               href="/"
-              className="bg-gray-300 text-gray-700 px-6 py-3 rounded-md w-5/12 flex items-center justify-center dark:bg-gray-700 dark:text-gray-300"
+              className="flex-1 bg-gray-500 dark:bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors text-center"
             >
               Cancelar
             </Link>
-
-            <button
-              type="submit"
-              className={`bg-green-600 text-white px-6 py-3 rounded-md w-5/12 flex items-center justify-center ${
-                isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : ""
-              } dark:bg-green-500 dark:text-gray-900`}
-              disabled={isSubmitting || !userFound}
-            >
-              {isSubmitting ? <LoadingDumbbell size={20} className="mr-2" /> : null}
-              {isSubmitting ? "Guardando..." : "Guardar"}
-            </button>
           </div>
-        ) : (
-          <div className="flex justify-between pt-4">
-            <Link
-              href="/"
-              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:scale-105 transition-transform dark:bg-gray-700 dark:text-gray-300"
-            >
-              Cancelar
-            </Link>
-
-            <button
-              type="submit"
-              className={`bg-green-600 text-white px-6 py-2 rounded-md transition-transform ${
-                isSubmitting || !userFound ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
-              } dark:bg-green-500 dark:text-gray-900`}
-              disabled={isSubmitting || !userFound}
-            >
-              {isSubmitting ? <LoadingDumbbell size={20} className="mr-2 inline" /> : null}
-              {isSubmitting ? "Guardando..." : "Guardar"}
-            </button>
-          </div>
-        )}
-
-        {/* Espacio adicional en la parte inferior para móviles */}
-        {isMobile && <div className="h-24"></div>}
-      </form>
-
-      {/* Modal de PIN */}
-      <PinModal
-        isOpen={showPinModal}
-        onClose={handlePinClose}
-        onSuccess={handlePinSuccess}
-        title="Procesar Pago de Cuota"
-        description={`Esta acción actualizará el pago de cuota para ${userFound?.nombreApellido || "el usuario"}. Ingrese el PIN de seguridad para continuar.`}
-      />
-
-      <Alert
-        message="Listo! Datos actualizados."
-        isOpen={showAlert}
-        onClose={() => setShowAlert(false)}
-        autoRedirect={true}
-      />
+        </form>
+      </div>
     </main>
   )
 }

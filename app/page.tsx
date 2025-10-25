@@ -14,6 +14,8 @@ import ProximosVencimientos from "@/components/proximos-vencimientos"
 import CuotasVencidas from "@/components/cuotas-vencidas"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
+export const dynamic = "force-dynamic"
+
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
   const [foundUser, setFoundUser] = useState(null)

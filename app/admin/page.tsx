@@ -16,6 +16,8 @@ import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
+export const dynamic = "force-dynamic"
+
 export default function Admin() {
   const { usuarios, cargando, error, eliminarUsuario, actualizarUsuario, recargarUsuarios } = useGymContext()
   const [eliminando, setEliminando] = useState<string | null>(null)

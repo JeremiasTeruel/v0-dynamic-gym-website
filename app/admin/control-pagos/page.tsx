@@ -16,6 +16,8 @@ import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import ResumenIngresos from "@/components/resumen-ingresos"
 import CerrarCajaModal from "@/components/cerrar-caja-modal"
 
+export const dynamic = "force-dynamic"
+
 export default function ControlPagos() {
   const { usuarios, cargando: cargandoUsuarios } = useGymContext()
   const [pagos, setPagos] = useState([])
