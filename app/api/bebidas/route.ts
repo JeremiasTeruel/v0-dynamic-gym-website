@@ -112,11 +112,18 @@ export async function GET() {
 // POST para registrar una venta y actualizar stock
 export async function POST(request: Request) {
   try {
-    const { bebidaId, cantidad, precioTotal, metodoPago } = await request.json()
-    console.log("API: Datos recibidos para venta de bebida:", { bebidaId, cantidad, precioTotal, metodoPago })
+    const { bebidaId, cantidad, total, metodoPago, montoEfectivo, montoMercadoPago } = await request.json()
+    console.log("API: Datos recibidos para venta de bebida:", {
+      bebidaId,
+      cantidad,
+      total,
+      metodoPago,
+      montoEfectivo,
+      montoMercadoPago,
+    })
 
     // Validar que los campos requeridos estén presentes
-    if (!bebidaId || !cantidad || !precioTotal || !metodoPago) {
+    if (!bebidaId || !cantidad || !total || !metodoPago) {
       console.error("API ERROR: Faltan campos requeridos")
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
     }
@@ -146,15 +153,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Error al actualizar stock" }, { status: 500 })
     }
 
-    // Registrar la venta en la colección de ventas
     const ventasCollection = db.collection("ventas_bebidas")
     const venta = {
       bebidaId: bebidaId,
       nombreBebida: bebida.nombre,
       cantidad: cantidad,
       precioUnitario: bebida.precio,
-      precioTotal: precioTotal,
+      total: total,
       metodoPago: metodoPago,
+      // Campos para pago mixto
+      montoEfectivo: montoEfectivo || 0,
+      montoMercadoPago: montoMercadoPago || 0,
       fecha: new Date(),
       stockAnterior: bebida.stock,
       stockNuevo: nuevoStock,

@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { X, DollarSign, CreditCard, Banknote, ShoppingCart, Shuffle, UserPlus } from "lucide-react"
+import { useState } from "react"
+import { X, DollarSign, CreditCard, Banknote, ShoppingCart, Shuffle, Users } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 import type { RegistroPago } from "@/context/gym-context"
-import type { Usuario } from "@/data/usuarios"
 
 interface VentaBebida {
   id: string
@@ -23,11 +22,11 @@ interface VentaBebida {
 interface CerrarCajaModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: (cantidadNuevosUsuarios: number, detalleNuevosUsuarios: any[]) => Promise<void>
+  onConfirm: () => Promise<void>
   pagosDia: RegistroPago[]
   ventasBebidas?: VentaBebida[]
   totalDia: number
-  usuarios: Usuario[]
+  cantidadNuevosUsuarios?: number
 }
 
 export default function CerrarCajaModal({
@@ -37,20 +36,11 @@ export default function CerrarCajaModal({
   pagosDia,
   ventasBebidas = [],
   totalDia,
-  usuarios,
+  cantidadNuevosUsuarios = 0,
 }: CerrarCajaModalProps) {
   const [isClosing, setIsClosing] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
   const { getSoundEnabled } = useSoundPreferences()
-
-  // Calcular nuevos usuarios del día
-  const nuevosUsuariosHoy = useMemo(() => {
-    const hoy = new Date().toISOString().split("T")[0]
-    return usuarios.filter((usuario) => {
-      const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
-      return fechaInicio === hoy
-    })
-  }, [usuarios])
 
   if (!isOpen) return null
 
@@ -111,16 +101,7 @@ export default function CerrarCajaModal({
   const handlePinSuccess = async () => {
     try {
       setIsClosing(true)
-
-      // Preparar detalle de nuevos usuarios
-      const detalleNuevosUsuarios = nuevosUsuariosHoy.map((usuario) => ({
-        nombre: usuario.nombreApellido,
-        dni: usuario.dni,
-        actividad: usuario.actividad,
-        fechaInicio: usuario.fechaInicio,
-      }))
-
-      await onConfirm(nuevosUsuariosHoy.length, detalleNuevosUsuarios)
+      await onConfirm()
 
       if (getSoundEnabled()) {
         await soundGenerator.playOperationCompleteSound()
@@ -193,44 +174,6 @@ export default function CerrarCajaModal({
             <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose de ingresos</h3>
 
-              {/* Nuevos Usuarios */}
-              {nuevosUsuariosHoy.length > 0 && (
-                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <UserPlus className="h-6 w-6 text-orange-600 dark:text-orange-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Nuevos Usuarios</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {nuevosUsuariosHoy.length}{" "}
-                          {nuevosUsuariosHoy.length === 1 ? "usuario nuevo" : "usuarios nuevos"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
-                        {nuevosUsuariosHoy.length}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Lista de nuevos usuarios */}
-                  <div className="mt-2 space-y-1">
-                    {nuevosUsuariosHoy.slice(0, 3).map((usuario) => (
-                      <div key={usuario.id} className="text-xs text-gray-600 dark:text-gray-400 flex justify-between">
-                        <span>{usuario.nombreApellido}</span>
-                        <span className="text-orange-600 dark:text-orange-400">{usuario.actividad}</span>
-                      </div>
-                    ))}
-                    {nuevosUsuariosHoy.length > 3 && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        y {nuevosUsuariosHoy.length - 3} más...
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Cuotas */}
               {totalCuotas > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
@@ -252,13 +195,13 @@ export default function CerrarCajaModal({
                   {/* Desglose por método de pago de cuotas */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">💵 Efectivo:</span>
+                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalEfectivoCuotas)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">💳 Mercado Pago:</span>
+                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalMercadoPagoCuotas)}
                       </span>
@@ -266,13 +209,13 @@ export default function CerrarCajaModal({
                     {(totalMixtoEfectivoCuotas > 0 || totalMixtoMercadoPagoCuotas > 0) && (
                       <>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (Efec):</span>
+                          <span className="text-gray-600 dark:text-gray-400">Mixto (Efec):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoEfectivoCuotas)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (MP):</span>
+                          <span className="text-gray-600 dark:text-gray-400">Mixto (MP):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoMercadoPagoCuotas)}
                           </span>
@@ -306,13 +249,13 @@ export default function CerrarCajaModal({
                   {/* Desglose por método de pago de bebidas */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">💵 Efectivo:</span>
+                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalEfectivoBebidas)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">💳 Mercado Pago:</span>
+                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalMercadoPagoBebidas)}
                       </span>
@@ -320,13 +263,13 @@ export default function CerrarCajaModal({
                     {(totalMixtoEfectivoBebidas > 0 || totalMixtoMercadoPagoBebidas > 0) && (
                       <>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (Efec):</span>
+                          <span className="text-gray-600 dark:text-gray-400">Mixto (Efec):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoEfectivoBebidas)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (MP):</span>
+                          <span className="text-gray-600 dark:text-gray-400">Mixto (MP):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoMercadoPagoBebidas)}
                           </span>
@@ -337,10 +280,32 @@ export default function CerrarCajaModal({
                 </div>
               )}
 
+              {cantidadNuevosUsuarios > 0 && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Users className="h-6 w-6 text-orange-600 dark:text-orange-400 mr-2" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Nuevos Usuarios</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Registrados hoy</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                        {cantidadNuevosUsuarios}
+                      </p>
+                      <p className="text-xs text-orange-600 dark:text-orange-400">
+                        {cantidadNuevosUsuarios === 1 ? "usuario" : "usuarios"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Resumen final por método de pago */}
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
                 <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Resumen por método de pago</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid ${hayPagosMixtos ? "grid-cols-2" : "grid-cols-2"} gap-4`}>
                   <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
                     <div className="flex items-center">
                       <Banknote className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
@@ -368,28 +333,30 @@ export default function CerrarCajaModal({
                   </div>
 
                   {hayPagosMixtos && (
-                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg col-span-2">
-                      <div className="flex items-center">
-                        <Shuffle className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-2" />
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Pagos Mixtos</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex gap-4">
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Efectivo</p>
-                            <p className="font-bold text-green-700 dark:text-green-300">
-                              {formatMonto(totalMixtoEfectivoFinal)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">MP</p>
-                            <p className="font-bold text-blue-700 dark:text-blue-300">
-                              {formatMonto(totalMixtoMercadoPagoFinal)}
-                            </p>
+                    <>
+                      <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg col-span-2">
+                        <div className="flex items-center">
+                          <Shuffle className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-2" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Pagos Mixtos</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex gap-4">
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Efectivo</p>
+                              <p className="font-bold text-green-700 dark:text-green-300">
+                                {formatMonto(totalMixtoEfectivoFinal)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">MP</p>
+                              <p className="font-bold text-blue-700 dark:text-blue-300">
+                                {formatMonto(totalMixtoMercadoPagoFinal)}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -398,7 +365,7 @@ export default function CerrarCajaModal({
             {/* Advertencia */}
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
               <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                <strong>⚠️ Atención:</strong> Al cerrar la caja, estos ingresos se registrarán definitivamente en los
+                <strong>Atención:</strong> Al cerrar la caja, estos ingresos se registrarán definitivamente en los
                 reportes semanales y mensuales. Esta acción no se puede deshacer.
               </p>
             </div>
@@ -443,7 +410,7 @@ export default function CerrarCajaModal({
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
         title="Cerrar Caja"
-        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)} y registrará ${nuevosUsuariosHoy.length} ${nuevosUsuariosHoy.length === 1 ? "nuevo usuario" : "nuevos usuarios"}. Ingrese el PIN de seguridad para continuar.`}
+        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)}. Ingrese el PIN de seguridad para continuar.`}
       />
     </>
   )

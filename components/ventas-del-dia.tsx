@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { DollarSign, ShoppingCart } from "lucide-react"
 import CerrarCajaModal from "@/components/cerrar-caja-modal"
 import Alert from "@/components/alert"
@@ -20,15 +20,35 @@ interface VentasDelDiaProps {
   pagos: RegistroPago[]
   ventasBebidas: VentaBebida[]
   onCerrarCaja?: () => Promise<void>
+  usuarios?: any[]
 }
 
-export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarCaja }: VentasDelDiaProps) {
+export default function VentasDelDia({
+  pagos = [],
+  ventasBebidas = [],
+  onCerrarCaja,
+  usuarios = [],
+}: VentasDelDiaProps) {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",
     visible: false,
     tipo: "success",
   })
+  const [cantidadNuevosUsuarios, setCantidadNuevosUsuarios] = useState(0)
+
+  useEffect(() => {
+    const hoy = new Date()
+    const primerMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+    const ultimoMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+
+    const nuevosUsuariosHoy = usuarios.filter((usuario) => {
+      const fechaInicio = new Date(usuario.fechaInicio)
+      return fechaInicio >= primerMomentoDia && fechaInicio <= ultimoMomentoDia
+    })
+
+    setCantidadNuevosUsuarios(nuevosUsuariosHoy.length)
+  }, [usuarios])
 
   const totalPagos = useMemo(() => {
     return pagos.reduce((sum, pago) => sum + pago.monto, 0)
@@ -249,6 +269,7 @@ export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarC
         pagosDia={pagos}
         ventasBebidas={ventasBebidas}
         totalDia={totalDelDia}
+        cantidadNuevosUsuarios={cantidadNuevosUsuarios}
       />
 
       {/* Alerta */}

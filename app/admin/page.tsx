@@ -16,8 +16,6 @@ import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
-export const dynamic = "force-dynamic"
-
 export default function Admin() {
   const { usuarios, cargando, error, eliminarUsuario, actualizarUsuario, recargarUsuarios } = useGymContext()
   const [eliminando, setEliminando] = useState<string | null>(null)
@@ -276,8 +274,8 @@ export default function Admin() {
               placeholder="Buscar por nombre..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              style={{ fontSize: "16px" }}
+              className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              style={{ fontSize: "16px" }} // Evita zoom en iOS
             />
             {busqueda && (
               <button
@@ -304,6 +302,18 @@ export default function Admin() {
               >
                 <RefreshCw className={`h-5 w-5 ${recargando ? "animate-spin" : ""}`} />
               </button>
+              <Link
+                href="/"
+                className="ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500"
+              >
+                Volver al Inicio
+              </Link>
+              <Link
+                href="/"
+                className="md:hidden ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500"
+              >
+                <X className="h-5 w-5" />
+              </Link>
             </div>
           </div>
         </div>
@@ -378,7 +388,7 @@ export default function Admin() {
                               <td className="p-3">{usuario.nombreApellido}</td>
                               <td className="p-3">{usuario.dni}</td>
                               <td className="p-3">{usuario.telefono || "-"}</td>
-                              <td className="p-3">{usuario.edad || "-"}</td>
+                              <td className="p-3">{usuario.edad}</td>
                               <td className="p-3">
                                 <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
                                   {usuario.actividad || "Normal"}

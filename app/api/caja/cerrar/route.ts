@@ -24,9 +24,8 @@ export async function POST(request: Request) {
       totalGeneral,
       cantidadPagos,
       cantidadVentasBebidas,
-      cantidadNuevosUsuarios,
       detalleVentasBebidas,
-      detalleNuevosUsuarios,
+      cantidadNuevosUsuarios,
     } = await request.json()
 
     console.log("API: Datos recibidos para cerrar caja:", {
@@ -78,12 +77,10 @@ export async function POST(request: Request) {
       totalBebidasMixtoMercadoPago: Number.parseFloat(totalBebidasMixtoMercadoPago) || 0,
       cantidadVentasBebidas: Number.parseInt(cantidadVentasBebidas) || 0,
 
-      // Nuevos usuarios
-      cantidadNuevosUsuarios: Number.parseInt(cantidadNuevosUsuarios) || 0,
-      detalleNuevosUsuarios: detalleNuevosUsuarios || [],
-
       // Detalle de ventas de bebidas
       detalleVentasBebidas: detalleVentasBebidas || [],
+
+      cantidadNuevosUsuarios: Number.parseInt(cantidadNuevosUsuarios) || 0,
 
       // Metadatos
       fechaCierre: new Date(),

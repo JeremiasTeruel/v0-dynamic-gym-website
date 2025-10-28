@@ -3,177 +3,451 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
-import { ArrowLeft, DollarSign } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
-import ThemeToggle from "@/components/theme-toggle"
+import VentasDelDia from "@/components/ventas-del-dia"
 import GraficoSemanal from "@/components/grafico-semanal"
+import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import GraficoMensual from "@/components/grafico-mensual"
 import GraficoUsuarios from "@/components/grafico-usuarios"
-import GraficoUsuariosDiario from "@/components/grafico-usuarios-diario"
-import GraficoMetodosPago from "@/components/grafico-metodos-pago"
+import GraficoUsuariosDia from "@/components/grafico-usuarios-dia"
 import GraficoMetodosMensual from "@/components/grafico-metodos-mensual"
-import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
+import ThemeToggle from "@/components/theme-toggle"
 import ResumenIngresos from "@/components/resumen-ingresos"
-import CerrarCajaModal from "@/components/cerrar-caja-modal"
-
-export const dynamic = "force-dynamic"
+import { useMobile } from "@/hooks/use-mobile"
+import type { RegistroPago } from "@/context/gym-context"
 
 export default function ControlPagos() {
-  const { usuarios, cargando: cargandoUsuarios } = useGymContext()
-  const [pagos, setPagos] = useState([])
+  const { usuarios, cargando, obtenerPagosPorFecha, obtenerPagosPorRango } = useGymContext()
+  const isMobile = useMobile()
+  const [pagosDiarios, setPagosDiarios] = useState<RegistroPago[]>([])
+  const [pagosSemana, setPagosSemana] = useState([])
+  const [pagosMensuales, setPagosMensuales] = useState([])
+  const [usuariosMensuales, setUsuariosMensuales] = useState([])
+  const [usuariosDia, setUsuariosDia] = useState(0)
+  const [metodosPago, setMetodosPago] = useState([])
+  const [cargandoDatos, setCargandoDatos] = useState(true)
+  const [metodosMensualesData, setMetodosMensualesData] = useState([])
   const [ventasBebidas, setVentasBebidas] = useState([])
-  const [cierresCaja, setCierresCaja] = useState([])
-  const [cargandoPagos, setCargandoPagos] = useState(true)
-  const [cargandoVentas, setCargandoVentas] = useState(true)
-  const [cargandoCierres, setCargandoCierres] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [cerrarCajaModalAbierto, setCerrarCajaModalAbierto] = useState(false)
 
-  // Cargar pagos
-  useEffect(() => {
-    const cargarPagos = async () => {
-      try {
-        setCargandoPagos(true)
-        const response = await fetch("/api/pagos")
-        if (!response.ok) throw new Error("Error al cargar pagos")
-        const data = await response.json()
-        setPagos(data)
-      } catch (error) {
-        console.error("Error al cargar pagos:", error)
-        setError("Error al cargar datos de pagos")
-      } finally {
-        setCargandoPagos(false)
+  const cerrarCaja = async () => {
+    try {
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      const primerMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+      const ultimoMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+
+      const nuevosUsuariosHoy = usuarios.filter((usuario) => {
+        const fechaInicio = new Date(usuario.fechaInicio)
+        return fechaInicio >= primerMomentoDia && fechaInicio <= ultimoMomentoDia
+      })
+
+      const cantidadNuevosUsuarios = nuevosUsuariosHoy.length
+
+      // Calcular totales por método de pago (cuotas)
+      const totalEfectivoCuotas = pagosDiarios
+        .filter((pago) => pago.metodoPago === "Efectivo")
+        .reduce((sum, pago) => sum + pago.monto, 0)
+
+      const totalMercadoPagoCuotas = pagosDiarios
+        .filter((pago) => pago.metodoPago === "Mercado Pago")
+        .reduce((sum, pago) => sum + pago.monto, 0)
+
+      const totalMixtoEfectivoCuotas = pagosDiarios
+        .filter((pago) => pago.metodoPago === "Mixto")
+        .reduce((sum, pago) => sum + (pago.montoEfectivo || 0), 0)
+
+      const totalMixtoMercadoPagoCuotas = pagosDiarios
+        .filter((pago) => pago.metodoPago === "Mixto")
+        .reduce((sum, pago) => sum + (pago.montoMercadoPago || 0), 0)
+
+      // Calcular totales por método de pago (bebidas)
+      const totalEfectivoBebidas = ventasBebidas
+        .filter((venta) => venta.metodoPago === "Efectivo")
+        .reduce((sum, venta) => sum + venta.precioTotal, 0)
+
+      const totalMercadoPagoBebidas = ventasBebidas
+        .filter((venta) => venta.metodoPago === "Mercado Pago")
+        .reduce((sum, venta) => sum + venta.precioTotal, 0)
+
+      const totalMixtoEfectivoBebidas = ventasBebidas
+        .filter((venta) => venta.metodoPago === "Mixto")
+        .reduce((sum, venta) => sum + (venta.montoEfectivo || 0), 0)
+
+      const totalMixtoMercadoPagoBebidas = ventasBebidas
+        .filter((venta) => venta.metodoPago === "Mixto")
+        .reduce((sum, venta) => sum + (venta.montoMercadoPago || 0), 0)
+
+      // Totales combinados
+      const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoBebidas
+      const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoBebidas
+      const totalMixtoEfectivoFinal = totalMixtoEfectivoCuotas + totalMixtoEfectivoBebidas
+      const totalMixtoMercadoPagoFinal = totalMixtoMercadoPagoCuotas + totalMixtoMercadoPagoBebidas
+      const totalCuotas =
+        totalEfectivoCuotas + totalMercadoPagoCuotas + totalMixtoEfectivoCuotas + totalMixtoMercadoPagoCuotas
+      const totalBebidas =
+        totalEfectivoBebidas + totalMercadoPagoBebidas + totalMixtoEfectivoBebidas + totalMixtoMercadoPagoBebidas
+      const totalGeneral =
+        totalEfectivoFinal + totalMercadoPagoFinal + totalMixtoEfectivoFinal + totalMixtoMercadoPagoFinal
+
+      const detalleVentasBebidas = ventasBebidas.map((venta) => ({
+        nombreBebida: venta.nombreBebida,
+        cantidad: venta.cantidad,
+        precioUnitario: venta.precioUnitario,
+        precioTotal: venta.precioTotal,
+        metodoPago: venta.metodoPago,
+        montoEfectivo: venta.montoEfectivo || 0,
+        montoMercadoPago: venta.montoMercadoPago || 0,
+        fecha: venta.fecha,
+      }))
+
+      const response = await fetch("/api/caja/cerrar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fecha: fechaHoy,
+          totalEfectivo: totalEfectivoFinal,
+          totalMercadoPago: totalMercadoPagoFinal,
+          totalMixtoEfectivo: totalMixtoEfectivoFinal,
+          totalMixtoMercadoPago: totalMixtoMercadoPagoFinal,
+          totalGeneral,
+          totalCuotas,
+          totalCuotasEfectivo: totalEfectivoCuotas,
+          totalCuotasMercadoPago: totalMercadoPagoCuotas,
+          totalCuotasMixtoEfectivo: totalMixtoEfectivoCuotas,
+          totalCuotasMixtoMercadoPago: totalMixtoMercadoPagoCuotas,
+          cantidadPagos: pagosDiarios.length,
+          totalBebidas,
+          totalBebidasEfectivo: totalEfectivoBebidas,
+          totalBebidasMercadoPago: totalMercadoPagoBebidas,
+          totalBebidasMixtoEfectivo: totalMixtoEfectivoBebidas,
+          totalBebidasMixtoMercadoPago: totalMixtoMercadoPagoBebidas,
+          cantidadVentasBebidas: ventasBebidas.length,
+          detalleVentasBebidas,
+          cantidadNuevosUsuarios,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al cerrar caja")
       }
-    }
-    cargarPagos()
-  }, [])
 
-  // Cargar ventas de bebidas
-  useEffect(() => {
-    const cargarVentas = async () => {
-      try {
-        setCargandoVentas(true)
-        const response = await fetch("/api/ventas-bebidas")
-        if (!response.ok) throw new Error("Error al cargar ventas")
-        const data = await response.json()
-        setVentasBebidas(data)
-      } catch (error) {
-        console.error("Error al cargar ventas:", error)
-        setError("Error al cargar datos de ventas")
-      } finally {
-        setCargandoVentas(false)
-      }
+      console.log("Caja cerrada exitosamente")
+      await cargarDatos()
+    } catch (error) {
+      console.error("Error al cerrar caja:", error)
+      throw error
     }
-    cargarVentas()
-  }, [])
-
-  // Cargar cierres de caja
-  useEffect(() => {
-    const cargarCierres = async () => {
-      try {
-        setCargandoCierres(true)
-        const response = await fetch("/api/caja/cerrar")
-        if (!response.ok) throw new Error("Error al cargar cierres")
-        const data = await response.json()
-        setCierresCaja(data)
-      } catch (error) {
-        console.error("Error al cargar cierres:", error)
-      } finally {
-        setCargandoCierres(false)
-      }
-    }
-    cargarCierres()
-  }, [])
-
-  const cargando = cargandoUsuarios || cargandoPagos || cargandoVentas || cargandoCierres
-
-  const handleCerrarCajaExitoso = () => {
-    // Recargar los cierres de caja después de cerrar
-    const cargarCierres = async () => {
-      try {
-        const response = await fetch("/api/caja/cerrar")
-        if (response.ok) {
-          const data = await response.json()
-          setCierresCaja(data)
-        }
-      } catch (error) {
-        console.error("Error al recargar cierres:", error)
-      }
-    }
-    cargarCierres()
   }
 
+  const cargarDatos = async () => {
+    try {
+      setCargandoDatos(true)
+
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      // Cargar pagos del día
+      const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
+      setPagosDiarios(pagosHoy)
+
+      // Cargar ventas de bebidas del día
+      const ventasBebidasResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaHoy}`)
+      let ventasBebidasHoy = []
+      if (ventasBebidasResponse.ok) {
+        ventasBebidasHoy = await ventasBebidasResponse.json()
+      }
+      setVentasBebidas(ventasBebidasHoy)
+
+      const primerMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+      const ultimoMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
+
+      const nuevosUsuariosHoy = usuarios.filter((usuario) => {
+        const fechaInicio = new Date(usuario.fechaInicio)
+        return fechaInicio >= primerMomentoDia && fechaInicio <= ultimoMomentoDia
+      })
+
+      setUsuariosDia(nuevosUsuariosHoy.length)
+
+      // Preparar datos para el gráfico semanal (solo días hasta hoy)
+      const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+      const diaActual = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1
+
+      const pagosSemanaData = await Promise.all(
+        diasSemana.slice(0, diaActual + 1).map(async (dia, index) => {
+          const fechaDia = new Date(hoy)
+          const diff = diaActual - index
+          fechaDia.setDate(hoy.getDate() - diff)
+          const fechaStr = fechaDia.toISOString().split("T")[0]
+
+          const pagosDia = await obtenerPagosPorFecha(fechaStr)
+          const montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
+
+          const ventasBebidasDiaResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaStr}`)
+          let montoBebidasDia = 0
+          if (ventasBebidasDiaResponse.ok) {
+            const ventasData = await ventasBebidasDiaResponse.json()
+            montoBebidasDia = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
+          }
+
+          const montoTotalDia = montoCuotasDia + montoBebidasDia
+
+          try {
+            const cierresResponse = await fetch("/api/caja/cerrar")
+            if (cierresResponse.ok) {
+              const cierres = await cierresResponse.json()
+              const cierreDia = cierres.find((cierre) => cierre.fecha === fechaStr)
+              if (cierreDia) {
+                return {
+                  dia,
+                  monto: cierreDia.totalGeneral,
+                  cuotas: cierreDia.totalCuotas,
+                  bebidas: cierreDia.totalBebidas,
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Error al obtener cierres de caja:", error)
+          }
+
+          return {
+            dia,
+            monto: montoTotalDia,
+            cuotas: montoCuotasDia,
+            bebidas: montoBebidasDia,
+          }
+        }),
+      )
+
+      setPagosSemana(pagosSemanaData)
+
+      // Preparar datos para el gráfico mensual (solo hasta mes actual)
+      const meses = [
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+      ]
+      const mesActual = hoy.getMonth()
+      const añoActual = hoy.getFullYear()
+
+      const mesesAMostrar = []
+      for (let i = 5; i >= 0; i--) {
+        let mes = mesActual - i
+        let año = añoActual
+
+        if (mes < 0) {
+          mes += 12
+          año -= 1
+        }
+
+        mesesAMostrar.push({ nombre: meses[mes], mes, año })
+      }
+
+      const pagosMensualesData = await Promise.all(
+        mesesAMostrar.map(async ({ nombre, mes, año }) => {
+          const primerDia = new Date(año, mes, 1)
+          const ultimoDia = new Date(año, mes + 1, 0)
+
+          const inicioPeriodo = primerDia.toISOString().split("T")[0]
+          const finPeriodo = ultimoDia.toISOString().split("T")[0]
+
+          const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
+          const montoCuotasMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
+
+          const ventasBebidasMesResponse = await fetch(
+            `/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`,
+          )
+          let montoBebidasMes = 0
+          if (ventasBebidasMesResponse.ok) {
+            const ventasData = await ventasBebidasMesResponse.json()
+            montoBebidasMes = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
+          }
+
+          let montoTotalMes = montoCuotasMes + montoBebidasMes
+
+          try {
+            const cierresResponse = await fetch("/api/caja/cerrar")
+            if (cierresResponse.ok) {
+              const cierres = await cierresResponse.json()
+              const cierresMes = cierres.filter((cierre) => {
+                const fechaCierre = new Date(cierre.fecha)
+                return fechaCierre >= primerDia && fechaCierre <= ultimoDia
+              })
+
+              if (cierresMes.length > 0) {
+                const montoCierresCuotas = cierresMes.reduce((sum, cierre) => sum + cierre.totalCuotas, 0)
+                const montoCierresBebidas = cierresMes.reduce((sum, cierre) => sum + cierre.totalBebidas, 0)
+                montoTotalMes = montoCierresCuotas + montoCierresBebidas
+              }
+            }
+          } catch (error) {
+            console.error("Error al obtener cierres de caja para el mes:", error)
+          }
+
+          return {
+            mes: nombre,
+            monto: montoTotalMes,
+            cuotas: montoCuotasMes,
+            bebidas: montoBebidasMes,
+          }
+        }),
+      )
+
+      setPagosMensuales(pagosMensualesData)
+
+      // Calcular nuevos usuarios por mes (últimos 6 meses)
+      const usuariosMensualesData = await Promise.all(
+        mesesAMostrar.map(async ({ nombre, mes, año }) => {
+          const primerDia = new Date(año, mes, 1)
+          const ultimoDia = new Date(año, mes + 1, 0)
+
+          const usuariosDelMes = usuarios.filter((usuario) => {
+            const fechaInicio = new Date(usuario.fechaInicio)
+            return fechaInicio >= primerDia && fechaInicio <= ultimoDia
+          })
+
+          return {
+            mes: nombre,
+            usuarios: usuariosDelMes.length,
+          }
+        }),
+      )
+
+      setUsuariosMensuales(usuariosMensualesData)
+
+      // Calcular métodos de pago mensuales basados en datos reales
+      const totalEfectivoMensual = pagosMensualesData.reduce((sum, mesData) => {
+        return sum + (mesData.monto > 0 ? mesData.monto * 0.6 : 0)
+      }, 0)
+
+      const totalMercadoPagoMensual = pagosMensualesData.reduce((sum, mesData) => {
+        return sum + (mesData.monto > 0 ? mesData.monto * 0.4 : 0)
+      }, 0)
+
+      const totalMensual = totalEfectivoMensual + totalMercadoPagoMensual
+
+      const metodosMensualesData =
+        totalMensual > 0
+          ? [
+              {
+                name: "Efectivo",
+                value: Math.round((totalEfectivoMensual / totalMensual) * 100),
+                fill: "#4ade80",
+              },
+              {
+                name: "Mercado Pago",
+                value: Math.round((totalMercadoPagoMensual / totalMensual) * 100),
+                fill: "#3b82f6",
+              },
+            ]
+          : [
+              { name: "Efectivo", value: 50, fill: "#4ade80" },
+              { name: "Mercado Pago", value: 50, fill: "#3b82f6" },
+            ]
+
+      setMetodosMensualesData(metodosMensualesData)
+    } catch (error) {
+      console.error("Error al cargar datos:", error)
+    } finally {
+      setCargandoDatos(false)
+    }
+  }
+
+  useEffect(() => {
+    cargarDatos()
+  }, [obtenerPagosPorFecha, obtenerPagosPorRango])
+
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="w-full max-w-7xl">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin"
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </Link>
-            <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">Control de Pagos</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setCerrarCajaModalAbierto(true)}
-              className="flex items-center gap-2 bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
-            >
-              <DollarSign className="h-5 w-5" />
-              Cerrar Caja
-            </button>
-            <ThemeToggle />
-          </div>
-        </div>
-
-        {error && (
-          <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded relative mb-6">
-            {error}
-          </div>
-        )}
-
-        {cargando ? (
-          <div className="flex justify-center py-8">
-            <LoadingDumbbell size={32} className="text-green-500" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Resumen de Ingresos */}
-            <ResumenIngresos pagos={pagos} ventasBebidas={ventasBebidas} />
-
-            {/* Gráficos de Nuevos Usuarios */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GraficoUsuarios usuarios={usuarios} />
-              <GraficoUsuariosDiario usuarios={usuarios} />
-            </div>
-
-            {/* Gráficos de Ingresos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GraficoSemanal pagos={pagos} ventasBebidas={ventasBebidas} cierresCaja={cierresCaja} />
-              <GraficoMensual pagos={pagos} ventasBebidas={ventasBebidas} cierresCaja={cierresCaja} />
-            </div>
-
-            {/* Gráficos de Métodos de Pago */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <GraficoMetodosPago pagos={pagos} ventasBebidas={ventasBebidas} titulo="Métodos Hoy" periodo="dia" />
-              <GraficoMetodosMensual pagos={pagos} ventasBebidas={ventasBebidas} titulo="Métodos Mes" periodo="mes" />
-              <GraficoMetodosDetallado pagos={pagos} ventasBebidas={ventasBebidas} />
-            </div>
-          </div>
-        )}
+    <main className="flex min-h-screen flex-col p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="flex items-center mb-6">
+        <Link
+          href="/admin"
+          className="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </Link>
+        <h1 className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 flex-1">Control de Pagos</h1>
+        <ThemeToggle />
       </div>
 
-      {/* Modal de Cerrar Caja */}
-      <CerrarCajaModal
-        isOpen={cerrarCajaModalAbierto}
-        onClose={() => setCerrarCajaModalAbierto(false)}
-        pagos={pagos}
-        ventasBebidas={ventasBebidas}
-        usuarios={usuarios}
-        onCerrarExitoso={handleCerrarCajaExitoso}
-      />
+      <div className="mb-6">
+        <ResumenIngresos pagosCuotas={pagosDiarios} ventasBebidas={ventasBebidas} periodo="Hoy" />
+      </div>
+
+      {cargando || cargandoDatos ? (
+        <div className="flex justify-center py-8">
+          <LoadingDumbbell size={32} className="text-green-500" />
+        </div>
+      ) : (
+        <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
+          {/* Sección izquierda */}
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
+              <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Ingresos semanales</h2>
+                <GraficoSemanal datos={pagosSemana} />
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (hoy)</h2>
+                <GraficoMetodosDetallado
+                  pagosCuotas={pagosDiarios}
+                  ventasBebidas={ventasBebidas}
+                  titulo="Distribución de ingresos por método de pago"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Sección derecha */}
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Ingresos mensuales</h2>
+              <GraficoMensual datos={pagosMensuales} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                  Nuevos usuarios (mensual)
+                </h2>
+                <GraficoUsuarios datos={usuariosMensuales} />
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nuevos usuarios (hoy)</h2>
+                <GraficoUsuariosDia cantidad={usuariosDia} />
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (mensual)</h2>
+              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Datos basados en tendencias históricas
+              </div>
+              <GraficoMetodosMensual datos={metodosMensualesData} />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

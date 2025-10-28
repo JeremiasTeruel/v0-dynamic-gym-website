@@ -14,8 +14,6 @@ import ProximosVencimientos from "@/components/proximos-vencimientos"
 import CuotasVencidas from "@/components/cuotas-vencidas"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
-export const dynamic = "force-dynamic"
-
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
   const [foundUser, setFoundUser] = useState(null)
@@ -211,7 +209,7 @@ export default function Home() {
                   </div>
                   <div>
                     <span className="font-medium text-gray-700 dark:text-gray-300">Edad:</span>
-                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.edad || "-"}</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.edad} años</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700 dark:text-gray-300">Actividad:</span>

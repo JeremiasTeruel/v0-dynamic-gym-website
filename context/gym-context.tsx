@@ -221,8 +221,14 @@ export function GymProvider({ children }) {
         monto: montoPago,
         fecha: fechaActual,
         metodoPago: usuario.metodoPago,
-        montoEfectivo: montoEfectivo || 0,
-        montoMercadoPago: montoMercadoPago || 0,
+        montoEfectivo:
+          usuario.metodoPago === "Mixto" ? montoEfectivo || 0 : usuario.metodoPago === "Efectivo" ? montoPago : 0,
+        montoMercadoPago:
+          usuario.metodoPago === "Mixto"
+            ? montoMercadoPago || 0
+            : usuario.metodoPago === "Mercado Pago"
+              ? montoPago
+              : 0,
       })
     } catch (err) {
       console.error("Error al agregar usuario:", err)
@@ -270,8 +276,9 @@ export function GymProvider({ children }) {
           monto: montoPago,
           fecha: fechaActual,
           metodoPago: metodoPago,
-          montoEfectivo: montoEfectivo || 0,
-          montoMercadoPago: montoMercadoPago || 0,
+          montoEfectivo: metodoPago === "Mixto" ? montoEfectivo || 0 : metodoPago === "Efectivo" ? montoPago : 0,
+          montoMercadoPago:
+            metodoPago === "Mixto" ? montoMercadoPago || 0 : metodoPago === "Mercado Pago" ? montoPago : 0,
         })
       }
     } catch (err) {
