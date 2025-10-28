@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { DollarSign, ShoppingCart } from "lucide-react"
 import CerrarCajaModal from "@/components/cerrar-caja-modal"
 import Alert from "@/components/alert"
 import type { RegistroPago } from "@/context/gym-context"
+import { useGymContext } from "@/context/gym-context"
 
 interface VentaBebida {
   id: string
@@ -20,35 +21,17 @@ interface VentasDelDiaProps {
   pagos: RegistroPago[]
   ventasBebidas: VentaBebida[]
   onCerrarCaja?: () => Promise<void>
-  usuarios?: any[]
 }
 
-export default function VentasDelDia({
-  pagos = [],
-  ventasBebidas = [],
-  onCerrarCaja,
-  usuarios = [],
-}: VentasDelDiaProps) {
+export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarCaja }: VentasDelDiaProps) {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",
     visible: false,
     tipo: "success",
   })
-  const [cantidadNuevosUsuarios, setCantidadNuevosUsuarios] = useState(0)
 
-  useEffect(() => {
-    const hoy = new Date()
-    const primerMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
-    const ultimoMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
-
-    const nuevosUsuariosHoy = usuarios.filter((usuario) => {
-      const fechaInicio = new Date(usuario.fechaInicio)
-      return fechaInicio >= primerMomentoDia && fechaInicio <= ultimoMomentoDia
-    })
-
-    setCantidadNuevosUsuarios(nuevosUsuariosHoy.length)
-  }, [usuarios])
+  const { usuarios } = useGymContext()
 
   const totalPagos = useMemo(() => {
     return pagos.reduce((sum, pago) => sum + pago.monto, 0)
@@ -59,6 +42,14 @@ export default function VentasDelDia({
   }, [ventasBebidas])
 
   const totalDelDia = totalPagos + totalBebidas
+
+  const nuevosUsuariosHoy = useMemo(() => {
+    const hoy = new Date().toISOString().split("T")[0]
+    return usuarios.filter((usuario) => {
+      const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
+      return fechaInicio === hoy
+    }).length
+  }, [usuarios])
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
@@ -269,7 +260,7 @@ export default function VentasDelDia({
         pagosDia={pagos}
         ventasBebidas={ventasBebidas}
         totalDia={totalDelDia}
-        cantidadNuevosUsuarios={cantidadNuevosUsuarios}
+        nuevosUsuarios={nuevosUsuariosHoy}
       />
 
       {/* Alerta */}

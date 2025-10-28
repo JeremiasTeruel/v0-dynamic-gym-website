@@ -91,13 +91,14 @@ export default function VentaBebidasModal({ isOpen, onClose, bebidas, onVentaExi
         cantidad: pendingVenta.cantidad,
         metodoPago: pendingVenta.metodoPago,
         total: pendingVenta.total,
+        fecha: new Date().toISOString(),
         ...(pendingVenta.metodoPago === "Mixto" && {
           montoEfectivo: pendingVenta.montoEfectivo,
           montoMercadoPago: pendingVenta.montoMercadoPago,
         }),
       }
 
-      const response = await fetch("/api/bebidas", {
+      const response = await fetch("/api/ventas-bebidas", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

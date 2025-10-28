@@ -174,13 +174,12 @@ export default function PagarCuota() {
     try {
       setIsSubmitting(true)
 
+      // Actualizar el pago usando la función del contexto
       await actualizarPago(
         pendingPaymentData.dni,
         pendingPaymentData.newDueDate,
         pendingPaymentData.metodoPago,
         pendingPaymentData.monto,
-        pendingPaymentData.metodoPago === "Mixto" ? Number.parseFloat(formData.montoEfectivo) : undefined,
-        pendingPaymentData.metodoPago === "Mixto" ? Number.parseFloat(formData.montoMercadoPago) : undefined,
       )
 
       // Reproducir sonido de éxito si está habilitado

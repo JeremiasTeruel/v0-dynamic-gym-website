@@ -1,6 +1,6 @@
 "use client"
 
-import { Users } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useTheme } from "@/context/theme-context"
 
 interface GraficoUsuariosDiaProps {
@@ -11,41 +11,50 @@ export default function GraficoUsuariosDia({ cantidad }: GraficoUsuariosDiaProps
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
-  return (
-    <div className="h-64 flex flex-col items-center justify-center">
-      <div className="relative">
-        <div
-          className={`w-32 h-32 rounded-full flex items-center justify-center ${
-            cantidad > 0
-              ? "bg-gradient-to-br from-orange-400 to-orange-600 dark:from-orange-500 dark:to-orange-700"
-              : "bg-gray-200 dark:bg-gray-700"
-          } shadow-lg`}
-        >
-          <div className="text-center">
-            <p className="text-4xl font-bold text-white">{cantidad}</p>
-            <p className="text-xs text-white/90 uppercase tracking-wide">{cantidad === 1 ? "Usuario" : "Usuarios"}</p>
-          </div>
-        </div>
-        <div
-          className={`absolute -top-2 -right-2 w-12 h-12 rounded-full flex items-center justify-center ${
-            cantidad > 0 ? "bg-orange-500 dark:bg-orange-600" : "bg-gray-300 dark:bg-gray-600"
-          } shadow-md`}
-        >
-          <Users className="h-6 w-6 text-white" />
-        </div>
-      </div>
+  const datos = [
+    {
+      nombre: "Hoy",
+      usuarios: cantidad,
+    },
+  ]
 
-      <div className="mt-6 text-center">
-        <p className={`text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-          {cantidad === 0 ? "No hay nuevos usuarios hoy" : "Nuevos usuarios registrados hoy"}
-        </p>
-        <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-          {new Date().toLocaleDateString("es-ES", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+  return (
+    <div className="h-64">
+      {cantidad === 0 ? (
+        <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+          No se han registrado usuarios nuevos hoy.
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={datos} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#e5e7eb"} />
+            <XAxis
+              dataKey="nombre"
+              tick={{ fill: isDark ? "#d1d5db" : "#374151", fontSize: 12 }}
+              axisLine={{ stroke: isDark ? "#6b7280" : "#9ca3af" }}
+            />
+            <YAxis
+              tick={{ fill: isDark ? "#d1d5db" : "#374151", fontSize: 12 }}
+              axisLine={{ stroke: isDark ? "#6b7280" : "#9ca3af" }}
+              allowDecimals={false}
+            />
+            <Tooltip
+              formatter={(value) => [value, "Nuevos usuarios"]}
+              contentStyle={{
+                backgroundColor: isDark ? "#1f2937" : "#ffffff",
+                border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
+                borderRadius: "6px",
+                color: isDark ? "#f3f4f6" : "#111827",
+              }}
+            />
+            <Bar dataKey="usuarios" fill={isDark ? "#fb923c" : "#f97316"} radius={[8, 8, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+      <div className="text-center mt-4">
+        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{cantidad}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {cantidad === 1 ? "Usuario nuevo hoy" : "Usuarios nuevos hoy"}
         </p>
       </div>
     </div>

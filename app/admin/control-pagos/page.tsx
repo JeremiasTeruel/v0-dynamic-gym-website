@@ -24,7 +24,7 @@ export default function ControlPagos() {
   const [pagosSemana, setPagosSemana] = useState([])
   const [pagosMensuales, setPagosMensuales] = useState([])
   const [usuariosMensuales, setUsuariosMensuales] = useState([])
-  const [usuariosDia, setUsuariosDia] = useState(0)
+  const [usuariosHoy, setUsuariosHoy] = useState(0)
   const [metodosPago, setMetodosPago] = useState([])
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [metodosMensualesData, setMetodosMensualesData] = useState([])
@@ -35,15 +35,10 @@ export default function ControlPagos() {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
-      const primerMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
-      const ultimoMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
-
-      const nuevosUsuariosHoy = usuarios.filter((usuario) => {
-        const fechaInicio = new Date(usuario.fechaInicio)
-        return fechaInicio >= primerMomentoDia && fechaInicio <= ultimoMomentoDia
-      })
-
-      const cantidadNuevosUsuarios = nuevosUsuariosHoy.length
+      const usuariosNuevosHoy = usuarios.filter((usuario) => {
+        const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
+        return fechaInicio === fechaHoy
+      }).length
 
       // Calcular totales por método de pago (cuotas)
       const totalEfectivoCuotas = pagosDiarios
@@ -127,7 +122,7 @@ export default function ControlPagos() {
           totalBebidasMixtoMercadoPago: totalMixtoMercadoPagoBebidas,
           cantidadVentasBebidas: ventasBebidas.length,
           detalleVentasBebidas,
-          cantidadNuevosUsuarios,
+          nuevosUsuarios: usuariosNuevosHoy,
         }),
       })
 
@@ -137,6 +132,7 @@ export default function ControlPagos() {
       }
 
       console.log("Caja cerrada exitosamente")
+
       await cargarDatos()
     } catch (error) {
       console.error("Error al cerrar caja:", error)
@@ -151,6 +147,12 @@ export default function ControlPagos() {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
+      const usuariosNuevosHoy = usuarios.filter((usuario) => {
+        const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
+        return fechaInicio === fechaHoy
+      }).length
+      setUsuariosHoy(usuariosNuevosHoy)
+
       // Cargar pagos del día
       const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
       setPagosDiarios(pagosHoy)
@@ -162,16 +164,6 @@ export default function ControlPagos() {
         ventasBebidasHoy = await ventasBebidasResponse.json()
       }
       setVentasBebidas(ventasBebidasHoy)
-
-      const primerMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
-      const ultimoMomentoDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59)
-
-      const nuevosUsuariosHoy = usuarios.filter((usuario) => {
-        const fechaInicio = new Date(usuario.fechaInicio)
-        return fechaInicio >= primerMomentoDia && fechaInicio <= ultimoMomentoDia
-      })
-
-      setUsuariosDia(nuevosUsuariosHoy.length)
 
       // Preparar datos para el gráfico semanal (solo días hasta hoy)
       const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
@@ -368,7 +360,7 @@ export default function ControlPagos() {
 
   useEffect(() => {
     cargarDatos()
-  }, [obtenerPagosPorFecha, obtenerPagosPorRango])
+  }, [obtenerPagosPorFecha, obtenerPagosPorRango, usuarios])
 
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -434,7 +426,7 @@ export default function ControlPagos() {
 
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nuevos usuarios (hoy)</h2>
-                <GraficoUsuariosDia cantidad={usuariosDia} />
+                <GraficoUsuariosDia cantidad={usuariosHoy} />
               </div>
             </div>
 

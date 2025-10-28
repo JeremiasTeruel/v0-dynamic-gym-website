@@ -141,7 +141,7 @@ export default function NuevoUsuario() {
       setIsSubmitting(true)
 
       // Crear el nuevo usuario con la fecha de vencimiento calculada
-      const { montoPago, montoEfectivo, montoMercadoPago, ...datosUsuario } = pendingFormData.formData
+      const { montoPago, ...datosUsuario } = pendingFormData.formData
       const nuevoUsuario = {
         ...datosUsuario,
         edad: "", // Campo vacío por defecto
@@ -151,16 +151,8 @@ export default function NuevoUsuario() {
 
       console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
 
-      await agregarNuevoUsuario(
-        nuevoUsuario,
-        pendingFormData.monto,
-        pendingFormData.formData.metodoPago === "Mixto"
-          ? Number.parseFloat(pendingFormData.formData.montoEfectivo)
-          : undefined,
-        pendingFormData.formData.metodoPago === "Mixto"
-          ? Number.parseFloat(pendingFormData.formData.montoMercadoPago)
-          : undefined,
-      )
+      // Agregar el usuario usando la función del contexto
+      await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto)
 
       // Reproducir sonido de éxito si está habilitado
       if (getSoundEnabled()) {

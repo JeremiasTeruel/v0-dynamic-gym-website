@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       cantidadPagos,
       cantidadVentasBebidas,
       detalleVentasBebidas,
-      cantidadNuevosUsuarios,
+      nuevosUsuarios,
     } = await request.json()
 
     console.log("API: Datos recibidos para cerrar caja:", {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       totalMixtoEfectivo,
       totalMixtoMercadoPago,
       totalGeneral,
-      cantidadNuevosUsuarios,
+      nuevosUsuarios,
     })
 
     if (!fecha || totalGeneral === undefined) {
@@ -54,35 +54,25 @@ export async function POST(request: Request) {
 
     const cierreParaInsertar = {
       fecha: new Date(fecha),
-      // Totales generales por método de pago
       totalEfectivo: Number.parseFloat(totalEfectivo) || 0,
       totalMercadoPago: Number.parseFloat(totalMercadoPago) || 0,
       totalMixtoEfectivo: Number.parseFloat(totalMixtoEfectivo) || 0,
       totalMixtoMercadoPago: Number.parseFloat(totalMixtoMercadoPago) || 0,
       totalGeneral: Number.parseFloat(totalGeneral),
-
-      // Totales de cuotas
       totalCuotas: Number.parseFloat(totalCuotas) || 0,
       totalCuotasEfectivo: Number.parseFloat(totalCuotasEfectivo) || 0,
       totalCuotasMercadoPago: Number.parseFloat(totalCuotasMercadoPago) || 0,
       totalCuotasMixtoEfectivo: Number.parseFloat(totalCuotasMixtoEfectivo) || 0,
       totalCuotasMixtoMercadoPago: Number.parseFloat(totalCuotasMixtoMercadoPago) || 0,
       cantidadPagos: Number.parseInt(cantidadPagos) || 0,
-
-      // Totales de bebidas
       totalBebidas: Number.parseFloat(totalBebidas) || 0,
       totalBebidasEfectivo: Number.parseFloat(totalBebidasEfectivo) || 0,
       totalBebidasMercadoPago: Number.parseFloat(totalBebidasMercadoPago) || 0,
       totalBebidasMixtoEfectivo: Number.parseFloat(totalBebidasMixtoEfectivo) || 0,
       totalBebidasMixtoMercadoPago: Number.parseFloat(totalBebidasMixtoMercadoPago) || 0,
       cantidadVentasBebidas: Number.parseInt(cantidadVentasBebidas) || 0,
-
-      // Detalle de ventas de bebidas
       detalleVentasBebidas: detalleVentasBebidas || [],
-
-      cantidadNuevosUsuarios: Number.parseInt(cantidadNuevosUsuarios) || 0,
-
-      // Metadatos
+      nuevosUsuarios: Number.parseInt(nuevosUsuarios) || 0,
       fechaCierre: new Date(),
     }
 

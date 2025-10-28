@@ -26,7 +26,7 @@ interface CerrarCajaModalProps {
   pagosDia: RegistroPago[]
   ventasBebidas?: VentaBebida[]
   totalDia: number
-  cantidadNuevosUsuarios?: number
+  nuevosUsuarios?: number
 }
 
 export default function CerrarCajaModal({
@@ -36,7 +36,7 @@ export default function CerrarCajaModal({
   pagosDia,
   ventasBebidas = [],
   totalDia,
-  cantidadNuevosUsuarios = 0,
+  nuevosUsuarios = 0,
 }: CerrarCajaModalProps) {
   const [isClosing, setIsClosing] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
@@ -174,6 +174,27 @@ export default function CerrarCajaModal({
             <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose de ingresos</h3>
 
+              {/* Nuevos Usuarios */}
+              {nuevosUsuarios > 0 && (
+                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Users className="h-6 w-6 text-orange-600 dark:text-orange-400 mr-2" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Nuevos Usuarios</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Registrados hoy</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{nuevosUsuarios}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {nuevosUsuarios === 1 ? "usuario" : "usuarios"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Cuotas */}
               {totalCuotas > 0 && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
@@ -195,13 +216,13 @@ export default function CerrarCajaModal({
                   {/* Desglose por método de pago de cuotas */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💵 Efectivo:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalEfectivoCuotas)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💳 Mercado Pago:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalMercadoPagoCuotas)}
                       </span>
@@ -209,13 +230,13 @@ export default function CerrarCajaModal({
                     {(totalMixtoEfectivoCuotas > 0 || totalMixtoMercadoPagoCuotas > 0) && (
                       <>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Mixto (Efec):</span>
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (Efec):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoEfectivoCuotas)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Mixto (MP):</span>
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (MP):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoMercadoPagoCuotas)}
                           </span>
@@ -249,13 +270,13 @@ export default function CerrarCajaModal({
                   {/* Desglose por método de pago de bebidas */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💵 Efectivo:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalEfectivoBebidas)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                      <span className="text-gray-600 dark:text-gray-400">💳 Mercado Pago:</span>
                       <span className="font-medium text-gray-900 dark:text-gray-100">
                         {formatMonto(totalMercadoPagoBebidas)}
                       </span>
@@ -263,41 +284,19 @@ export default function CerrarCajaModal({
                     {(totalMixtoEfectivoBebidas > 0 || totalMixtoMercadoPagoBebidas > 0) && (
                       <>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Mixto (Efec):</span>
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (Efec):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoEfectivoBebidas)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Mixto (MP):</span>
+                          <span className="text-gray-600 dark:text-gray-400">🔀 Mixto (MP):</span>
                           <span className="font-medium text-gray-900 dark:text-gray-100">
                             {formatMonto(totalMixtoMercadoPagoBebidas)}
                           </span>
                         </div>
                       </>
                     )}
-                  </div>
-                </div>
-              )}
-
-              {cantidadNuevosUsuarios > 0 && (
-                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Users className="h-6 w-6 text-orange-600 dark:text-orange-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Nuevos Usuarios</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Registrados hoy</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
-                        {cantidadNuevosUsuarios}
-                      </p>
-                      <p className="text-xs text-orange-600 dark:text-orange-400">
-                        {cantidadNuevosUsuarios === 1 ? "usuario" : "usuarios"}
-                      </p>
-                    </div>
                   </div>
                 </div>
               )}
@@ -365,7 +364,7 @@ export default function CerrarCajaModal({
             {/* Advertencia */}
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
               <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                <strong>Atención:</strong> Al cerrar la caja, estos ingresos se registrarán definitivamente en los
+                <strong>⚠️ Atención:</strong> Al cerrar la caja, estos ingresos se registrarán definitivamente en los
                 reportes semanales y mensuales. Esta acción no se puede deshacer.
               </p>
             </div>
