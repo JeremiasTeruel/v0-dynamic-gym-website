@@ -38,6 +38,24 @@ export default function ResumenIngresos({ pagosCuotas, ventasBebidas, periodo }:
     return total > 0 ? Math.round((parte / total) * 100) : 0
   }
 
+  if (totalGeneral === 0 && pagosCuotas.length === 0 && ventasBebidas.length === 0) {
+    return (
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-8 border border-gray-200 dark:border-gray-600">
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <DollarSign className="h-16 w-16 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No hay ingresos registrados {periodo.toLowerCase()}
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Los pagos de cuotas y ventas de bebidas aparecerán aquí cuando se registren.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
       <div className="flex items-center justify-between mb-4">

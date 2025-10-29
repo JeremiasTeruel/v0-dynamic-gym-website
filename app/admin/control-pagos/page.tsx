@@ -28,11 +28,22 @@ export default function ControlPagos() {
   const [metodosMensualesData, setMetodosMensualesData] = useState([])
   const [ventasBebidas, setVentasBebidas] = useState([])
 
+  useEffect(() => {
+    const hoy = new Date()
+    const fechaHoy = hoy.toISOString().split("T")[0]
+    console.log("[v0] Fecha actual para control de pagos:", fechaHoy)
+    console.log("[v0] Fecha completa:", hoy.toLocaleString("es-AR"))
+  }, [])
+
   // Función para cerrar caja
   const cerrarCaja = async () => {
     try {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
+
+      console.log("[v0] Cerrando caja para fecha:", fechaHoy)
+      console.log("[v0] Pagos diarios:", pagosDiarios.length)
+      console.log("[v0] Ventas bebidas:", ventasBebidas.length)
 
       // Calcular totales por método de pago (cuotas)
       const totalEfectivoCuotas = pagosDiarios
@@ -104,12 +115,12 @@ export default function ControlPagos() {
         throw new Error(errorData.error || "Error al cerrar caja")
       }
 
-      console.log("Caja cerrada exitosamente")
+      console.log("[v0] Caja cerrada exitosamente")
 
       // Recargar datos para actualizar los gráficos
       await cargarDatos()
     } catch (error) {
-      console.error("Error al cerrar caja:", error)
+      console.error("[v0] Error al cerrar caja:", error)
       throw error
     }
   }
@@ -123,8 +134,11 @@ export default function ControlPagos() {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
+      console.log("[v0] Cargando datos para fecha:", fechaHoy)
+
       // Cargar pagos del día
       const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
+      console.log("[v0] Pagos del día cargados:", pagosHoy.length)
       setPagosDiarios(pagosHoy)
 
       // Cargar ventas de bebidas del día
@@ -132,6 +146,9 @@ export default function ControlPagos() {
       let ventasBebidasHoy = []
       if (ventasBebidasResponse.ok) {
         ventasBebidasHoy = await ventasBebidasResponse.json()
+        console.log("[v0] Ventas de bebidas del día cargadas:", ventasBebidasHoy.length)
+      } else {
+        console.log("[v0] No se pudieron cargar ventas de bebidas:", ventasBebidasResponse.status)
       }
       setVentasBebidas(ventasBebidasHoy)
 
@@ -321,7 +338,7 @@ export default function ControlPagos() {
 
       setMetodosMensualesData(metodosMensualesData)
     } catch (error) {
-      console.error("Error al cargar datos:", error)
+      console.error("[v0] Error al cargar datos:", error)
     } finally {
       setCargandoDatos(false)
     }
