@@ -24,6 +24,7 @@ async function inicializarBaseDeDatos() {
           ...usuario,
           // Eliminar el id para que MongoDB genere uno nuevo
           id: undefined,
+          fechaCreacion: new Date(),
         })),
       )
       console.log("Base de datos inicializada con datos de ejemplo")
@@ -100,14 +101,20 @@ export async function POST(request: Request) {
     // Asegurarse de que no haya un campo 'id' que pueda causar conflictos con '_id' de MongoDB
     const { id, ...usuarioSinId } = usuario
 
+    const usuarioConFecha = {
+      ...usuarioSinId,
+      fechaCreacion: new Date(),
+    }
+
     // Insertar el nuevo usuario
-    const resultado = await collection.insertOne(usuarioSinId)
+    const resultado = await collection.insertOne(usuarioConFecha)
 
     if (resultado.acknowledged) {
       // Devolver el usuario con su nuevo ID
       const nuevoUsuario = {
-        ...usuarioSinId,
+        ...usuarioConFecha,
         id: resultado.insertedId.toString(),
+        fechaCreacion: usuarioConFecha.fechaCreacion.toISOString(),
       }
       console.log("API: Usuario creado exitosamente:", nuevoUsuario)
       return NextResponse.json(nuevoUsuario)

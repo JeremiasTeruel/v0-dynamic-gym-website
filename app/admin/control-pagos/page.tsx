@@ -139,6 +139,7 @@ export default function ControlPagos() {
       // Cargar pagos del día
       const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
       console.log("[v0] Pagos del día cargados:", pagosHoy.length)
+      console.log("[v0] Detalle de pagos del día:", pagosHoy)
       setPagosDiarios(pagosHoy)
 
       // Cargar ventas de bebidas del día
@@ -147,23 +148,37 @@ export default function ControlPagos() {
       if (ventasBebidasResponse.ok) {
         ventasBebidasHoy = await ventasBebidasResponse.json()
         console.log("[v0] Ventas de bebidas del día cargadas:", ventasBebidasHoy.length)
+        console.log("[v0] Detalle de ventas del día:", ventasBebidasHoy)
       } else {
         console.log("[v0] No se pudieron cargar ventas de bebidas:", ventasBebidasResponse.status)
       }
       setVentasBebidas(ventasBebidasHoy)
 
-      // Preparar datos para el gráfico de métodos de pago del día (combinando cuotas y bebidas)
       const efectivoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Efectivo").length
       const mercadoPagoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
+      const mixtoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Mixto").length
+
       const efectivoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Efectivo").length
       const mercadoPagoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Mercado Pago").length
+      const mixtoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Mixto").length
 
       const totalEfectivo = efectivoCuotas + efectivoBebidas
       const totalMercadoPago = mercadoPagoCuotas + mercadoPagoBebidas
+      const totalMixto = mixtoCuotas + mixtoBebidas
+
+      console.log(
+        "[v0] Métodos de pago del día - Efectivo:",
+        totalEfectivo,
+        "Mercado Pago:",
+        totalMercadoPago,
+        "Mixto:",
+        totalMixto,
+      )
 
       setMetodosPago([
         { name: "Efectivo", value: totalEfectivo || 1, fill: "#4ade80" },
         { name: "Mercado Pago", value: totalMercadoPago || 1, fill: "#3b82f6" },
+        { name: "Mixto", value: totalMixto || 1, fill: "#a78bfa" },
       ])
 
       // Preparar datos para el gráfico semanal (incluyendo cuotas y bebidas)
@@ -297,11 +312,37 @@ export default function ControlPagos() {
 
       setPagosMensuales(pagosMensualesData)
 
-      // Preparar datos para el gráfico de usuarios mensuales
-      const usuariosMensualesData = meses.map((mes) => ({
-        mes,
-        usuarios: 0, // Sin datos reales por ahora
-      }))
+      const usuariosMensualesData = meses.map((mes, index) => {
+        // Calcular el mes (0 = enero, 1 = febrero, etc.)
+        const mesActual = hoy.getMonth()
+        let mesIndex = (mesActual - 5 + index) % 12
+        if (mesIndex < 0) mesIndex += 12
+
+        // Calcular el año correcto
+        let anio = hoy.getFullYear()
+        if (mesActual - 5 + index < 0) {
+          anio -= 1
+        }
+
+        // Calcular el primer y último día del mes
+        const primerDia = new Date(anio, mesIndex, 1)
+        const ultimoDia = new Date(anio, mesIndex + 1, 0)
+
+        // Contar usuarios creados en este mes
+        const usuariosDelMes = usuarios.filter((usuario) => {
+          if (!usuario.fechaCreacion) return false
+
+          const fechaCreacion = new Date(usuario.fechaCreacion)
+          return fechaCreacion >= primerDia && fechaCreacion <= ultimoDia
+        })
+
+        console.log(`[v0] Usuarios creados en ${mes} ${anio}:`, usuariosDelMes.length)
+
+        return {
+          mes,
+          usuarios: usuariosDelMes.length,
+        }
+      })
 
       setUsuariosMensuales(usuariosMensualesData)
 
@@ -346,7 +387,7 @@ export default function ControlPagos() {
 
   useEffect(() => {
     cargarDatos()
-  }, [obtenerPagosPorFecha, obtenerPagosPorRango])
+  }, [obtenerPagosPorFecha, obtenerPagosPorRango, usuarios])
 
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
