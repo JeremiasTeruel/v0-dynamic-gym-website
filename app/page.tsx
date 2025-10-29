@@ -4,12 +4,10 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Settings, ShoppingCart, Volume2, VolumeX } from "lucide-react"
+import { CheckCircle, XCircle, Settings, Volume2, VolumeX } from "lucide-react"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
-import VentaBebidasModal from "@/components/venta-bebidas-modal"
-import { useMobile } from "@/hooks/use-mobile"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 export default function Home() {
@@ -17,19 +15,15 @@ export default function Home() {
   const [foundUser, setFoundUser] = useState(null)
   const [showAlert, setShowAlert] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
-  const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
-  const isMobile = useMobile()
   const { getSoundEnabled, setSoundEnabled: saveSoundEnabled } = useSoundPreferences()
 
-  // Cargar preferencia de sonido desde localStorage
   useEffect(() => {
     setSoundEnabled(getSoundEnabled())
   }, [])
 
-  // Guardar preferencia de sonido
   const toggleSound = () => {
     const newSoundEnabled = !soundEnabled
     setSoundEnabled(newSoundEnabled)
@@ -42,29 +36,23 @@ export default function Home() {
     setIsSearching(true)
 
     try {
-      // Reproducir sonido de búsqueda si está habilitado
       if (soundEnabled) {
         await soundGenerator.playSearchSound()
       }
 
-      // Buscar usuario por DNI
       const usuario = await buscarUsuario(searchDni.trim())
 
       if (usuario) {
         setFoundUser(usuario)
 
-        // Reproducir sonido según el estado de la cuota
         if (soundEnabled) {
           if (isPaymentDue(usuario.fechaVencimiento)) {
-            // Cuota vencida - sonido de alarma
             await soundGenerator.playAlarmSound()
           } else {
-            // Cuota al día - sonido de éxito
             await soundGenerator.playSuccessSound()
           }
         }
 
-        // Configurar un temporizador para limpiar la pantalla después de 5 segundos
         setTimeout(() => {
           setFoundUser(null)
           setSearchDni("")
@@ -73,7 +61,6 @@ export default function Home() {
         setFoundUser(null)
         setShowAlert(true)
 
-        // Reproducir sonido de alarma para usuario no encontrado
         if (soundEnabled) {
           await soundGenerator.playAlarmSound()
         }
@@ -81,7 +68,6 @@ export default function Home() {
     } catch (error) {
       console.error("Error al buscar usuario:", error)
 
-      // Reproducir sonido de error
       if (soundEnabled) {
         await soundGenerator.playAlarmSound()
       }
@@ -90,7 +76,6 @@ export default function Home() {
     }
   }
 
-  // Función para manejar la tecla Enter
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       e.preventDefault()
@@ -116,11 +101,13 @@ export default function Home() {
   }, [searchDni])
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-yellow-600 dark:text-yellow-400">High Performance Gym</h1>
-        <div className="flex items-center space-x-3">
-          {/* Control de sonido */}
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="w-full max-w-4xl flex justify-between items-center mb-12">
+        <div className="flex-1" />
+        <h1 className="text-4xl md:text-5xl font-bold text-yellow-600 dark:text-yellow-400 text-center flex-1">
+          High Performance Gym
+        </h1>
+        <div className="flex items-center space-x-3 flex-1 justify-end">
           <button
             onClick={toggleSound}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -139,12 +126,12 @@ export default function Home() {
       </div>
 
       {cargando ? (
-        <div className="w-full max-w-6xl flex justify-center py-8">
+        <div className="w-full max-w-4xl flex justify-center py-8">
           <LoadingDumbbell size={32} className="text-yellow-500 dark:text-yellow-400" />
         </div>
       ) : (
-        <div className="w-full max-w-6xl">
-          <div className="max-w-md mx-auto mb-8">
+        <div className="w-full max-w-4xl">
+          <div className="max-w-2xl mx-auto mb-8">
             <div className="flex mb-6">
               <input
                 type="text"
@@ -152,14 +139,13 @@ export default function Home() {
                 value={searchDni}
                 onChange={(e) => setSearchDni(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                className="flex-1 p-5 text-lg border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isSearching}
-                style={{ fontSize: "16px" }}
                 autoFocus
               />
               <button
                 onClick={handleSearch}
-                className={`bg-yellow-600 dark:bg-yellow-700 text-white px-4 py-2 rounded-r-md transition-all ${
+                className={`bg-yellow-600 dark:bg-yellow-700 text-white px-6 py-5 text-lg rounded-r-md transition-all ${
                   isSearching
                     ? "opacity-70 cursor-not-allowed"
                     : "active:scale-95 hover:bg-yellow-700 dark:hover:bg-yellow-600"
@@ -170,9 +156,8 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Indicador visual de que Enter funciona y estado del sonido */}
             <div className="text-center mb-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 💡 Presiona{" "}
                 <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
                   Enter
@@ -187,77 +172,48 @@ export default function Home() {
 
             {foundUser && (
               <div
-                className={`border rounded-md p-4 mb-6 shadow-sm transition-all duration-300 ${
+                className={`border rounded-lg p-8 mb-6 shadow-lg transition-all duration-300 ${
                   isPaymentDue(foundUser.fechaVencimiento)
                     ? "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 animate-pulse"
                     : "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20"
                 }`}
               >
-                <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                <h2 className="text-3xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
                   {foundUser.nombreApellido}
                 </h2>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-lg">
                   <div>
                     <span className="font-medium text-gray-700 dark:text-gray-300">DNI:</span>
-                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.dni}</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-2">{foundUser.dni}</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700 dark:text-gray-300">Actividad:</span>
-                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.actividad || "Normal"}</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-2">{foundUser.actividad || "Normal"}</span>
                   </div>
                   <div className="col-span-2">
                     <span className="font-medium text-gray-700 dark:text-gray-300">Inicio:</span>
-                    <span className="text-gray-900 dark:text-gray-100 ml-1">{formatDate(foundUser.fechaInicio)}</span>
+                    <span className="text-gray-900 dark:text-gray-100 ml-2">{formatDate(foundUser.fechaInicio)}</span>
                   </div>
                 </div>
-                <div className="flex items-center mt-3">
-                  <span className="font-medium mr-2 text-gray-700 dark:text-gray-300">Estado de cuota:</span>
+                <div className="flex items-center mt-6">
+                  <span className="font-medium mr-3 text-gray-700 dark:text-gray-300 text-lg">Estado de cuota:</span>
                   {isPaymentDue(foundUser.fechaVencimiento) ? (
-                    <div className="flex items-center text-red-600 dark:text-red-400 font-semibold">
-                      <XCircle className="h-5 w-5 mr-1" />
+                    <div className="flex items-center text-red-600 dark:text-red-400 font-semibold text-lg">
+                      <XCircle className="h-6 w-6 mr-2" />
                       <span>⚠️ VENCIDA el {formatDate(foundUser.fechaVencimiento)}</span>
                     </div>
                   ) : (
-                    <div className="flex items-center text-green-600 dark:text-green-400 font-semibold">
-                      <CheckCircle className="h-5 w-5 mr-1" />
+                    <div className="flex items-center text-green-600 dark:text-green-400 font-semibold text-lg">
+                      <CheckCircle className="h-6 w-6 mr-2" />
                       <span>✅ AL DÍA hasta {formatDate(foundUser.fechaVencimiento)}</span>
                     </div>
                   )}
                 </div>
               </div>
             )}
-
-            {!isMobile && (
-              <div className="flex flex-col space-y-3 mb-8">
-                <Link
-                  href="/nuevo-usuario"
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 text-center font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700"
-                >
-                  ¿Nuevo en el gimnasio?
-                </Link>
-
-                <Link
-                  href="/pagar-cuota"
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 text-center font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700"
-                >
-                  Pagar cuota mensual
-                </Link>
-
-                <button
-                  onClick={() => setShowVentaBebidasModal(true)}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 text-center font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700 flex items-center justify-center"
-                >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  Venta de bebidas
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
-
-      {/* Modal de Venta de Bebidas */}
-      <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
 
       <Alert
         message="Usuario no encontrado."

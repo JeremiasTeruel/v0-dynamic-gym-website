@@ -3,12 +3,27 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Trash2, RefreshCw, Edit, Search, X, BarChart, Package, FileText } from "lucide-react"
+import {
+  CheckCircle,
+  XCircle,
+  Trash2,
+  RefreshCw,
+  Edit,
+  Search,
+  X,
+  BarChart,
+  Package,
+  FileText,
+  UserPlus,
+  CreditCard,
+  ShoppingCart,
+} from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
 import PinModal from "@/components/pin-modal"
 import StockBebidasModal from "@/components/stock-bebidas-modal"
 import ReporteCierreCaja from "@/components/reporte-cierre-caja"
+import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
@@ -34,10 +49,10 @@ export default function Admin() {
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<Usuario[]>([])
   const [usuariosOrdenados, setUsuariosOrdenados] = useState<Usuario[]>([])
   const [reporteModalAbierto, setReporteModalAbierto] = useState(false)
+  const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
-  // Ordenar usuarios alfabéticamente
   const ordenarUsuarios = (listaUsuarios: Usuario[]): Usuario[] => {
     return [...listaUsuarios].sort((a, b) => {
       const nombreA = a.nombreApellido
@@ -52,13 +67,11 @@ export default function Admin() {
     })
   }
 
-  // Ordenar la lista completa de usuarios cuando cambia
   useEffect(() => {
     const ordenados = ordenarUsuarios(usuarios)
     setUsuariosOrdenados(ordenados)
   }, [usuarios])
 
-  // Filtrar y ordenar usuarios cuando cambia la búsqueda o la lista ordenada
   useEffect(() => {
     if (!busqueda.trim()) {
       setUsuariosFiltrados(usuariosOrdenados)
@@ -97,7 +110,6 @@ export default function Admin() {
     if (!usuario) return
 
     if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
-      // Configurar acción de PIN para eliminar
       setPinAction({ type: "delete", data: { id, nombre: usuario.nombreApellido } })
       setShowPinModal(true)
     }
@@ -112,7 +124,6 @@ export default function Admin() {
     try {
       await actualizarUsuario(usuarioActualizado.id, usuarioActualizado)
 
-      // Reproducir sonido de éxito si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playSuccessSound()
       }
@@ -125,7 +136,6 @@ export default function Admin() {
     } catch (error) {
       console.error("Error al actualizar usuario:", error)
 
-      // Reproducir sonido de error si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playAlarmSound()
       }
@@ -143,7 +153,6 @@ export default function Admin() {
       setRecargando(true)
       await recargarUsuarios()
 
-      // Reproducir sonido de éxito si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playSuccessSound()
       }
@@ -156,7 +165,6 @@ export default function Admin() {
     } catch (error) {
       console.error("Error al recargar usuarios:", error)
 
-      // Reproducir sonido de error si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playAlarmSound()
       }
@@ -179,7 +187,6 @@ export default function Admin() {
         setEliminando(pinAction.data.id)
         await eliminarUsuario(pinAction.data.id)
 
-        // Reproducir sonido de eliminación si está habilitado
         if (getSoundEnabled()) {
           await soundGenerator.playDeleteSound()
         }
@@ -192,7 +199,6 @@ export default function Admin() {
       } catch (error) {
         console.error("Error al eliminar usuario:", error)
 
-        // Reproducir sonido de error si está habilitado
         if (getSoundEnabled()) {
           await soundGenerator.playAlarmSound()
         }
@@ -229,7 +235,32 @@ export default function Admin() {
       </div>
 
       <div className="w-full max-w-6xl">
-        {/* Barra de navegación de administración */}
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link
+            href="/nuevo-usuario"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+          >
+            <UserPlus className="h-5 w-5" />
+            Nuevo Usuario
+          </Link>
+
+          <Link
+            href="/pagar-cuota"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+          >
+            <CreditCard className="h-5 w-5" />
+            Pagar Cuota
+          </Link>
+
+          <button
+            onClick={() => setShowVentaBebidasModal(true)}
+            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            Venta de Bebidas
+          </button>
+        </div>
+
         <div className="mb-8 flex flex-wrap gap-4 justify-center">
           <Link
             href="/admin/control-pagos"
@@ -263,7 +294,6 @@ export default function Admin() {
           </Link>
         </div>
 
-        {/* Barra de búsqueda optimizada para móviles */}
         <div className="sticky top-0 bg-white dark:bg-gray-800 z-10 p-2 md:p-0 md:static md:bg-transparent mb-4 rounded-lg shadow-sm md:shadow-none">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -275,7 +305,7 @@ export default function Admin() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              style={{ fontSize: "16px" }} // Evita zoom en iOS
+              style={{ fontSize: "16px" }}
             />
             {busqueda && (
               <button
@@ -339,7 +369,6 @@ export default function Admin() {
               </div>
             ) : (
               <>
-                {/* Vista de tarjetas para móviles */}
                 {isMobile && (
                   <div className="md:hidden">
                     {usuariosFiltrados.map((usuario) => (
@@ -356,7 +385,6 @@ export default function Admin() {
                   </div>
                 )}
 
-                {/* Tabla para escritorio */}
                 {!isMobile && (
                   <div className="border dark:border-gray-600 rounded-md overflow-hidden overflow-x-auto">
                     <table className="w-full">
@@ -449,7 +477,6 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Modal de edición */}
       <EditarUsuarioModal
         usuario={usuarioEditando}
         isOpen={modalAbierto}
@@ -460,13 +487,12 @@ export default function Admin() {
         onSave={handleGuardarEdicion}
       />
 
-      {/* Modal de Stock de Bebidas */}
       <StockBebidasModal isOpen={stockModalAbierto} onClose={() => setStockModalAbierto(false)} />
 
-      {/* Modal de Reportes de Cierre de Caja */}
       <ReporteCierreCaja isOpen={reporteModalAbierto} onClose={() => setReporteModalAbierto(false)} />
 
-      {/* Modal de PIN */}
+      <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
+
       <PinModal
         isOpen={showPinModal}
         onClose={handlePinClose}
@@ -479,7 +505,6 @@ export default function Admin() {
         }
       />
 
-      {/* Alerta */}
       <Alert
         message={alertaInfo.mensaje}
         isOpen={alertaInfo.visible}
