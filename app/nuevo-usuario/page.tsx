@@ -12,12 +12,13 @@ import ThemeToggle from "@/components/theme-toggle"
 import PinModal from "@/components/pin-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
-// Función para calcular el monto según actividad y método de pago
 const calcularMontoPorActividad = (actividad: string, metodoPago: string): string => {
   if (actividad === "Normal") {
     return metodoPago === "Efectivo" ? "32000" : "40000"
   } else if (actividad === "Familiar") {
     return metodoPago === "Efectivo" ? "30000" : "38000"
+  } else if (actividad === "Dia") {
+    return "5000"
   } else {
     // BJJ, MMA, Boxeo, Convenio
     return metodoPago === "Efectivo" ? "28000" : "36000"
@@ -26,7 +27,7 @@ const calcularMontoPorActividad = (actividad: string, metodoPago: string): strin
 
 export default function NuevoUsuario() {
   const router = useRouter()
-  const { agregarNuevoUsuario, error: contextError } = useGymContext()
+  const { agregarNuevoUsuario, registrarPago, error: contextError } = useGymContext()
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState("Listo! Ya sos parte del gimnasio.")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -42,7 +43,7 @@ export default function NuevoUsuario() {
     fechaInicio: "",
     metodoPago: "Efectivo",
     actividad: "Normal",
-    montoPago: "32000", // Valor predeterminado para Normal + Efectivo
+    montoPago: "32000",
     montoEfectivo: "0",
     montoMercadoPago: "0",
   })
@@ -69,7 +70,6 @@ export default function NuevoUsuario() {
     setFormData((prev) => {
       const newData = { ...prev, [name]: value }
 
-      // Calcular el total de montos mixtos
       const efectivo = Number.parseFloat(newData.montoEfectivo) || 0
       const mercadoPago = Number.parseFloat(newData.montoMercadoPago) || 0
       const totalMixto = efectivo + mercadoPago
@@ -96,14 +96,12 @@ export default function NuevoUsuario() {
       return
     }
 
-    // Validar que el monto sea un número positivo
     const monto = Number.parseFloat(formData.montoPago)
     if (isNaN(monto) || monto <= 0) {
       setError("El monto debe ser un número positivo")
       return
     }
 
-    // Validar montos mixtos si el método de pago es Mixto
     if (formData.metodoPago === "Mixto") {
       const efectivo = Number.parseFloat(formData.montoEfectivo) || 0
       const mercadoPago = Number.parseFloat(formData.montoMercadoPago) || 0
@@ -119,7 +117,6 @@ export default function NuevoUsuario() {
       }
     }
 
-    // Guardar los datos del formulario y mostrar modal de PIN
     setPendingFormData({ formData, monto })
     setShowPinModal(true)
   }
@@ -130,37 +127,59 @@ export default function NuevoUsuario() {
     try {
       setIsSubmitting(true)
 
-      // Crear el nuevo usuario con la fecha de vencimiento calculada
-      const { montoPago, ...datosUsuario } = pendingFormData.formData
-      const nuevoUsuario = {
-        ...datosUsuario,
-        edad: "", // Campo vacío por defecto
-        telefono: "", // Campo vacío por defecto
-        fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
+      // Si la actividad es "Dia", solo registrar el pago sin crear usuario
+      if (pendingFormData.formData.actividad === "Dia") {
+        console.log("Registrando pago de día sin crear usuario")
+
+        // Registrar solo el pago
+        await registrarPago({
+          userNombre: pendingFormData.formData.nombreApellido,
+          userDni: pendingFormData.formData.dni,
+          monto: pendingFormData.monto,
+          fecha: pendingFormData.formData.fechaInicio,
+          metodoPago: pendingFormData.formData.metodoPago,
+        })
+
+        if (getSoundEnabled()) {
+          await soundGenerator.playOperationCompleteSound()
+        }
+
+        setAlertMessage("Pago de día registrado exitosamente!")
+        setShowAlert(true)
+
+        console.log("Pago de día registrado:", {
+          nombre: pendingFormData.formData.nombreApellido,
+          dni: pendingFormData.formData.dni,
+          monto: pendingFormData.monto,
+        })
+      } else {
+        // Para otras actividades, crear el usuario normalmente
+        const { montoPago, ...datosUsuario } = pendingFormData.formData
+        const nuevoUsuario = {
+          ...datosUsuario,
+          edad: "",
+          telefono: "",
+          fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
+        }
+
+        console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
+
+        await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto)
+
+        if (getSoundEnabled()) {
+          await soundGenerator.playOperationCompleteSound()
+        }
+
+        setAlertMessage("Listo! Ya sos parte del gimnasio.")
+        setShowAlert(true)
+
+        console.log("Usuario creado:", nuevoUsuario)
       }
-
-      console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
-
-      // Agregar el usuario usando la función del contexto
-      await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto)
-
-      // Reproducir sonido de éxito si está habilitado
-      if (getSoundEnabled()) {
-        await soundGenerator.playOperationCompleteSound()
-      }
-
-      // Mostrar la alerta de éxito
-      setAlertMessage("Listo! Ya sos parte del gimnasio.")
-      setShowAlert(true)
-
-      // Registrar en consola para verificación
-      console.log("Usuario creado:", nuevoUsuario)
     } catch (err) {
-      console.error("Error al crear usuario:", err)
-      setError(err.message || "Error al crear usuario. Por favor, intenta de nuevo.")
-      setAlertMessage("Error al crear usuario: " + err.message)
+      console.error("Error al procesar:", err)
+      setError(err.message || "Error al procesar. Por favor, intenta de nuevo.")
+      setAlertMessage("Error: " + err.message)
 
-      // Reproducir sonido de error si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playAlarmSound()
       }
@@ -191,7 +210,6 @@ export default function NuevoUsuario() {
           </div>
         )}
 
-        {/* Campos de formulario optimizados para móviles */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
           <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nombre y Apellido</label>
           <input
@@ -254,7 +272,6 @@ export default function NuevoUsuario() {
           </select>
         </div>
 
-        {/* Inputs para pago mixto */}
         {formData.metodoPago === "Mixto" && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm p-4 border border-blue-200 dark:border-blue-800">
             <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">Desglose de Pago Mixto</h3>
@@ -319,7 +336,9 @@ export default function NuevoUsuario() {
         )}
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Fecha de Inicio</label>
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+            {formData.actividad === "Dia" ? "Fecha del Día" : "Fecha de Inicio"}
+          </label>
           <input
             type="date"
             name="fechaInicio"
@@ -332,21 +351,23 @@ export default function NuevoUsuario() {
           />
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
-          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-            Fecha de Vencimiento de Cuota
-          </label>
-          <input
-            type="date"
-            value={formData.fechaInicio ? calculateDueDate(formData.fechaInicio) : ""}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100"
-            disabled
-            style={{ fontSize: "16px" }}
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Se calcula automáticamente (1 mes después de la fecha de inicio)
-          </p>
-        </div>
+        {formData.actividad !== "Dia" && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+              Fecha de Vencimiento de Cuota
+            </label>
+            <input
+              type="date"
+              value={formData.fechaInicio ? calculateDueDate(formData.fechaInicio) : ""}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100"
+              disabled
+              style={{ fontSize: "16px" }}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Se calcula automáticamente (1 mes después de la fecha de inicio)
+            </p>
+          </div>
+        )}
 
         {formData.metodoPago !== "Mixto" && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
@@ -374,7 +395,6 @@ export default function NuevoUsuario() {
           </div>
         )}
 
-        {/* Botones fijos en la parte inferior para móviles */}
         {isMobile ? (
           <div className="fixed bottom-20 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex justify-between z-10">
             <Link
@@ -419,17 +439,19 @@ export default function NuevoUsuario() {
           </div>
         )}
 
-        {/* Espacio adicional en la parte inferior para móviles */}
         {isMobile && <div className="h-24"></div>}
       </form>
 
-      {/* Modal de PIN */}
       <PinModal
         isOpen={showPinModal}
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
-        title="Agregar Nuevo Usuario"
-        description="Esta acción creará un nuevo usuario en el sistema. Ingrese el PIN de seguridad para continuar."
+        title={formData.actividad === "Dia" ? "Registrar Pago de Día" : "Agregar Nuevo Usuario"}
+        description={
+          formData.actividad === "Dia"
+            ? "Esta acción registrará un pago de día sin crear un usuario permanente. Ingrese el PIN de seguridad para continuar."
+            : "Esta acción creará un nuevo usuario en el sistema. Ingrese el PIN de seguridad para continuar."
+        }
       />
 
       <Alert
