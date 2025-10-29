@@ -240,8 +240,6 @@ export default function PagarCuota() {
               </p>
               <div className="text-xs text-green-700 dark:text-green-400 mt-1 grid grid-cols-2 gap-2">
                 <div>Actividad: {userFound.actividad || "Normal"}</div>
-                {userFound.edad && <div>Edad: {userFound.edad} años</div>}
-                {userFound.telefono && <div className="col-span-2">Teléfono: {userFound.telefono}</div>}
               </div>
             </div>
           )}

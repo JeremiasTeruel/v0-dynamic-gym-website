@@ -157,8 +157,6 @@ export default function NuevoUsuario() {
         const { montoPago, ...datosUsuario } = pendingFormData.formData
         const nuevoUsuario = {
           ...datosUsuario,
-          edad: "",
-          telefono: "",
           fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
         }
 

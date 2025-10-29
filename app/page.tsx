@@ -202,14 +202,6 @@ export default function Home() {
                     <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.dni}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Teléfono:</span>
-                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.telefono || "-"}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Edad:</span>
-                    <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.edad} años</span>
-                  </div>
-                  <div>
                     <span className="font-medium text-gray-700 dark:text-gray-300">Actividad:</span>
                     <span className="text-gray-900 dark:text-gray-100 ml-1">{foundUser.actividad || "Normal"}</span>
                   </div>

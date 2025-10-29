@@ -23,14 +23,6 @@ export default function UserCard({ usuario, onEdit, onDelete, isDeleting, format
             <span className="text-gray-900 dark:text-gray-100 ml-1">{usuario.dni}</span>
           </div>
           <div>
-            <span className="font-medium text-gray-700 dark:text-gray-300">Teléfono:</span>
-            <span className="text-gray-900 dark:text-gray-100 ml-1">{usuario.telefono || "-"}</span>
-          </div>
-          <div>
-            <span className="font-medium text-gray-700 dark:text-gray-300">Edad:</span>
-            <span className="text-gray-900 dark:text-gray-100 ml-1">{usuario.edad} años</span>
-          </div>
-          <div>
             <span className="font-medium text-gray-700 dark:text-gray-300">Actividad:</span>
             <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full ml-1">
               {usuario.actividad || "Normal"}

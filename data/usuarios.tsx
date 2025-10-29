@@ -3,8 +3,6 @@ export interface Usuario {
   _id: string
   nombreApellido: string
   dni: string
-  telefono: string
-  edad: string
   fechaInicio: string
   fechaVencimiento: string
   metodoPago: string
@@ -23,7 +21,6 @@ export const usuariosIniciales: Usuario[] = [
     id: "1",
     nombreApellido: "Juan Pérez",
     dni: "12345678",
-    edad: "25",
     fechaInicio: "2023-01-15",
     fechaVencimiento: "2023-02-15",
     metodoPago: "Efectivo",
@@ -33,7 +30,6 @@ export const usuariosIniciales: Usuario[] = [
     id: "2",
     nombreApellido: "María López",
     dni: "87654321",
-    edad: "30",
     fechaInicio: "2023-03-10",
     fechaVencimiento: "2023-04-10",
     metodoPago: "Mercado Pago",
@@ -86,7 +82,7 @@ export const buscarUsuarioPorDni = (usuarios: Usuario[], dni: string): Usuario |
 }
 
 // Función para agregar un nuevo usuario
-export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, "id">): Usuario[] => {
+export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, "_id">): Usuario[] => {
   // Verificar si ya existe un usuario con ese DNI
   const usuarioExistente = buscarUsuarioPorDni(usuarios, nuevoUsuario.dni)
   if (usuarioExistente) {
@@ -96,7 +92,7 @@ export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, 
   // Crear nuevo usuario con ID único
   const usuarioConId: Usuario = {
     ...nuevoUsuario,
-    id: generarIdUnico(),
+    _id: generarIdUnico(),
   }
 
   // Agregar al array y guardar

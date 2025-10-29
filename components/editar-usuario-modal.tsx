@@ -45,7 +45,7 @@ export default function EditarUsuarioModal({ usuario, isOpen, onClose, onSave }:
     e.preventDefault()
     setError(null)
 
-    if (!formData.nombreApellido || !formData.dni || !formData.edad || !formData.fechaInicio) {
+    if (!formData.nombreApellido || !formData.dni || !formData.fechaInicio) {
       setError("Por favor complete todos los campos requeridos")
       return
     }
@@ -132,31 +132,6 @@ export default function EditarUsuarioModal({ usuario, isOpen, onClose, onSave }:
                 type="text"
                 name="dni"
                 value={formData.dni || ""}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                required
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Teléfono</label>
-              <input
-                type="text"
-                name="telefono"
-                value={formData.telefono || ""}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Edad</label>
-              <input
-                type="number"
-                name="edad"
-                value={formData.edad || ""}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 required
