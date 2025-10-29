@@ -13,9 +13,7 @@ import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 // Función para calcular el monto según actividad y método de pago
 const calcularMontoPorActividad = (actividad: string, metodoPago: string): string => {
-  if (actividad === "Dia") {
-    return "5000" // Precio fijo para pago por día
-  } else if (actividad === "Normal") {
+  if (actividad === "Normal") {
     return metodoPago === "Efectivo" ? "32000" : "40000"
   } else if (actividad === "Familiar") {
     return metodoPago === "Efectivo" ? "30000" : "38000"
@@ -106,17 +104,9 @@ export default function PagarCuota() {
     })
   }
 
-  const calculateNewDueDate = (paymentDate, actividad) => {
+  const calculateNewDueDate = (paymentDate) => {
     const date = new Date(paymentDate)
-
-    if (actividad === "Dia") {
-      // Para pago por día, vence al día siguiente en el mismo mes
-      date.setDate(date.getDate() + 1)
-    } else {
-      // Para otros tipos, vence un mes después
-      date.setMonth(date.getMonth() + 1)
-    }
-
+    date.setMonth(date.getMonth() + 1)
     return date.toISOString().split("T")[0]
   }
 
@@ -158,7 +148,7 @@ export default function PagarCuota() {
     }
 
     // Guardar los datos del pago y mostrar modal de PIN
-    const newDueDate = calculateNewDueDate(formData.fechaPago, userFound.actividad)
+    const newDueDate = calculateNewDueDate(formData.fechaPago)
     setPendingPaymentData({
       dni: formData.dni,
       newDueDate,
@@ -210,8 +200,6 @@ export default function PagarCuota() {
     setPendingPaymentData(null)
   }
 
-  const esPagoPorDia = userFound?.actividad === "Dia"
-
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="w-full max-w-md flex justify-between items-center mb-6">
@@ -255,13 +243,6 @@ export default function PagarCuota() {
                 {userFound.edad && <div>Edad: {userFound.edad} años</div>}
                 {userFound.telefono && <div className="col-span-2">Teléfono: {userFound.telefono}</div>}
               </div>
-              {esPagoPorDia && (
-                <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded">
-                  <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-300">
-                    ⏰ Pago por Día - Vence al día siguiente
-                  </p>
-                </div>
-              )}
             </div>
           )}
           {formData.dni.length > 5 && !userFound && !isSearching && (
@@ -276,22 +257,17 @@ export default function PagarCuota() {
             value={formData.metodoPago}
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-            disabled={isSubmitting || esPagoPorDia}
+            disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           >
             <option value="Efectivo">Efectivo</option>
             <option value="Mercado Pago">Mercado Pago</option>
-            {!esPagoPorDia && <option value="Mixto">Mixto (Efectivo + Mercado Pago)</option>}
+            <option value="Mixto">Mixto (Efectivo + Mercado Pago)</option>
           </select>
-          {esPagoPorDia && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              El pago por día tiene un precio fijo de $5.000
-            </p>
-          )}
         </div>
 
         {/* Inputs para pago mixto */}
-        {formData.metodoPago === "Mixto" && !esPagoPorDia && (
+        {formData.metodoPago === "Mixto" && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm p-4 border border-blue-200 dark:border-blue-800">
             <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">Desglose de Pago Mixto</h3>
 
@@ -374,15 +350,13 @@ export default function PagarCuota() {
           </label>
           <input
             type="date"
-            value={userFound ? calculateNewDueDate(formData.fechaPago, userFound.actividad) : ""}
+            value={calculateNewDueDate(formData.fechaPago)}
             className="w-full p-3 border border-gray-300 rounded-md bg-gray-100 dark:bg-gray-700 dark:text-white dark:border-gray-600"
             disabled
             style={{ fontSize: "16px" }}
           />
           <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-            {esPagoPorDia
-              ? "Se calcula automáticamente (1 día después de la fecha de pago)"
-              : "Se calcula automáticamente (1 mes después de la fecha de pago)"}
+            Se calcula automáticamente (1 mes después de la fecha de pago)
           </p>
         </div>
 
@@ -402,12 +376,12 @@ export default function PagarCuota() {
                 required
                 min="1"
                 step="1"
-                disabled={isSubmitting || esPagoPorDia}
+                disabled={isSubmitting}
                 style={{ fontSize: "16px" }}
               />
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {esPagoPorDia ? "Precio fijo por día: $5.000" : "Monto sugerido según actividad y método de pago"}
+              Monto sugerido según actividad y método de pago
             </p>
           </div>
         )}

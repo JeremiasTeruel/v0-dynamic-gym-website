@@ -20,37 +20,24 @@ export interface Usuario {
 // en el archivo. Las modificaciones se guardan en localStorage.
 export const usuariosIniciales: Usuario[] = [
   {
-    _id: "1",
+    id: "1",
     nombreApellido: "Juan Pérez",
     dni: "12345678",
-    telefono: "1234567890",
-    edad: "28",
-    fechaInicio: "2024-01-15",
-    fechaVencimiento: "2024-02-15",
+    edad: "25",
+    fechaInicio: "2023-01-15",
+    fechaVencimiento: "2023-02-15",
     metodoPago: "Efectivo",
     actividad: "Normal",
   },
   {
-    _id: "2",
-    nombreApellido: "María García",
+    id: "2",
+    nombreApellido: "María López",
     dni: "87654321",
-    telefono: "0987654321",
-    edad: "32",
-    fechaInicio: "2024-01-20",
-    fechaVencimiento: "2024-02-20",
+    edad: "30",
+    fechaInicio: "2023-03-10",
+    fechaVencimiento: "2023-04-10",
     metodoPago: "Mercado Pago",
-    actividad: "BJJ",
-  },
-  {
-    _id: "3",
-    nombreApellido: "Carlos López",
-    dni: "11223344",
-    telefono: "1122334455",
-    edad: "25",
-    fechaInicio: "2024-01-10",
-    fechaVencimiento: "2024-02-10",
-    metodoPago: "Efectivo",
-    actividad: "MMA",
+    actividad: "Familiar",
   },
 ]
 
@@ -99,7 +86,7 @@ export const buscarUsuarioPorDni = (usuarios: Usuario[], dni: string): Usuario |
 }
 
 // Función para agregar un nuevo usuario
-export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, "_id">): Usuario[] => {
+export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, "id">): Usuario[] => {
   // Verificar si ya existe un usuario con ese DNI
   const usuarioExistente = buscarUsuarioPorDni(usuarios, nuevoUsuario.dni)
   if (usuarioExistente) {
@@ -109,7 +96,7 @@ export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, 
   // Crear nuevo usuario con ID único
   const usuarioConId: Usuario = {
     ...nuevoUsuario,
-    _id: generarIdUnico(),
+    id: generarIdUnico(),
   }
 
   // Agregar al array y guardar
@@ -159,6 +146,6 @@ export const importarDatos = (datosJSON: string): Usuario[] => {
 }
 
 // Opciones de actividades disponibles
-export const ACTIVIDADES_OPCIONES = ["Normal", "Familiar", "BJJ", "MMA", "Boxeo", "Convenio", "Dia"] as const
+export const ACTIVIDADES_OPCIONES = ["Normal", "Familiar", "BJJ", "MMA", "Boxeo", "Convenio"] as const
 
 export type ActividadTipo = (typeof ACTIVIDADES_OPCIONES)[number]

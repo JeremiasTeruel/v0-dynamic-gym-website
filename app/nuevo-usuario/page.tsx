@@ -14,9 +14,7 @@ import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 // Función para calcular el monto según actividad y método de pago
 const calcularMontoPorActividad = (actividad: string, metodoPago: string): string => {
-  if (actividad === "Dia") {
-    return "5000" // Precio fijo para pago por día
-  } else if (actividad === "Normal") {
+  if (actividad === "Normal") {
     return metodoPago === "Efectivo" ? "32000" : "40000"
   } else if (actividad === "Familiar") {
     return metodoPago === "Efectivo" ? "30000" : "38000"
@@ -83,17 +81,9 @@ export default function NuevoUsuario() {
     })
   }
 
-  const calculateDueDate = (startDate, actividad) => {
+  const calculateDueDate = (startDate) => {
     const date = new Date(startDate)
-
-    if (actividad === "Dia") {
-      // Para pago por día, vence al día siguiente en el mismo mes
-      date.setDate(date.getDate() + 1)
-    } else {
-      // Para otros tipos, vence un mes después
-      date.setMonth(date.getMonth() + 1)
-    }
-
+    date.setMonth(date.getMonth() + 1)
     return date.toISOString().split("T")[0]
   }
 
@@ -146,7 +136,7 @@ export default function NuevoUsuario() {
         ...datosUsuario,
         edad: "", // Campo vacío por defecto
         telefono: "", // Campo vacío por defecto
-        fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio, pendingFormData.formData.actividad),
+        fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
       }
 
       console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
@@ -255,22 +245,17 @@ export default function NuevoUsuario() {
             value={formData.metodoPago}
             onChange={handleChange}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            disabled={isSubmitting || formData.actividad === "Dia"}
+            disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           >
             <option value="Efectivo">Efectivo</option>
             <option value="Mercado Pago">Mercado Pago</option>
-            {formData.actividad !== "Dia" && <option value="Mixto">Mixto (Efectivo + Mercado Pago)</option>}
+            <option value="Mixto">Mixto (Efectivo + Mercado Pago)</option>
           </select>
-          {formData.actividad === "Dia" && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              El pago por día tiene un precio fijo de $5.000
-            </p>
-          )}
         </div>
 
         {/* Inputs para pago mixto */}
-        {formData.metodoPago === "Mixto" && formData.actividad !== "Dia" && (
+        {formData.metodoPago === "Mixto" && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm p-4 border border-blue-200 dark:border-blue-800">
             <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">Desglose de Pago Mixto</h3>
 
@@ -349,19 +334,17 @@ export default function NuevoUsuario() {
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
           <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-            Fecha de Vencimiento
+            Fecha de Vencimiento de Cuota
           </label>
           <input
             type="date"
-            value={formData.fechaInicio ? calculateDueDate(formData.fechaInicio, formData.actividad) : ""}
+            value={formData.fechaInicio ? calculateDueDate(formData.fechaInicio) : ""}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100"
             disabled
             style={{ fontSize: "16px" }}
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {formData.actividad === "Dia"
-              ? "Se calcula automáticamente (1 día después)"
-              : "Se calcula automáticamente (1 mes después de la fecha de inicio)"}
+            Se calcula automáticamente (1 mes después de la fecha de inicio)
           </p>
         </div>
 
@@ -381,14 +364,12 @@ export default function NuevoUsuario() {
                 required
                 min="1"
                 step="1"
-                disabled={isSubmitting || formData.actividad === "Dia"}
+                disabled={isSubmitting}
                 style={{ fontSize: "16px" }}
               />
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {formData.actividad === "Dia"
-                ? "Precio fijo por día: $5.000"
-                : "Monto sugerido según actividad y método de pago"}
+              Monto sugerido según actividad y método de pago
             </p>
           </div>
         )}
