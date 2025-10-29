@@ -250,7 +250,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
 
             {cargandoBebidas ? (
               <div className="flex justify-center py-8">
-                <LoadingDumbbell size={32} className="text-green-500" />
+                <LoadingDumbbell size={32} className="text-yellow-500" />
                 <span className="ml-2 text-gray-600 dark:text-gray-400">Cargando bebidas...</span>
               </div>
             ) : (

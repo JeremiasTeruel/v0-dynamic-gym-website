@@ -203,7 +203,7 @@ export default function PagarCuota() {
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="w-full max-w-md flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-green-600 dark:text-green-400">Pagar Cuota</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-yellow-600 dark:text-yellow-400">Pagar Cuota</h1>
         <ThemeToggle />
       </div>
 
@@ -229,7 +229,7 @@ export default function PagarCuota() {
             />
             {isSearching && (
               <div className="ml-2 flex items-center">
-                <LoadingDumbbell size={20} className="text-green-500 dark:text-green-400" />
+                <LoadingDumbbell size={20} className="text-yellow-500 dark:text-yellow-400" />
               </div>
             )}
           </div>

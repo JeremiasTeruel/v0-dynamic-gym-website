@@ -324,7 +324,7 @@ export default function Admin() {
 
         {cargando ? (
           <div className="flex justify-center py-8">
-            <LoadingDumbbell size={32} className="text-green-500" />
+            <LoadingDumbbell size={32} className="text-yellow-500" />
           </div>
         ) : (
           <>

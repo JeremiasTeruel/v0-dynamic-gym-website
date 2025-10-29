@@ -414,7 +414,7 @@ export default function ControlPagos() {
 
       {cargando || cargandoDatos ? (
         <div className="flex justify-center py-8">
-          <LoadingDumbbell size={32} className="text-green-500" />
+          <LoadingDumbbell size={32} className="text-yellow-500" />
         </div>
       ) : (
         <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
