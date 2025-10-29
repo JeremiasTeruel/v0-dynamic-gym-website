@@ -20,7 +20,7 @@ interface VentaBebida {
 interface CerrarCajaModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => Promise<void>
+  onConfirm: (tipoCierre: "parcial" | "completo") => Promise<void>
   pagosDia: RegistroPago[]
   ventasBebidas?: VentaBebida[]
   totalDia: number
@@ -36,6 +36,7 @@ export default function CerrarCajaModal({
 }: CerrarCajaModalProps) {
   const [isClosing, setIsClosing] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
+  const [tipoCierre, setTipoCierre] = useState<"parcial" | "completo">("completo")
   const { getSoundEnabled } = useSoundPreferences()
 
   if (!isOpen) return null
@@ -77,7 +78,7 @@ export default function CerrarCajaModal({
   const handlePinSuccess = async () => {
     try {
       setIsClosing(true)
-      await onConfirm()
+      await onConfirm(tipoCierre)
 
       // Reproducir sonido de operación completada si está habilitado
       if (getSoundEnabled()) {
@@ -132,6 +133,40 @@ export default function CerrarCajaModal({
             {/* Fecha */}
             <div className="text-center mb-6">
               <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{fechaHoy}</p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Tipo de cierre</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setTipoCierre("parcial")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    tipoCierre === "parcial"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
+                  }`}
+                  disabled={isClosing}
+                >
+                  <div className="text-center">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">Cierre Parcial</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Genera reporte sin cerrar el día</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setTipoCierre("completo")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    tipoCierre === "completo"
+                      ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                      : "border-gray-200 dark:border-gray-700 hover:border-red-300"
+                  }`}
+                  disabled={isClosing}
+                >
+                  <div className="text-center">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">Cierre Completo</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cierra el día definitivamente</p>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* Resumen total */}
@@ -257,11 +292,30 @@ export default function CerrarCajaModal({
               </div>
             </div>
 
-            {/* Advertencia */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
-              <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                <strong>⚠️ Atención:</strong> Al cerrar la caja, estos ingresos se registrarán definitivamente en los
-                reportes semanales y mensuales. Esta acción no se puede deshacer.
+            <div
+              className={`border rounded-lg p-4 mb-6 ${
+                tipoCierre === "parcial"
+                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                  : "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
+              }`}
+            >
+              <p
+                className={`text-sm ${
+                  tipoCierre === "parcial" ? "text-blue-800 dark:text-blue-300" : "text-yellow-800 dark:text-yellow-300"
+                }`}
+              >
+                {tipoCierre === "parcial" ? (
+                  <>
+                    <strong>ℹ️ Cierre Parcial:</strong> Se generará un reporte con los datos actuales, pero los ingresos
+                    del día NO se resetearán. Podrás seguir registrando pagos y ventas normalmente.
+                  </>
+                ) : (
+                  <>
+                    <strong>⚠️ Cierre Completo:</strong> Al cerrar la caja, estos ingresos se registrarán definitivamente
+                    en los reportes semanales y mensuales. Los datos del día se resetearán para comenzar un nuevo día.
+                    Esta acción no se puede deshacer.
+                  </>
+                )}
               </p>
             </div>
 
@@ -276,16 +330,20 @@ export default function CerrarCajaModal({
               </button>
               <button
                 onClick={handleConfirmClick}
-                className="flex-1 px-4 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center"
+                className={`flex-1 px-4 py-3 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center ${
+                  tipoCierre === "parcial"
+                    ? "bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600"
+                    : "bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600"
+                }`}
                 disabled={isClosing || totalDia === 0}
               >
                 {isClosing ? (
                   <>
                     <LoadingDumbbell size={20} className="mr-2" />
-                    Cerrando...
+                    Procesando...
                   </>
                 ) : (
-                  "Confirmar Cierre"
+                  `Confirmar ${tipoCierre === "parcial" ? "Reporte" : "Cierre"}`
                 )}
               </button>
             </div>
@@ -304,8 +362,12 @@ export default function CerrarCajaModal({
         isOpen={showPinModal}
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
-        title="Cerrar Caja"
-        description={`Esta acción cerrará la caja del día con un total de ${formatMonto(totalDia)}. Desglose: Cuotas ${formatMonto(totalCuotas)} (Efectivo: ${formatMonto(totalEfectivoCuotas)}, MP: ${formatMonto(totalMercadoPagoCuotas)}), Bebidas ${formatMonto(totalBebidas)} (Efectivo: ${formatMonto(totalEfectivoBebidas)}, MP: ${formatMonto(totalMercadoPagoBebidas)}). Ingrese el PIN de seguridad para continuar.`}
+        title={tipoCierre === "parcial" ? "Generar Reporte Parcial" : "Cerrar Caja"}
+        description={`${
+          tipoCierre === "parcial"
+            ? "Se generará un reporte con los datos actuales sin cerrar el día."
+            : "Esta acción cerrará la caja del día y reseteará los ingresos."
+        } Total: ${formatMonto(totalDia)}. Desglose: Cuotas ${formatMonto(totalCuotas)} (Efectivo: ${formatMonto(totalEfectivoCuotas)}, MP: ${formatMonto(totalMercadoPagoCuotas)}), Bebidas ${formatMonto(totalBebidas)} (Efectivo: ${formatMonto(totalEfectivoBebidas)}, MP: ${formatMonto(totalMercadoPagoBebidas)}). Ingrese el PIN de seguridad para continuar.`}
       />
     </>
   )

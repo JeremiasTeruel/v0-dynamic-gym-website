@@ -9,6 +9,7 @@ import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 interface CierreCaja {
   id: string
   fecha: string
+  tipoCierre: "parcial" | "completo"
   totalGeneral: number
   totalEfectivo: number
   totalMercadoPago: number
@@ -52,7 +53,6 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
       setCargando(true)
       setError(null)
 
-      // Corregir la ruta - usar /api/caja/cerrar en lugar de /api/caja/reportes
       const response = await fetch("/api/caja/cerrar")
 
       if (!response.ok) {
@@ -63,7 +63,6 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
       const data = await response.json()
       setCierres(data)
 
-      // Reproducir sonido de éxito si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playSuccessSound()
       }
@@ -71,7 +70,6 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
       console.error("Error al cargar cierres:", error)
       setError(error instanceof Error ? error.message : "Error al cargar los reportes de caja")
 
-      // Reproducir sonido de error si está habilitado
       if (getSoundEnabled()) {
         await soundGenerator.playAlarmSound()
       }
@@ -99,12 +97,13 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
 
   const exportarReporte = (cierre: CierreCaja) => {
     const contenido = `
-REPORTE DE CIERRE DE CAJA
+REPORTE DE CIERRE DE CAJA ${cierre.tipoCierre === "parcial" ? "(PARCIAL)" : "(COMPLETO)"}
 High Performance Gym
 ========================
 
 Fecha: ${formatFecha(cierre.fecha)}
 Fecha de cierre: ${new Date(cierre.fechaCierre).toLocaleString("es-ES")}
+Tipo de cierre: ${cierre.tipoCierre === "parcial" ? "Parcial" : "Completo"}
 
 RESUMEN GENERAL
 ===============
@@ -138,6 +137,12 @@ ${cierre.detalleVentasBebidas
     : ""
 }
 
+${
+  cierre.tipoCierre === "parcial"
+    ? "NOTA: Este es un cierre parcial. Los ingresos del día no fueron reseteados."
+    : "NOTA: Este es un cierre completo. Los ingresos del día fueron reseteados."
+}
+
 Reporte generado el ${new Date().toLocaleString("es-ES")}
     `.trim()
 
@@ -145,13 +150,12 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `cierre-caja-${cierre.fecha}.txt`
+    link.download = `cierre-caja-${cierre.tipoCierre}-${cierre.fecha}.txt`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
 
-    // Reproducir sonido de éxito si está habilitado
     if (getSoundEnabled()) {
       soundGenerator.playSuccessSound()
     }
@@ -255,9 +259,20 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                     {/* Header del cierre */}
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                          {formatFecha(cierre.fecha)}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {formatFecha(cierre.fecha)}
+                          </h3>
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              cierre.tipoCierre === "parcial"
+                                ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                            }`}
+                          >
+                            {cierre.tipoCierre === "parcial" ? "Parcial" : "Completo"}
+                          </span>
+                        </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Cerrado el {new Date(cierre.fechaCierre).toLocaleString("es-ES")}
                         </p>

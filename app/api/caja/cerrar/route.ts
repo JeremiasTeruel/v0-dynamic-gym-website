@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   try {
     const {
       fecha,
+      tipoCierre,
       totalEfectivo,
       totalMercadoPago,
       totalCuotas,
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
 
     console.log("API: Datos recibidos para cerrar caja:", {
       fecha,
+      tipoCierre,
       totalEfectivo,
       totalMercadoPago,
       totalCuotas,
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
     })
 
     // Validar que los campos requeridos estén presentes
-    if (!fecha || totalGeneral === undefined) {
+    if (!fecha || totalGeneral === undefined || !tipoCierre) {
       console.error("API ERROR: Faltan campos requeridos")
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
     }
@@ -48,16 +50,18 @@ export async function POST(request: Request) {
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
-    // Verificar si ya existe un cierre para esta fecha
-    const cierreExistente = await collection.findOne({ fecha })
-    if (cierreExistente) {
-      console.error("API ERROR: Ya existe un cierre de caja para esta fecha:", fecha)
-      return NextResponse.json({ error: "Ya existe un cierre de caja para esta fecha" }, { status: 400 })
+    if (tipoCierre === "completo") {
+      const cierreCompletoExistente = await collection.findOne({ fecha, tipoCierre: "completo" })
+      if (cierreCompletoExistente) {
+        console.error("API ERROR: Ya existe un cierre completo de caja para esta fecha:", fecha)
+        return NextResponse.json({ error: "Ya existe un cierre completo de caja para esta fecha" }, { status: 400 })
+      }
     }
 
     // Preparar el documento para insertar
     const cierreParaInsertar = {
       fecha: new Date(fecha),
+      tipoCierre,
       // Totales generales por método de pago
       totalEfectivo: Number.parseFloat(totalEfectivo) || 0,
       totalMercadoPago: Number.parseFloat(totalMercadoPago) || 0,

@@ -19,7 +19,7 @@ interface VentaBebida {
 interface VentasDelDiaProps {
   pagos: RegistroPago[]
   ventasBebidas: VentaBebida[]
-  onCerrarCaja?: () => Promise<void>
+  onCerrarCaja?: (tipoCierre: "parcial" | "completo") => Promise<void>
 }
 
 export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarCaja }: VentasDelDiaProps) {
@@ -44,12 +44,15 @@ export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarC
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
   }
 
-  const handleCerrarCaja = async () => {
+  const handleCerrarCaja = async (tipoCierre: "parcial" | "completo") => {
     try {
       if (onCerrarCaja) {
-        await onCerrarCaja()
+        await onCerrarCaja(tipoCierre)
         setAlertaInfo({
-          mensaje: "Caja cerrada correctamente. Los ingresos se han registrado en los reportes.",
+          mensaje:
+            tipoCierre === "parcial"
+              ? "Reporte parcial generado correctamente. Los ingresos del día se mantienen activos."
+              : "Caja cerrada correctamente. Los ingresos se han registrado en los reportes y el día se ha reseteado.",
           visible: true,
           tipo: "success",
         })

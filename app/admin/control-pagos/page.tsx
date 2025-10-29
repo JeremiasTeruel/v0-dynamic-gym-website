@@ -36,12 +36,12 @@ export default function ControlPagos() {
   }, [])
 
   // Función para cerrar caja
-  const cerrarCaja = async () => {
+  const cerrarCaja = async (tipoCierre: "parcial" | "completo" = "completo") => {
     try {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
-      console.log("[v0] Cerrando caja para fecha:", fechaHoy)
+      console.log("[v0] Cerrando caja para fecha:", fechaHoy, "Tipo:", tipoCierre)
       console.log("[v0] Pagos diarios:", pagosDiarios.length)
       console.log("[v0] Ventas bebidas:", ventasBebidas.length)
 
@@ -88,6 +88,7 @@ export default function ControlPagos() {
         },
         body: JSON.stringify({
           fecha: fechaHoy,
+          tipoCierre,
           // Totales generales
           totalEfectivo: totalEfectivoFinal,
           totalMercadoPago: totalMercadoPagoFinal,
@@ -115,10 +116,14 @@ export default function ControlPagos() {
         throw new Error(errorData.error || "Error al cerrar caja")
       }
 
-      console.log("[v0] Caja cerrada exitosamente")
+      console.log("[v0] Caja cerrada exitosamente. Tipo:", tipoCierre)
 
-      // Recargar datos para actualizar los gráficos
-      await cargarDatos()
+      if (tipoCierre === "completo") {
+        console.log("[v0] Cierre completo - Recargando datos para resetear el día")
+        await cargarDatos()
+      } else {
+        console.log("[v0] Cierre parcial - Manteniendo datos del día sin cambios")
+      }
     } catch (error) {
       console.error("[v0] Error al cerrar caja:", error)
       throw error
