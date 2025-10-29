@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, DollarSign, CreditCard, Banknote, ShoppingCart, Shuffle, Users } from "lucide-react"
+import { X, DollarSign, CreditCard, Banknote, ShoppingCart, Shuffle } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
@@ -26,7 +26,6 @@ interface CerrarCajaModalProps {
   pagosDia: RegistroPago[]
   ventasBebidas?: VentaBebida[]
   totalDia: number
-  nuevosUsuarios?: number
 }
 
 export default function CerrarCajaModal({
@@ -36,7 +35,6 @@ export default function CerrarCajaModal({
   pagosDia,
   ventasBebidas = [],
   totalDia,
-  nuevosUsuarios = 0,
 }: CerrarCajaModalProps) {
   const [isClosing, setIsClosing] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
@@ -173,27 +171,6 @@ export default function CerrarCajaModal({
             {/* Desglose por tipo de ingreso */}
             <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose de ingresos</h3>
-
-              {/* Nuevos Usuarios */}
-              {nuevosUsuarios > 0 && (
-                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Users className="h-6 w-6 text-orange-600 dark:text-orange-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Nuevos Usuarios</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Registrados hoy</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{nuevosUsuarios}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {nuevosUsuarios === 1 ? "usuario" : "usuarios"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Cuotas */}
               {totalCuotas > 0 && (

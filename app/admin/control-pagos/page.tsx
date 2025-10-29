@@ -10,7 +10,6 @@ import GraficoSemanal from "@/components/grafico-semanal"
 import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import GraficoMensual from "@/components/grafico-mensual"
 import GraficoUsuarios from "@/components/grafico-usuarios"
-import GraficoUsuariosDia from "@/components/grafico-usuarios-dia"
 import GraficoMetodosMensual from "@/components/grafico-metodos-mensual"
 import ThemeToggle from "@/components/theme-toggle"
 import ResumenIngresos from "@/components/resumen-ingresos"
@@ -24,7 +23,6 @@ export default function ControlPagos() {
   const [pagosSemana, setPagosSemana] = useState([])
   const [pagosMensuales, setPagosMensuales] = useState([])
   const [usuariosMensuales, setUsuariosMensuales] = useState([])
-  const [usuariosHoy, setUsuariosHoy] = useState(0)
   const [metodosPago, setMetodosPago] = useState([])
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [metodosMensualesData, setMetodosMensualesData] = useState([])
@@ -34,11 +32,6 @@ export default function ControlPagos() {
     try {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
-
-      const usuariosNuevosHoy = usuarios.filter((usuario) => {
-        const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
-        return fechaInicio === fechaHoy
-      }).length
 
       // Calcular totales por método de pago (cuotas)
       const totalEfectivoCuotas = pagosDiarios
@@ -122,7 +115,6 @@ export default function ControlPagos() {
           totalBebidasMixtoMercadoPago: totalMixtoMercadoPagoBebidas,
           cantidadVentasBebidas: ventasBebidas.length,
           detalleVentasBebidas,
-          nuevosUsuarios: usuariosNuevosHoy,
         }),
       })
 
@@ -132,7 +124,6 @@ export default function ControlPagos() {
       }
 
       console.log("Caja cerrada exitosamente")
-
       await cargarDatos()
     } catch (error) {
       console.error("Error al cerrar caja:", error)
@@ -146,12 +137,6 @@ export default function ControlPagos() {
 
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
-
-      const usuariosNuevosHoy = usuarios.filter((usuario) => {
-        const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
-        return fechaInicio === fechaHoy
-      }).length
-      setUsuariosHoy(usuariosNuevosHoy)
 
       // Cargar pagos del día
       const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
@@ -167,7 +152,7 @@ export default function ControlPagos() {
 
       // Preparar datos para el gráfico semanal (solo días hasta hoy)
       const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-      const diaActual = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1
+      const diaActual = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1 // Convertir domingo a 6
 
       const pagosSemanaData = await Promise.all(
         diasSemana.slice(0, diaActual + 1).map(async (dia, index) => {
@@ -235,6 +220,7 @@ export default function ControlPagos() {
       const mesActual = hoy.getMonth()
       const añoActual = hoy.getFullYear()
 
+      // Obtener los últimos 6 meses hasta el actual
       const mesesAMostrar = []
       for (let i = 5; i >= 0; i--) {
         let mes = mesActual - i
@@ -306,6 +292,7 @@ export default function ControlPagos() {
           const primerDia = new Date(año, mes, 1)
           const ultimoDia = new Date(año, mes + 1, 0)
 
+          // Contar usuarios cuya fechaInicio está en este mes
           const usuariosDelMes = usuarios.filter((usuario) => {
             const fechaInicio = new Date(usuario.fechaInicio)
             return fechaInicio >= primerDia && fechaInicio <= ultimoDia
@@ -322,6 +309,7 @@ export default function ControlPagos() {
 
       // Calcular métodos de pago mensuales basados en datos reales
       const totalEfectivoMensual = pagosMensualesData.reduce((sum, mesData) => {
+        // Aquí necesitaríamos los datos reales, por ahora aproximamos
         return sum + (mesData.monto > 0 ? mesData.monto * 0.6 : 0)
       }, 0)
 
@@ -360,7 +348,7 @@ export default function ControlPagos() {
 
   useEffect(() => {
     cargarDatos()
-  }, [obtenerPagosPorFecha, obtenerPagosPorRango, usuarios])
+  }, [obtenerPagosPorFecha, obtenerPagosPorRango])
 
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -375,6 +363,7 @@ export default function ControlPagos() {
         <ThemeToggle />
       </div>
 
+      {/* Resumen de ingresos */}
       <div className="mb-6">
         <ResumenIngresos pagosCuotas={pagosDiarios} ventasBebidas={ventasBebidas} periodo="Hoy" />
       </div>
@@ -416,18 +405,9 @@ export default function ControlPagos() {
               <GraficoMensual datos={pagosMensuales} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                  Nuevos usuarios (mensual)
-                </h2>
-                <GraficoUsuarios datos={usuariosMensuales} />
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nuevos usuarios (hoy)</h2>
-                <GraficoUsuariosDia cantidad={usuariosHoy} />
-              </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nuevos usuarios por mes</h2>
+              <GraficoUsuarios datos={usuariosMensuales} />
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">

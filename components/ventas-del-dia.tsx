@@ -5,7 +5,6 @@ import { DollarSign, ShoppingCart } from "lucide-react"
 import CerrarCajaModal from "@/components/cerrar-caja-modal"
 import Alert from "@/components/alert"
 import type { RegistroPago } from "@/context/gym-context"
-import { useGymContext } from "@/context/gym-context"
 
 interface VentaBebida {
   id: string
@@ -31,8 +30,6 @@ export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarC
     tipo: "success",
   })
 
-  const { usuarios } = useGymContext()
-
   const totalPagos = useMemo(() => {
     return pagos.reduce((sum, pago) => sum + pago.monto, 0)
   }, [pagos])
@@ -42,14 +39,6 @@ export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarC
   }, [ventasBebidas])
 
   const totalDelDia = totalPagos + totalBebidas
-
-  const nuevosUsuariosHoy = useMemo(() => {
-    const hoy = new Date().toISOString().split("T")[0]
-    return usuarios.filter((usuario) => {
-      const fechaInicio = new Date(usuario.fechaInicio).toISOString().split("T")[0]
-      return fechaInicio === hoy
-    }).length
-  }, [usuarios])
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
@@ -260,7 +249,6 @@ export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarC
         pagosDia={pagos}
         ventasBebidas={ventasBebidas}
         totalDia={totalDelDia}
-        nuevosUsuarios={nuevosUsuariosHoy}
       />
 
       {/* Alerta */}
