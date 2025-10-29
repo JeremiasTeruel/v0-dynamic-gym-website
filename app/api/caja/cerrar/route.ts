@@ -1,26 +1,22 @@
 import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
+// Nombre de la colección en MongoDB
 const COLLECTION = "cierres_caja"
 
+// POST para registrar un cierre de caja
 export async function POST(request: Request) {
   try {
     const {
       fecha,
       totalEfectivo,
       totalMercadoPago,
-      totalMixtoEfectivo,
-      totalMixtoMercadoPago,
       totalCuotas,
       totalCuotasEfectivo,
       totalCuotasMercadoPago,
-      totalCuotasMixtoEfectivo,
-      totalCuotasMixtoMercadoPago,
       totalBebidas,
       totalBebidasEfectivo,
       totalBebidasMercadoPago,
-      totalBebidasMixtoEfectivo,
-      totalBebidasMixtoMercadoPago,
       totalGeneral,
       cantidadPagos,
       cantidadVentasBebidas,
@@ -31,11 +27,19 @@ export async function POST(request: Request) {
       fecha,
       totalEfectivo,
       totalMercadoPago,
-      totalMixtoEfectivo,
-      totalMixtoMercadoPago,
+      totalCuotas,
+      totalCuotasEfectivo,
+      totalCuotasMercadoPago,
+      totalBebidas,
+      totalBebidasEfectivo,
+      totalBebidasMercadoPago,
       totalGeneral,
+      cantidadPagos,
+      cantidadVentasBebidas,
+      detalleVentasBebidas,
     })
 
+    // Validar que los campos requeridos estén presentes
     if (!fecha || totalGeneral === undefined) {
       console.error("API ERROR: Faltan campos requeridos")
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
@@ -44,47 +48,45 @@ export async function POST(request: Request) {
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
+    // Verificar si ya existe un cierre para esta fecha
     const cierreExistente = await collection.findOne({ fecha })
     if (cierreExistente) {
       console.error("API ERROR: Ya existe un cierre de caja para esta fecha:", fecha)
       return NextResponse.json({ error: "Ya existe un cierre de caja para esta fecha" }, { status: 400 })
     }
 
+    // Preparar el documento para insertar
     const cierreParaInsertar = {
       fecha: new Date(fecha),
       // Totales generales por método de pago
       totalEfectivo: Number.parseFloat(totalEfectivo) || 0,
       totalMercadoPago: Number.parseFloat(totalMercadoPago) || 0,
-      totalMixtoEfectivo: Number.parseFloat(totalMixtoEfectivo) || 0,
-      totalMixtoMercadoPago: Number.parseFloat(totalMixtoMercadoPago) || 0,
       totalGeneral: Number.parseFloat(totalGeneral),
 
       // Totales de cuotas
       totalCuotas: Number.parseFloat(totalCuotas) || 0,
       totalCuotasEfectivo: Number.parseFloat(totalCuotasEfectivo) || 0,
       totalCuotasMercadoPago: Number.parseFloat(totalCuotasMercadoPago) || 0,
-      totalCuotasMixtoEfectivo: Number.parseFloat(totalCuotasMixtoEfectivo) || 0,
-      totalCuotasMixtoMercadoPago: Number.parseFloat(totalCuotasMixtoMercadoPago) || 0,
       cantidadPagos: Number.parseInt(cantidadPagos) || 0,
 
       // Totales de bebidas
       totalBebidas: Number.parseFloat(totalBebidas) || 0,
       totalBebidasEfectivo: Number.parseFloat(totalBebidasEfectivo) || 0,
       totalBebidasMercadoPago: Number.parseFloat(totalBebidasMercadoPago) || 0,
-      totalBebidasMixtoEfectivo: Number.parseFloat(totalBebidasMixtoEfectivo) || 0,
-      totalBebidasMixtoMercadoPago: Number.parseFloat(totalBebidasMixtoMercadoPago) || 0,
       cantidadVentasBebidas: Number.parseInt(cantidadVentasBebidas) || 0,
 
-      // Detalle de ventas de bebidas
+      // Detalle de ventas de bebidas (opcional)
       detalleVentasBebidas: detalleVentasBebidas || [],
 
       // Metadatos
       fechaCierre: new Date(),
     }
 
+    // Insertar el nuevo cierre de caja
     const resultado = await collection.insertOne(cierreParaInsertar)
 
     if (resultado.acknowledged) {
+      // Devolver el cierre con su nuevo ID
       const nuevoCierre = {
         ...cierreParaInsertar,
         id: resultado.insertedId.toString(),
@@ -108,6 +110,7 @@ export async function POST(request: Request) {
   }
 }
 
+// GET para obtener todos los cierres de caja
 export async function GET() {
   try {
     console.log("API: Intentando obtener cierres de caja...")
@@ -118,12 +121,13 @@ export async function GET() {
     const cierres = await collection.find({}).sort({ fecha: -1 }).toArray()
     console.log(`API: Se encontraron ${cierres.length} cierres de caja`)
 
+    // Convertir _id de MongoDB a id de string para mantener compatibilidad
     const cierresFormateados = cierres.map((cierre) => ({
       ...cierre,
       id: cierre._id.toString(),
       _id: undefined,
-      fecha: cierre.fecha.toISOString().split("T")[0],
-      fechaCierre: cierre.fechaCierre.toISOString(),
+      fecha: cierre.fecha.toISOString().split("T")[0], // Convertir fecha a string
+      fechaCierre: cierre.fechaCierre.toISOString(), // Convertir fecha de cierre a string ISO
     }))
 
     return NextResponse.json(cierresFormateados)

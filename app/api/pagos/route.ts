@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
+// Nombre de la colección en MongoDB
 const COLLECTION = "pagos"
 
+// GET para obtener todos los pagos
 export async function GET() {
   try {
     console.log("API: Intentando obtener pagos...")
@@ -13,6 +15,7 @@ export async function GET() {
     const pagos = await collection.find({}).toArray()
     console.log(`API: Se encontraron ${pagos.length} pagos`)
 
+    // Convertir _id de MongoDB a id de string para mantener compatibilidad
     const pagosFormateados = pagos.map((pago) => ({
       ...pago,
       id: pago._id.toString(),
@@ -33,11 +36,13 @@ export async function GET() {
   }
 }
 
+// POST para registrar un nuevo pago
 export async function POST(request: Request) {
   try {
     const pago = await request.json()
     console.log("API: Datos recibidos para registrar pago:", pago)
 
+    // Validar que los campos requeridos estén presentes
     if (!pago.userNombre || !pago.userDni || !pago.monto || !pago.metodoPago) {
       console.error("API ERROR: Faltan campos requeridos:", pago)
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
@@ -46,26 +51,26 @@ export async function POST(request: Request) {
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
+    // Asegurarse de que el monto sea un número
     const montoNumerico = Number.parseFloat(pago.monto)
     if (isNaN(montoNumerico)) {
       return NextResponse.json({ error: "El monto debe ser un número válido" }, { status: 400 })
     }
 
-    // Preparar el documento para insertar con soporte para pago mixto
+    // Preparar el documento para insertar
     const pagoParaInsertar = {
       userNombre: pago.userNombre,
       userDni: pago.userDni,
       monto: montoNumerico,
       fecha: new Date(pago.fecha || new Date()),
       metodoPago: pago.metodoPago,
-      // Campos para pago mixto
-      montoEfectivo: pago.montoEfectivo ? Number.parseFloat(pago.montoEfectivo) : 0,
-      montoMercadoPago: pago.montoMercadoPago ? Number.parseFloat(pago.montoMercadoPago) : 0,
     }
 
+    // Insertar el nuevo pago
     const resultado = await collection.insertOne(pagoParaInsertar)
 
     if (resultado.acknowledged) {
+      // Devolver el pago con su nuevo ID
       const nuevoPago = {
         ...pagoParaInsertar,
         id: resultado.insertedId.toString(),
