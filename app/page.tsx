@@ -142,7 +142,7 @@ export default function Home() {
 
       {cargando ? (
         <div className="w-full max-w-6xl flex justify-center py-8">
-          <LoadingDumbbell size={32} className="text-green-500 dark:text-green-400" />
+          <LoadingDumbbell size={32} className="text-yellow-500 dark:text-yellow-400" />
         </div>
       ) : (
         <div className="w-full max-w-6xl">
@@ -154,17 +154,17 @@ export default function Home() {
                 value={searchDni}
                 onChange={(e) => setSearchDni(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isSearching}
                 style={{ fontSize: "16px" }}
                 autoFocus
               />
               <button
                 onClick={handleSearch}
-                className={`bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-r-md transition-all ${
+                className={`bg-yellow-600 dark:bg-yellow-700 text-white px-4 py-2 rounded-r-md transition-all ${
                   isSearching
                     ? "opacity-70 cursor-not-allowed"
-                    : "active:scale-95 hover:bg-green-700 dark:hover:bg-green-600"
+                    : "active:scale-95 hover:bg-yellow-700 dark:hover:bg-yellow-600"
                 }`}
                 disabled={isSearching}
               >
@@ -241,21 +241,21 @@ export default function Home() {
               <div className="flex flex-col space-y-3 mb-8">
                 <Link
                   href="/nuevo-usuario"
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-green-600 dark:text-green-400 text-center font-medium hover:bg-green-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700"
+                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 text-center font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700"
                 >
                   ¿Nuevo en el gimnasio?
                 </Link>
 
                 <Link
                   href="/pagar-cuota"
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-green-600 dark:text-green-400 text-center font-medium hover:bg-green-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700"
+                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 text-center font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700"
                 >
                   Pagar cuota mensual
                 </Link>
 
                 <button
                   onClick={() => setShowVentaBebidasModal(true)}
-                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-green-600 dark:text-green-400 text-center font-medium hover:bg-green-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700 flex items-center justify-center"
+                  className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 text-center font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 active:scale-98 transition-all border border-gray-200 dark:border-gray-700 flex items-center justify-center"
                 >
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   Venta de bebidas
