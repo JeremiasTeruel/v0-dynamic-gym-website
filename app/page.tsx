@@ -10,8 +10,6 @@ import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import { useMobile } from "@/hooks/use-mobile"
-import ProximosVencimientos from "@/components/proximos-vencimientos"
-import CuotasVencidas from "@/components/cuotas-vencidas"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 export default function Home() {
@@ -263,21 +261,6 @@ export default function Home() {
               </div>
             )}
           </div>
-
-          {/* Listas de vencimientos */}
-          {isMobile ? (
-            // Vista móvil: una lista debajo de la otra
-            <div className="space-y-8">
-              <ProximosVencimientos usuarios={usuarios} />
-              <CuotasVencidas usuarios={usuarios} />
-            </div>
-          ) : (
-            // Vista escritorio: listas lado a lado
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <ProximosVencimientos usuarios={usuarios} />
-              <CuotasVencidas usuarios={usuarios} />
-            </div>
-          )}
         </div>
       )}
 
