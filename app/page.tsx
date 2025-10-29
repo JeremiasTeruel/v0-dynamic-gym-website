@@ -150,7 +150,7 @@ export default function Home() {
             <div className="flex mb-6">
               <input
                 type="text"
-                placeholder="Ingrese el DNI del usuario"
+                placeholder="Ingresá tu DNI..."
                 value={searchDni}
                 onChange={(e) => setSearchDni(e.target.value)}
                 onKeyPress={handleKeyPress}
