@@ -17,6 +17,7 @@ import {
   UserPlus,
   CreditCard,
   ShoppingCart,
+  Users,
 } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
@@ -50,6 +51,7 @@ export default function Admin() {
   const [usuariosOrdenados, setUsuariosOrdenados] = useState<Usuario[]>([])
   const [reporteModalAbierto, setReporteModalAbierto] = useState(false)
   const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
+  const [listaUsuariosModalAbierto, setListaUsuariosModalAbierto] = useState(false)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
@@ -262,6 +264,14 @@ export default function Admin() {
         </div>
 
         <div className="mb-8 flex flex-wrap gap-4 justify-center">
+          <button
+            onClick={() => setListaUsuariosModalAbierto(true)}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <Users className="h-5 w-5" />
+            Lista de Usuarios
+          </button>
+
           <Link
             href="/admin/control-pagos"
             className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-green-600 font-medium hover:bg-green-50 transition-colors"
@@ -294,223 +304,237 @@ export default function Admin() {
           </Link>
         </div>
 
-        <div className="sticky top-0 bg-white dark:bg-gray-800 z-10 p-2 md:p-0 md:static md:bg-transparent mb-4 rounded-lg shadow-sm md:shadow-none">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400 dark:text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Buscar por nombre..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              style={{ fontSize: "16px" }}
-            />
-            {busqueda && (
-              <button
-                onClick={limpiarBusqueda}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-500"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl md:text-2xl font-semibold">
-              Lista de Usuarios ({usuariosFiltrados.length}/{usuarios.length})
-            </h2>
-            <div className="flex items-center">
-              <button
-                onClick={handleRecargar}
-                className="ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500 focus:outline-none"
-                disabled={recargando || cargando}
-                title="Recargar usuarios"
-              >
-                <RefreshCw className={`h-5 w-5 ${recargando ? "animate-spin" : ""}`} />
-              </button>
-              <Link
-                href="/"
-                className="ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500"
-              >
-                Volver al Inicio
-              </Link>
-              <Link
-                href="/"
-                className="md:hidden ml-2 p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-500"
-              >
-                <X className="h-5 w-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">{error}</div>
-        )}
-
-        {cargando ? (
-          <div className="flex justify-center py-8">
-            <LoadingDumbbell size={32} className="text-yellow-500" />
-          </div>
-        ) : (
-          <>
-            {busqueda && usuariosFiltrados.length === 0 ? (
-              <div className="text-center py-8 border rounded-md">
-                <p className="text-gray-500 dark:text-gray-400">
-                  No se encontraron usuarios que coincidan con "{busqueda}"
-                </p>
-                <button onClick={limpiarBusqueda} className="mt-2 text-green-600 dark:text-green-400 hover:underline">
-                  Limpiar búsqueda
-                </button>
+        {listaUsuariosModalAbierto && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 md:p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg w-full h-full md:h-[95vh] max-w-7xl flex flex-col overflow-hidden">
+              <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  Lista de Usuarios ({usuariosFiltrados.length}/{usuarios.length})
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRecargar}
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                    disabled={recargando || cargando}
+                    title="Recargar usuarios"
+                  >
+                    <RefreshCw className={`h-5 w-5 ${recargando ? "animate-spin" : ""}`} />
+                  </button>
+                  <button
+                    onClick={() => setListaUsuariosModalAbierto(false)}
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
               </div>
-            ) : (
-              <>
-                {isMobile && (
-                  <div className="md:hidden">
-                    {usuariosFiltrados.map((usuario) => (
-                      <UserCard
-                        key={usuario.id}
-                        usuario={usuario}
-                        onEdit={handleEditar}
-                        onDelete={handleEliminar}
-                        isDeleting={eliminando === usuario.id}
-                        formatDate={formatDate}
-                        isPaymentDue={isPaymentDue}
-                      />
-                    ))}
+
+              <div className="p-4 md:p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    style={{ fontSize: "16px" }}
+                  />
+                  {busqueda && (
+                    <button
+                      onClick={limpiarBusqueda}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                {error && (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+                    {error}
                   </div>
                 )}
 
-                {!isMobile && (
-                  <div className="border dark:border-gray-600 rounded-md overflow-hidden overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-100 dark:bg-gray-800">
-                        <tr>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">ID</th>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Nombre y Apellido</th>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Fecha Inicio</th>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
-                          <th className="p-3 text-left text-gray-900 dark:text-gray-100">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {usuariosFiltrados.length === 0 ? (
-                          <tr>
-                            <td colSpan={8} className="p-4 text-center text-gray-500 dark:text-gray-400">
-                              No hay usuarios registrados
-                            </td>
-                          </tr>
-                        ) : (
-                          usuariosFiltrados.map((usuario) => (
-                            <tr key={usuario.id} className="border-t border-gray-200 dark:border-gray-600">
-                              <td className="p-3">{usuario.id.substring(0, 8)}...</td>
-                              <td className="p-3">{usuario.nombreApellido}</td>
-                              <td className="p-3">{usuario.dni}</td>
-                              <td className="p-3">
-                                <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
-                                  {usuario.actividad || "Normal"}
-                                </span>
-                              </td>
-                              <td className="p-3">{formatDate(usuario.fechaInicio)}</td>
-                              <td className="p-3">{formatDate(usuario.fechaVencimiento)}</td>
-                              <td className="p-3">
-                                {isPaymentDue(usuario.fechaVencimiento) ? (
-                                  <div className="flex items-center text-red-500 dark:text-red-400">
-                                    <XCircle className="h-5 w-5 mr-1" />
-                                    <span>Vencida</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center text-green-500 dark:text-green-400">
-                                    <CheckCircle className="h-5 w-5 mr-1" />
-                                    <span>Al día</span>
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3">
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleEditar(usuario)}
-                                    className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-500 focus:outline-none"
-                                    title="Editar usuario"
-                                  >
-                                    <Edit className="h-5 w-5" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleEliminar(usuario.id)}
-                                    className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 focus:outline-none"
-                                    disabled={eliminando === usuario.id}
-                                    title="Eliminar usuario"
-                                  >
-                                    {eliminando === usuario.id ? (
-                                      <LoadingDumbbell size={20} className="text-red-500 dark:text-red-400" />
-                                    ) : (
-                                      <Trash2 className="h-5 w-5" />
-                                    )}
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                {cargando ? (
+                  <div className="flex justify-center py-8">
+                    <LoadingDumbbell size={32} className="text-indigo-500" />
                   </div>
+                ) : (
+                  <>
+                    {busqueda && usuariosFiltrados.length === 0 ? (
+                      <div className="text-center py-8 border rounded-md">
+                        <p className="text-gray-500 dark:text-gray-400">
+                          No se encontraron usuarios que coincidan con "{busqueda}"
+                        </p>
+                        <button
+                          onClick={limpiarBusqueda}
+                          className="mt-2 text-indigo-600 dark:text-indigo-400 hover:underline"
+                        >
+                          Limpiar búsqueda
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {isMobile && (
+                          <div className="md:hidden space-y-4">
+                            {usuariosFiltrados.map((usuario) => (
+                              <UserCard
+                                key={usuario.id}
+                                usuario={usuario}
+                                onEdit={handleEditar}
+                                onDelete={handleEliminar}
+                                isDeleting={eliminando === usuario.id}
+                                formatDate={formatDate}
+                                isPaymentDue={isPaymentDue}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {!isMobile && (
+                          <div className="border dark:border-gray-600 rounded-md overflow-hidden">
+                            <table className="w-full">
+                              <thead className="bg-gray-100 dark:bg-gray-700">
+                                <tr>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">ID</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">Nombre y Apellido</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">Fecha Inicio</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">Acciones</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {usuariosFiltrados.length === 0 ? (
+                                  <tr>
+                                    <td colSpan={8} className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                      No hay usuarios registrados
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  usuariosFiltrados.map((usuario) => (
+                                    <tr
+                                      key={usuario.id}
+                                      className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                    >
+                                      <td className="p-3 text-gray-900 dark:text-gray-100">
+                                        {usuario.id.substring(0, 8)}...
+                                      </td>
+                                      <td className="p-3 text-gray-900 dark:text-gray-100">{usuario.nombreApellido}</td>
+                                      <td className="p-3 text-gray-900 dark:text-gray-100">{usuario.dni}</td>
+                                      <td className="p-3">
+                                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
+                                          {usuario.actividad || "Normal"}
+                                        </span>
+                                      </td>
+                                      <td className="p-3 text-gray-900 dark:text-gray-100">
+                                        {formatDate(usuario.fechaInicio)}
+                                      </td>
+                                      <td className="p-3 text-gray-900 dark:text-gray-100">
+                                        {formatDate(usuario.fechaVencimiento)}
+                                      </td>
+                                      <td className="p-3">
+                                        {isPaymentDue(usuario.fechaVencimiento) ? (
+                                          <div className="flex items-center text-red-500 dark:text-red-400">
+                                            <XCircle className="h-5 w-5 mr-1" />
+                                            <span>Vencida</span>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center text-green-500 dark:text-green-400">
+                                            <CheckCircle className="h-5 w-5 mr-1" />
+                                            <span>Al día</span>
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="p-3">
+                                        <div className="flex space-x-2">
+                                          <button
+                                            onClick={() => handleEditar(usuario)}
+                                            className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus:outline-none"
+                                            title="Editar usuario"
+                                          >
+                                            <Edit className="h-5 w-5" />
+                                          </button>
+                                          <button
+                                            onClick={() => handleEliminar(usuario.id)}
+                                            className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
+                                            disabled={eliminando === usuario.id}
+                                            title="Eliminar usuario"
+                                          >
+                                            {eliminando === usuario.id ? (
+                                              <LoadingDumbbell size={20} className="text-red-500 dark:text-red-400" />
+                                            ) : (
+                                              <Trash2 className="h-5 w-5" />
+                                            )}
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </>
+              </div>
+
+              <div className="p-4 md:p-6 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                  {busqueda
+                    ? `Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios (ordenados alfabéticamente)`
+                    : `Total de usuarios registrados: ${usuarios.length} (ordenados alfabéticamente)`}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
-        <div className="mt-6">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {busqueda
-              ? `Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios (ordenados alfabéticamente)`
-              : `Total de usuarios registrados: ${usuarios.length} (ordenados alfabéticamente)`}
-          </p>
-        </div>
+        <EditarUsuarioModal
+          usuario={usuarioEditando}
+          isOpen={modalAbierto}
+          onClose={() => {
+            setModalAbierto(false)
+            setUsuarioEditando(null)
+          }}
+          onSave={handleGuardarEdicion}
+        />
+
+        <StockBebidasModal isOpen={stockModalAbierto} onClose={() => setStockModalAbierto(false)} />
+
+        <ReporteCierreCaja isOpen={reporteModalAbierto} onClose={() => setReporteModalAbierto(false)} />
+
+        <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
+
+        <PinModal
+          isOpen={showPinModal}
+          onClose={handlePinClose}
+          onSuccess={handlePinSuccess}
+          title={pinAction?.type === "delete" ? "Eliminar Usuario" : "Acción Administrativa"}
+          description={
+            pinAction?.type === "delete"
+              ? `Esta acción eliminará permanentemente a ${pinAction.data.nombre} del sistema. Ingrese el PIN de seguridad para continuar.`
+              : "Ingrese el PIN de seguridad para realizar esta acción."
+          }
+        />
+
+        <Alert
+          message={alertaInfo.mensaje}
+          isOpen={alertaInfo.visible}
+          onClose={() => setAlertaInfo((prev) => ({ ...prev, visible: false }))}
+          type={alertaInfo.tipo}
+        />
       </div>
-
-      <EditarUsuarioModal
-        usuario={usuarioEditando}
-        isOpen={modalAbierto}
-        onClose={() => {
-          setModalAbierto(false)
-          setUsuarioEditando(null)
-        }}
-        onSave={handleGuardarEdicion}
-      />
-
-      <StockBebidasModal isOpen={stockModalAbierto} onClose={() => setStockModalAbierto(false)} />
-
-      <ReporteCierreCaja isOpen={reporteModalAbierto} onClose={() => setReporteModalAbierto(false)} />
-
-      <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
-
-      <PinModal
-        isOpen={showPinModal}
-        onClose={handlePinClose}
-        onSuccess={handlePinSuccess}
-        title={pinAction?.type === "delete" ? "Eliminar Usuario" : "Acción Administrativa"}
-        description={
-          pinAction?.type === "delete"
-            ? `Esta acción eliminará permanentemente a ${pinAction.data.nombre} del sistema. Ingrese el PIN de seguridad para continuar.`
-            : "Ingrese el PIN de seguridad para realizar esta acción."
-        }
-      />
-
-      <Alert
-        message={alertaInfo.mensaje}
-        isOpen={alertaInfo.visible}
-        onClose={() => setAlertaInfo((prev) => ({ ...prev, visible: false }))}
-        type={alertaInfo.tipo}
-      />
     </main>
   )
 }
