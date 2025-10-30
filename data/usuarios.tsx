@@ -142,6 +142,15 @@ export const importarDatos = (datosJSON: string): Usuario[] => {
 }
 
 // Opciones de actividades disponibles
-export const ACTIVIDADES_OPCIONES = ["Normal", "Familiar", "BJJ", "MMA", "Boxeo", "Convenio", "Dia"] as const
+export const ACTIVIDADES_OPCIONES = [
+  "Normal",
+  "Familiar",
+  "BJJ",
+  "MMA",
+  "Boxeo",
+  "Convenio",
+  "Dia",
+  "Referees",
+] as const
 
 export type ActividadTipo = (typeof ACTIVIDADES_OPCIONES)[number]

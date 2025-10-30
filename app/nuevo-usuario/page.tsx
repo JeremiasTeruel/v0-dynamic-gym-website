@@ -19,6 +19,8 @@ const calcularMontoPorActividad = (actividad: string, metodoPago: string): strin
     return metodoPago === "Efectivo" ? "30000" : "38000"
   } else if (actividad === "Dia") {
     return "5000"
+  } else if (actividad === "Referees") {
+    return "0"
   } else {
     // BJJ, MMA, Boxeo, Convenio
     return metodoPago === "Efectivo" ? "28000" : "36000"
@@ -97,7 +99,7 @@ export default function NuevoUsuario() {
     }
 
     const monto = Number.parseFloat(formData.montoPago)
-    if (isNaN(monto) || monto <= 0) {
+    if (isNaN(monto) || (monto <= 0 && formData.actividad !== "Referees")) {
       setError("El monto debe ser un número positivo")
       return
     }

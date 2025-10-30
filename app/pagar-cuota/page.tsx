@@ -17,6 +17,8 @@ const calcularMontoPorActividad = (actividad: string, metodoPago: string): strin
     return metodoPago === "Efectivo" ? "32000" : "40000"
   } else if (actividad === "Familiar") {
     return metodoPago === "Efectivo" ? "30000" : "38000"
+  } else if (actividad === "Referees") {
+    return "0"
   } else {
     // BJJ, MMA, Boxeo, Convenio
     return metodoPago === "Efectivo" ? "28000" : "36000"
