@@ -101,13 +101,13 @@ export default function Home() {
   }, [searchDni])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <div className="w-full max-w-4xl flex justify-between items-center mb-12">
-        <div className="flex-1" />
-        <h1 className="text-4xl md:text-5xl font-bold text-yellow-600 dark:text-yellow-400 text-center flex-1">
+    <main className="flex min-h-screen flex-col items-center justify-start pt-16 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="w-full max-w-4xl flex flex-col items-center space-y-6 mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold text-yellow-600 dark:text-yellow-400 text-center whitespace-nowrap">
           High Performance Gym
         </h1>
-        <div className="flex items-center space-x-3 flex-1 justify-end">
+
+        <div className="flex items-center space-x-4">
           <button
             onClick={toggleSound}
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -118,6 +118,7 @@ export default function Home() {
           </button>
 
           <ThemeToggle />
+
           <Link href="/admin" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
             <Settings className="h-6 w-6" />
             <span className="sr-only">Administración</span>
