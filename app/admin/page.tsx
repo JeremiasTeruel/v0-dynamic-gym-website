@@ -55,6 +55,9 @@ export default function Admin() {
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
+  const [ingresosDia, setIngresosDia] = useState([])
+  const [cargandoIngresos, setCargandoIngresos] = useState(true)
+
   const ordenarUsuarios = (listaUsuarios: Usuario[]): Usuario[] => {
     return [...listaUsuarios].sort((a, b) => {
       const nombreA = a.nombreApellido
@@ -227,6 +230,37 @@ export default function Admin() {
     setBusqueda("")
   }
 
+  const cargarIngresosDia = async () => {
+    try {
+      setCargandoIngresos(true)
+      const hoy = new Date().toISOString().split("T")[0]
+      const response = await fetch(`/api/ingresos?fecha=${hoy}`)
+
+      if (response.ok) {
+        const ingresos = await response.json()
+        console.log("[v0] Ingresos del día cargados:", ingresos.length)
+        setIngresosDia(ingresos)
+      } else {
+        console.error("[v0] Error al cargar ingresos:", response.status)
+        setIngresosDia([])
+      }
+    } catch (error) {
+      console.error("[v0] Error al cargar ingresos del día:", error)
+      setIngresosDia([])
+    } finally {
+      setCargandoIngresos(false)
+    }
+  }
+
+  useEffect(() => {
+    cargarIngresosDia()
+
+    // Recargar ingresos cada 30 segundos
+    const interval = setInterval(cargarIngresosDia, 30000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="w-full max-w-6xl flex justify-between items-center mb-6">
@@ -302,6 +336,129 @@ export default function Admin() {
           >
             Volver al Inicio
           </Link>
+        </div>
+
+        <div className="mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Registro de Asistencia del Día</h2>
+              <button
+                onClick={cargarIngresosDia}
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                disabled={cargandoIngresos}
+                title="Recargar ingresos"
+              >
+                <RefreshCw className={`h-5 w-5 ${cargandoIngresos ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+
+            {cargandoIngresos ? (
+              <div className="flex justify-center py-8">
+                <LoadingDumbbell size={32} className="text-yellow-500" />
+              </div>
+            ) : ingresosDia.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-gray-500 dark:text-gray-400">Aún no han ingresado usuarios al gimnasio.</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Total de ingresos hoy: {ingresosDia.length}
+                </p>
+
+                {/* Vista móvil */}
+                <div className="md:hidden space-y-3">
+                  {ingresosDia.map((ingreso, index) => (
+                    <div
+                      key={ingreso._id}
+                      className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{ingreso.nombreApellido}</h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">#{index + 1}</span>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p className="text-gray-700 dark:text-gray-300">
+                          <span className="font-medium">DNI:</span> {ingreso.dni}
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300">
+                          <span className="font-medium">Actividad:</span>{" "}
+                          <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
+                            {ingreso.actividad}
+                          </span>
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300">
+                          <span className="font-medium">Vencimiento:</span> {formatDate(ingreso.fechaVencimiento)}
+                        </p>
+                        <div className="mt-2">
+                          {isPaymentDue(ingreso.fechaVencimiento) ? (
+                            <div className="flex items-center text-red-500 dark:text-red-400 text-sm">
+                              <XCircle className="h-4 w-4 mr-1" />
+                              <span>Cuota vencida</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-green-500 dark:text-green-400 text-sm">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              <span>Cuota al día</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Vista desktop */}
+                <div className="hidden md:block border dark:border-gray-600 rounded-md overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-100 dark:bg-gray-700">
+                      <tr>
+                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">#</th>
+                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Nombre y Apellido</th>
+                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
+                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
+                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
+                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ingresosDia.map((ingreso, index) => (
+                        <tr
+                          key={ingreso._id}
+                          className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        >
+                          <td className="p-3 text-gray-900 dark:text-gray-100">{index + 1}</td>
+                          <td className="p-3 text-gray-900 dark:text-gray-100">{ingreso.nombreApellido}</td>
+                          <td className="p-3 text-gray-900 dark:text-gray-100">{ingreso.dni}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
+                              {ingreso.actividad}
+                            </span>
+                          </td>
+                          <td className="p-3 text-gray-900 dark:text-gray-100">
+                            {formatDate(ingreso.fechaVencimiento)}
+                          </td>
+                          <td className="p-3">
+                            {isPaymentDue(ingreso.fechaVencimiento) ? (
+                              <div className="flex items-center text-red-500 dark:text-red-400">
+                                <XCircle className="h-5 w-5 mr-1" />
+                                <span>Vencida</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center text-green-500 dark:text-green-400">
+                                <CheckCircle className="h-5 w-5 mr-1" />
+                                <span>Al día</span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {listaUsuariosModalAbierto && (

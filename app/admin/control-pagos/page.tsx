@@ -120,6 +120,21 @@ export default function ControlPagos() {
 
       if (tipoCierre === "completo") {
         console.log("[v0] Cierre completo - Recargando datos para resetear el día")
+
+        try {
+          const responseIngresos = await fetch(`/api/ingresos?fecha=${fechaHoy}`, {
+            method: "DELETE",
+          })
+
+          if (responseIngresos.ok) {
+            console.log("[v0] Ingresos del día eliminados correctamente")
+          } else {
+            console.error("[v0] Error al eliminar ingresos del día")
+          }
+        } catch (error) {
+          console.error("[v0] Error al eliminar ingresos:", error)
+        }
+
         await cargarDatos()
       } else {
         console.log("[v0] Cierre parcial - Manteniendo datos del día sin cambios")

@@ -61,6 +61,25 @@ export default function Home() {
       if (usuario) {
         setFoundUser(usuario)
 
+        try {
+          await fetch("/api/ingresos", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              dni: usuario.dni,
+              nombreApellido: usuario.nombreApellido,
+              actividad: usuario.actividad,
+              fechaVencimiento: usuario.fechaVencimiento,
+            }),
+          })
+          console.log("[v0] Ingreso registrado para:", usuario.nombreApellido)
+        } catch (error) {
+          console.error("[v0] Error al registrar ingreso:", error)
+          // No mostrar error al usuario, solo registrar en consola
+        }
+
         if (soundEnabled) {
           if (isPaymentDue(usuario.fechaVencimiento)) {
             await soundGenerator.playAlarmSound()
