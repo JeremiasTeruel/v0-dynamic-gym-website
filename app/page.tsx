@@ -16,12 +16,28 @@ export default function Home() {
   const [showAlert, setShowAlert] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [currentTime, setCurrentTime] = useState("")
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const { getSoundEnabled, setSoundEnabled: saveSoundEnabled } = useSoundPreferences()
 
   useEffect(() => {
     setSoundEnabled(getSoundEnabled())
+  }, [])
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date()
+      const hours = String(now.getHours()).padStart(2, "0")
+      const minutes = String(now.getMinutes()).padStart(2, "0")
+      const seconds = String(now.getSeconds()).padStart(2, "0")
+      setCurrentTime(`${hours}:${minutes}:${seconds}`)
+    }
+
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
+
+    return () => clearInterval(interval)
   }, [])
 
   const toggleSound = () => {
@@ -101,7 +117,13 @@ export default function Home() {
   }, [searchDni])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start pt-16 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <main className="flex min-h-screen flex-col items-center justify-start pt-16 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative">
+      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
+        <div className="text-lg md:text-xl font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
+          {currentTime}
+        </div>
+      </div>
+
       <div className="w-full max-w-4xl flex flex-col items-center space-y-6 mb-8">
         <h1 className="text-4xl md:text-5xl font-bold text-yellow-600 dark:text-yellow-400 text-center whitespace-nowrap">
           High Performance Gym
