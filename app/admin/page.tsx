@@ -235,7 +235,7 @@ export default function Admin() {
       </div>
 
       <div className="w-full max-w-6xl">
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mb-8 hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             href="/nuevo-usuario"
             className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
