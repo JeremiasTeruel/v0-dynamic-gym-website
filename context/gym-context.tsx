@@ -11,7 +11,8 @@ export interface RegistroPago {
   monto: number
   fecha: string
   metodoPago: string
-  tipoPago?: "Nuevo" | "Pago de cuota" // Indica si es un usuario nuevo o pago de cuota
+  tipoPago?: "Nuevo" | "Pago de cuota"
+  cajaId?: string // Agregado cajaId para vincular pago a caja específica
 }
 
 interface GymContextType {
@@ -21,8 +22,14 @@ interface GymContextType {
   pagos: RegistroPago[]
   cargandoPagos: boolean
   buscarUsuario: (dni: string) => Promise<Usuario | null>
-  agregarNuevoUsuario: (usuario: Omit<Usuario, "id">, montoPago: number) => Promise<void>
-  actualizarPago: (dni: string, nuevaFechaVencimiento: string, metodoPago: string, montoPago: number) => Promise<void>
+  agregarNuevoUsuario: (usuario: Omit<Usuario, "id">, montoPago: number, cajaId: string) => Promise<void>
+  actualizarPago: (
+    dni: string,
+    nuevaFechaVencimiento: string,
+    metodoPago: string,
+    montoPago: number,
+    cajaId: string,
+  ) => Promise<void>
   actualizarUsuario: (id: string, datosActualizados: Partial<Usuario>) => Promise<void>
   eliminarUsuario: (id: string) => Promise<void>
   recargarUsuarios: () => Promise<void>
@@ -170,7 +177,6 @@ export function GymProvider({ children }) {
 
       console.log("Pago registrado exitosamente:", data)
 
-      // Actualizar la lista de pagos
       setPagos((prevPagos) => [...prevPagos, data])
     } catch (err) {
       console.error("Error al registrar pago:", err)
@@ -180,7 +186,11 @@ export function GymProvider({ children }) {
   }
 
   // Función para agregar un nuevo usuario con registro de pago
-  const agregarNuevoUsuario = async (usuario: Omit<Usuario, "id">, montoPago: number): Promise<void> => {
+  const agregarNuevoUsuario = async (
+    usuario: Omit<Usuario, "id">,
+    montoPago: number,
+    cajaId: string,
+  ): Promise<void> => {
     try {
       setError(null)
 
@@ -203,11 +213,9 @@ export function GymProvider({ children }) {
 
       console.log("Usuario agregado exitosamente:", data)
 
-      // Agregar el nuevo usuario y reordenar la lista
       const nuevosUsuarios = ordenarUsuariosAlfabeticamente([...usuarios, data])
       setUsuarios(nuevosUsuarios)
 
-      // Registrar el pago en la base de datos
       const fechaActual = new Date().toISOString().split("T")[0]
       await registrarPago({
         userNombre: data.nombreApellido,
@@ -216,6 +224,7 @@ export function GymProvider({ children }) {
         fecha: fechaActual,
         metodoPago: usuario.metodoPago,
         tipoPago: "Nuevo",
+        cajaId: cajaId,
       })
     } catch (err) {
       console.error("Error al agregar usuario:", err)
@@ -230,6 +239,7 @@ export function GymProvider({ children }) {
     nuevaFechaVencimiento: string,
     metodoPago: string,
     montoPago: number,
+    cajaId: string,
   ): Promise<void> => {
     try {
       setError(null)
@@ -249,11 +259,9 @@ export function GymProvider({ children }) {
         throw new Error(data.error || "Error al actualizar pago")
       }
 
-      // Actualizar el usuario y reordenar la lista
       const nuevosUsuarios = usuarios.map((u) => (u.dni === dni ? data : u))
       setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
 
-      // Registrar el pago en la base de datos
       const fechaActual = new Date().toISOString().split("T")[0]
       const usuarioActualizado = nuevosUsuarios.find((u) => u.dni === dni)
 
@@ -265,6 +273,7 @@ export function GymProvider({ children }) {
           fecha: fechaActual,
           metodoPago: metodoPago,
           tipoPago: "Pago de cuota",
+          cajaId: cajaId,
         })
       }
     } catch (err) {
@@ -298,7 +307,6 @@ export function GymProvider({ children }) {
 
       console.log("Usuario actualizado exitosamente:", data)
 
-      // Actualizar el usuario y reordenar la lista
       const nuevosUsuarios = usuarios.map((u) => (u.id === id ? data : u))
       setUsuarios(ordenarUsuariosAlfabeticamente(nuevosUsuarios))
     } catch (err) {
@@ -324,7 +332,6 @@ export function GymProvider({ children }) {
         throw new Error(data.error || "Error al eliminar usuario")
       }
 
-      // Eliminar el usuario (no es necesario reordenar ya que solo se elimina)
       setUsuarios((prev) => prev.filter((u) => u.id !== id))
     } catch (err) {
       console.error("Error al eliminar usuario:", err)

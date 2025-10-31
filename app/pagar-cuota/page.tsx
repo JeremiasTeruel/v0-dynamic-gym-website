@@ -230,12 +230,22 @@ export default function PagarCuota() {
     try {
       setIsSubmitting(true)
 
-      // Actualizar el pago usando la función del contexto
+      const cajaResponse = await fetch("/api/caja/actual")
+      const cajaData = await cajaResponse.json()
+
+      if (!cajaData.cajaAbierta || !cajaData.caja?.id) {
+        throw new Error("No hay caja abierta")
+      }
+
+      const cajaId = cajaData.caja.id
+
+      // Actualizar el pago usando la función del contexto con cajaId
       await actualizarPago(
         pendingPaymentData.dni,
         pendingPaymentData.newDueDate,
         pendingPaymentData.metodoPago,
         pendingPaymentData.monto,
+        cajaId, // Pasar cajaId
       )
 
       // Reproducir sonido de éxito si está habilitado

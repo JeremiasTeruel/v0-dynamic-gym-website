@@ -112,13 +112,12 @@ export async function GET() {
 // POST para registrar una venta y actualizar stock
 export async function POST(request: Request) {
   try {
-    const { bebidaId, cantidad, precioTotal, metodoPago } = await request.json()
-    console.log("API: Datos recibidos para venta de bebida:", { bebidaId, cantidad, precioTotal, metodoPago })
+    const { bebidaId, cantidad, precioTotal, metodoPago, cajaId } = await request.json()
+    console.log("API: Datos recibidos para venta de bebida:", { bebidaId, cantidad, precioTotal, metodoPago, cajaId })
 
-    // Validar que los campos requeridos estén presentes
-    if (!bebidaId || !cantidad || !precioTotal || !metodoPago) {
+    if (!bebidaId || !cantidad || !precioTotal || !metodoPago || !cajaId) {
       console.error("API ERROR: Faltan campos requeridos")
-      return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
+      return NextResponse.json({ error: "Faltan campos requeridos (incluyendo cajaId)" }, { status: 400 })
     }
 
     const db = await getMongoDb()
@@ -146,7 +145,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Error al actualizar stock" }, { status: 500 })
     }
 
-    // Registrar la venta en la colección de ventas
     const ventasCollection = db.collection("ventas_bebidas")
     const venta = {
       bebidaId: bebidaId,
@@ -158,11 +156,12 @@ export async function POST(request: Request) {
       fecha: new Date(),
       stockAnterior: bebida.stock,
       stockNuevo: nuevoStock,
+      cajaId: cajaId, // ID de la caja actual
     }
 
     await ventasCollection.insertOne(venta)
 
-    console.log("API: Venta registrada exitosamente")
+    console.log("API: Venta registrada exitosamente con cajaId:", cajaId)
     return NextResponse.json({
       success: true,
       message: "Venta registrada correctamente",

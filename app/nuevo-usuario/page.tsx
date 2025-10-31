@@ -192,6 +192,15 @@ export default function NuevoUsuario() {
     try {
       setIsSubmitting(true)
 
+      const cajaResponse = await fetch("/api/caja/actual")
+      const cajaData = await cajaResponse.json()
+
+      if (!cajaData.cajaAbierta || !cajaData.caja?.id) {
+        throw new Error("No hay caja abierta")
+      }
+
+      const cajaId = cajaData.caja.id
+
       if (pendingFormData.formData.actividad === "Dia") {
         console.log("Registrando pago de día sin crear usuario")
 
@@ -202,6 +211,7 @@ export default function NuevoUsuario() {
           fecha: pendingFormData.formData.fechaInicio,
           metodoPago: pendingFormData.formData.metodoPago,
           tipoPago: "Nuevo",
+          cajaId: cajaId,
         })
 
         if (getSoundEnabled()) {
@@ -225,7 +235,7 @@ export default function NuevoUsuario() {
 
         console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
 
-        await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto)
+        await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto, cajaId)
 
         if (getSoundEnabled()) {
           await soundGenerator.playOperationCompleteSound()
