@@ -35,17 +35,26 @@ export async function GET(request: Request, { params }: { params: { fecha: strin
 
     console.log(`API: Último cierre completo encontrado:`, ultimoCierreCompleto?.horaCierre)
 
-    const query: any = {
-      fecha: {
-        $gte: fechaInicio,
-        $lte: fechaFin,
-      },
-    }
+    let query: any
 
-    // Si existe un cierre completo, filtrar solo pagos después del cierre
     if (ultimoCierreCompleto && ultimoCierreCompleto.horaCierre) {
-      query.fecha.$gt = ultimoCierreCompleto.horaCierre
+      // Si hay cierre completo, solo mostrar pagos posteriores al cierre
+      query = {
+        fecha: {
+          $gt: ultimoCierreCompleto.horaCierre,
+          $lte: fechaFin,
+        },
+      }
       console.log(`API: Filtrando pagos posteriores a ${ultimoCierreCompleto.horaCierre}`)
+    } else {
+      // Si no hay cierre completo, mostrar todos los pagos del día
+      query = {
+        fecha: {
+          $gte: fechaInicio,
+          $lte: fechaFin,
+        },
+      }
+      console.log(`API: No hay cierre completo, mostrando todos los pagos del día`)
     }
 
     // Buscar pagos según el query
