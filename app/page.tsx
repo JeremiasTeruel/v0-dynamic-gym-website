@@ -17,6 +17,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [currentTime, setCurrentTime] = useState("")
+  const [currentDate, setCurrentDate] = useState("")
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const { getSoundEnabled, setSoundEnabled: saveSoundEnabled } = useSoundPreferences()
@@ -36,6 +37,23 @@ export default function Home() {
 
     updateTime()
     const interval = setInterval(updateTime, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const updateDate = () => {
+      const now = new Date()
+      const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+      const diaSemana = diasSemana[now.getDay()]
+      const dia = String(now.getDate()).padStart(2, "0")
+      const mes = String(now.getMonth() + 1).padStart(2, "0")
+      const anio = now.getFullYear()
+      setCurrentDate(`${diaSemana}, ${dia}/${mes}/${anio}`)
+    }
+
+    updateDate()
+    const interval = setInterval(updateDate, 60000)
 
     return () => clearInterval(interval)
   }, [])
@@ -137,7 +155,10 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start pt-16 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative">
-      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10">
+      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex flex-col items-end space-y-2">
+        <div className="text-sm md:text-base font-mono font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
+          {currentDate}
+        </div>
         <div className="text-lg md:text-xl font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
           {currentTime}
         </div>
