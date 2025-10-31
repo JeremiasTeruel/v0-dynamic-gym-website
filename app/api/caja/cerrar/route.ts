@@ -58,13 +58,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const horaCierre = new Date()
-
     // Preparar el documento para insertar
     const cierreParaInsertar = {
       fecha: new Date(fecha),
       tipoCierre,
-      horaCierre, // Guardar la hora exacta del cierre
       // Totales generales por método de pago
       totalEfectivo: Number.parseFloat(totalEfectivo) || 0,
       totalMercadoPago: Number.parseFloat(totalMercadoPago) || 0,
@@ -134,7 +131,6 @@ export async function GET() {
       id: cierre._id.toString(),
       _id: undefined,
       fecha: cierre.fecha.toISOString().split("T")[0], // Convertir fecha a string
-      horaCierre: cierre.horaCierre?.toISOString(), // Incluir hora de cierre
       fechaCierre: cierre.fechaCierre.toISOString(), // Convertir fecha de cierre a string ISO
     }))
 
