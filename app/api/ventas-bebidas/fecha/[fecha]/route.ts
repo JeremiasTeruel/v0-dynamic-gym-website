@@ -8,13 +8,7 @@ const COLLECTION = "ventas_bebidas"
 export async function GET(request: Request, { params }: { params: { fecha: string } }) {
   try {
     const fecha = params.fecha
-    const { searchParams } = new URL(request.url)
-    const desde = searchParams.get("desde") // Parámetro opcional para filtrar desde una hora específica
-
     console.log(`API: Intentando obtener ventas de bebidas para la fecha ${fecha}...`)
-    if (desde) {
-      console.log(`API: Filtrando ventas desde ${desde}`)
-    }
 
     // Crear objetos Date para el inicio y fin del día
     const fechaInicio = new Date(fecha)
@@ -26,15 +20,15 @@ export async function GET(request: Request, { params }: { params: { fecha: strin
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
-    const query: any = {
-      fecha: {
-        $gte: desde ? new Date(desde) : fechaInicio, // Si hay "desde", usar ese timestamp
-        $lte: fechaFin,
-      },
-    }
-
-    // Buscar ventas entre fechaInicio y fechaFin (o desde el timestamp especificado)
-    const ventas = await collection.find(query).toArray()
+    // Buscar ventas entre fechaInicio y fechaFin
+    const ventas = await collection
+      .find({
+        fecha: {
+          $gte: fechaInicio,
+          $lte: fechaFin,
+        },
+      })
+      .toArray()
 
     console.log(`API: Se encontraron ${ventas.length} ventas de bebidas para la fecha ${fecha}`)
 

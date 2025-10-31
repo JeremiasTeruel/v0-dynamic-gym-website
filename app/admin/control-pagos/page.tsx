@@ -156,41 +156,14 @@ export default function ControlPagos() {
 
       console.log("[v0] Cargando datos para fecha:", fechaHoy)
 
-      let timestampUltimoCierre: string | null = null
-      try {
-        const ultimoCierreResponse = await fetch("/api/caja/ultimo-cierre")
-        if (ultimoCierreResponse.ok) {
-          const ultimoCierreData = await ultimoCierreResponse.json()
-          if (ultimoCierreData.existe) {
-            timestampUltimoCierre = ultimoCierreData.fechaCierre
-            console.log("[v0] Último cierre completo encontrado:", timestampUltimoCierre)
-            console.log("[v0] Filtrando datos posteriores a este cierre")
-          } else {
-            console.log("[v0] No hay cierre completo previo, mostrando todos los datos del día")
-          }
-        }
-      } catch (error) {
-        console.error("[v0] Error al verificar último cierre:", error)
-      }
-
-      const urlPagos = timestampUltimoCierre
-        ? `/api/pagos/fecha/${fechaHoy}?desde=${timestampUltimoCierre}`
-        : `/api/pagos/fecha/${fechaHoy}`
-
-      const pagosResponse = await fetch(urlPagos)
-      let pagosHoy = []
-      if (pagosResponse.ok) {
-        pagosHoy = await pagosResponse.json()
-        console.log("[v0] Pagos del día cargados:", pagosHoy.length)
-        console.log("[v0] Detalle de pagos del día:", pagosHoy)
-      }
+      // Cargar pagos del día
+      const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
+      console.log("[v0] Pagos del día cargados:", pagosHoy.length)
+      console.log("[v0] Detalle de pagos del día:", pagosHoy)
       setPagosDiarios(pagosHoy)
 
-      const urlVentas = timestampUltimoCierre
-        ? `/api/ventas-bebidas/fecha/${fechaHoy}?desde=${timestampUltimoCierre}`
-        : `/api/ventas-bebidas/fecha/${fechaHoy}`
-
-      const ventasBebidasResponse = await fetch(urlVentas)
+      // Cargar ventas de bebidas del día
+      const ventasBebidasResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaHoy}`)
       let ventasBebidasHoy = []
       if (ventasBebidasResponse.ok) {
         ventasBebidasHoy = await ventasBebidasResponse.json()
@@ -238,23 +211,14 @@ export default function ControlPagos() {
           fechaDia.setDate(hoy.getDate() - diff)
           const fechaStr = fechaDia.toISOString().split("T")[0]
 
-          // Si es el día actual, usar los datos ya cargados (con filtro de sesión)
-          if (fechaStr === fechaHoy) {
-            const montoCuotasDia = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
-            const montoBebidasDia = ventasBebidasHoy.reduce((sum, venta) => sum + venta.precioTotal, 0)
-            const montoTotalDia = montoCuotasDia + montoBebidasDia
-
-            return {
-              dia,
-              monto: montoTotalDia,
-              cuotas: montoCuotasDia,
-              bebidas: montoBebidasDia,
-            }
-          }
-
-          // Para otros días, obtener todos los datos sin filtro de sesión
+          // Obtener pagos de cuotas para esta fecha
           const pagosDia = await obtenerPagosPorFecha(fechaStr)
-          const montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
+          let montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
+
+          // Si es el día actual, usar los pagos actuales
+          if (fechaStr === fechaHoy) {
+            montoCuotasDia = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
+          }
 
           // Obtener ventas de bebidas para esta fecha
           const ventasBebidasDiaResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaStr}`)
@@ -262,6 +226,11 @@ export default function ControlPagos() {
           if (ventasBebidasDiaResponse.ok) {
             const ventasData = await ventasBebidasDiaResponse.json()
             montoBebidasDia = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
+          }
+
+          // Si es el día actual, usar las ventas actuales
+          if (fechaStr === fechaHoy) {
+            montoBebidasDia = ventasBebidasHoy.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
           const montoTotalDia = montoCuotasDia + montoBebidasDia
