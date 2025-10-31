@@ -15,17 +15,18 @@ export async function POST(request: Request) {
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
-    // Verificar si ya existe una caja abierta para esta fecha
     const cajaExistente = await collection.findOne({
-      fecha: new Date(fecha),
       estado: "abierta",
     })
 
     if (cajaExistente) {
-      return NextResponse.json({ error: "Ya existe una caja abierta para esta fecha" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Ya existe una caja abierta. Debe cerrarla antes de abrir una nueva." },
+        { status: 400 },
+      )
     }
 
-    // Crear nueva caja
+    // Crear nueva caja con ID único
     const nuevaCaja = {
       fecha: new Date(fecha),
       fechaApertura: new Date(),
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     const resultado = await collection.insertOne(nuevaCaja)
 
     if (resultado.acknowledged) {
-      console.log("[v0] Caja abierta exitosamente:", resultado.insertedId)
+      console.log("[v0] Caja abierta exitosamente con ID:", resultado.insertedId)
       return NextResponse.json({
         ...nuevaCaja,
         id: resultado.insertedId.toString(),

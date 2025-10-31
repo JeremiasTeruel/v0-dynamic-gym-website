@@ -36,10 +36,7 @@ export default function ControlPagos() {
   const verificarCajaAbierta = async () => {
     try {
       setCargandoCaja(true)
-      const hoy = new Date()
-      const fechaHoy = hoy.toISOString().split("T")[0]
-
-      const response = await fetch(`/api/caja/actual?fecha=${fechaHoy}`)
+      const response = await fetch("/api/caja/actual")
       const data = await response.json()
 
       console.log("[v0] Estado de caja:", data)
@@ -77,7 +74,7 @@ export default function ControlPagos() {
       setAlertMessage("Caja abierta exitosamente")
       setShowAlert(true)
 
-      await cargarDatos()
+      await cargarDatosDiarios()
     } catch (error) {
       console.error("[v0] Error al abrir caja:", error)
       setAlertMessage("Error al abrir caja: " + error.message)
@@ -90,7 +87,7 @@ export default function ControlPagos() {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
-      console.log("[v0] Cerrando caja para fecha:", fechaHoy, "Tipo:", tipoCierre)
+      console.log("[v0] Cerrando caja. Tipo:", tipoCierre)
 
       const totalEfectivoCuotas = pagosDiarios
         .filter((pago) => pago.metodoPago === "Efectivo")
@@ -154,7 +151,7 @@ export default function ControlPagos() {
       console.log("[v0] Caja cerrada exitosamente. Tipo:", tipoCierre)
 
       if (tipoCierre === "completo") {
-        console.log("[v0] Cierre completo - Recargando datos para resetear el día")
+        console.log("[v0] Cierre completo - Reseteando valores diarios")
 
         try {
           const responseIngresos = await fetch(`/api/ingresos?fecha=${fechaHoy}`, {
@@ -169,10 +166,13 @@ export default function ControlPagos() {
         }
 
         setCajaAbierta(false)
+        setPagosDiarios([])
+        setVentasBebidas([])
+        setMetodosPago([])
         setAlertMessage("Caja cerrada exitosamente")
         setShowAlert(true)
 
-        await cargarDatos()
+        await cargarDatosSemanalesYMensuales()
       } else {
         console.log("[v0] Cierre parcial - Manteniendo datos del día sin cambios")
         setAlertMessage("Cierre parcial realizado exitosamente")
@@ -186,18 +186,15 @@ export default function ControlPagos() {
     }
   }
 
-  const cargarDatos = async () => {
+  const cargarDatosDiarios = async () => {
     try {
-      setCargandoDatos(true)
-
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
-      console.log("[v0] Cargando datos para fecha:", fechaHoy)
+      console.log("[v0] Cargando datos diarios para fecha:", fechaHoy)
 
       const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
       console.log("[v0] Pagos del día cargados:", pagosHoy.length)
-      console.log("[v0] Detalle de pagos del día:", pagosHoy)
       setPagosDiarios(pagosHoy)
 
       const ventasBebidasResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaHoy}`)
@@ -205,9 +202,6 @@ export default function ControlPagos() {
       if (ventasBebidasResponse.ok) {
         ventasBebidasHoy = await ventasBebidasResponse.json()
         console.log("[v0] Ventas de bebidas del día cargadas:", ventasBebidasHoy.length)
-        console.log("[v0] Detalle de ventas del día:", ventasBebidasHoy)
-      } else {
-        console.log("[v0] No se pudieron cargar ventas de bebidas:", ventasBebidasResponse.status)
       }
       setVentasBebidas(ventasBebidasHoy)
 
@@ -223,21 +217,19 @@ export default function ControlPagos() {
       const totalMercadoPago = mercadoPagoCuotas + mercadoPagoBebidas
       const totalMixto = mixtoCuotas + mixtoBebidas
 
-      console.log(
-        "[v0] Métodos de pago del día - Efectivo:",
-        totalEfectivo,
-        "Mercado Pago:",
-        totalMercadoPago,
-        "Mixto:",
-        totalMixto,
-      )
-
       setMetodosPago([
         { name: "Efectivo", value: totalEfectivo || 1, fill: "#4ade80" },
         { name: "Mercado Pago", value: totalMercadoPago || 1, fill: "#3b82f6" },
         { name: "Mixto", value: totalMixto || 1, fill: "#a78bfa" },
       ])
+    } catch (error) {
+      console.error("[v0] Error al cargar datos diarios:", error)
+    }
+  }
 
+  const cargarDatosSemanalesYMensuales = async () => {
+    try {
+      const hoy = new Date()
       const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
       const pagosSemanaData = await Promise.all(
         diasSemana.map(async (dia, index) => {
@@ -247,11 +239,7 @@ export default function ControlPagos() {
           const fechaStr = fechaDia.toISOString().split("T")[0]
 
           const pagosDia = await obtenerPagosPorFecha(fechaStr)
-          let montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
-
-          if (fechaStr === fechaHoy) {
-            montoCuotasDia = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
-          }
+          const montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
 
           const ventasBebidasDiaResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaStr}`)
           let montoBebidasDia = 0
@@ -260,29 +248,7 @@ export default function ControlPagos() {
             montoBebidasDia = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          if (fechaStr === fechaHoy) {
-            montoBebidasDia = ventasBebidasHoy.reduce((sum, venta) => sum + venta.precioTotal, 0)
-          }
-
           const montoTotalDia = montoCuotasDia + montoBebidasDia
-
-          try {
-            const cierresResponse = await fetch("/api/caja/cerrar")
-            if (cierresResponse.ok) {
-              const cierres = await cierresResponse.json()
-              const cierreDia = cierres.find((cierre) => cierre.fecha === fechaStr)
-              if (cierreDia) {
-                return {
-                  dia,
-                  monto: cierreDia.totalGeneral,
-                  cuotas: cierreDia.totalGeneral - cierreDia.totalBebidas,
-                  bebidas: cierreDia.totalBebidas,
-                }
-              }
-            }
-          } catch (error) {
-            console.error("Error al obtener cierres de caja:", error)
-          }
 
           return {
             dia,
@@ -320,29 +286,7 @@ export default function ControlPagos() {
             montoBebidasMes = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          let montoTotalMes = montoCuotasMes + montoBebidasMes
-
-          try {
-            const cierresResponse = await fetch("/api/caja/cerrar")
-            if (cierresResponse.ok) {
-              const cierres = await cierresResponse.json()
-              const cierresMes = cierres.filter((cierre) => {
-                const fechaCierre = new Date(cierre.fecha)
-                return fechaCierre >= primerDia && fechaCierre <= ultimoDia
-              })
-
-              if (cierresMes.length > 0) {
-                const montoCierresCuotas = cierresMes.reduce(
-                  (sum, cierre) => sum + (cierre.totalGeneral - cierre.totalBebidas),
-                  0,
-                )
-                const montoCierresBebidas = cierresMes.reduce((sum, cierre) => sum + cierre.totalBebidas, 0)
-                montoTotalMes = montoCierresCuotas + montoCierresBebidas
-              }
-            }
-          } catch (error) {
-            console.error("Error al obtener cierres de caja para el mes:", error)
-          }
+          const montoTotalMes = montoCuotasMes + montoBebidasMes
 
           return {
             mes,
@@ -416,20 +360,26 @@ export default function ControlPagos() {
 
       setMetodosMensualesData(metodosMensualesData)
     } catch (error) {
-      console.error("[v0] Error al cargar datos:", error)
-    } finally {
-      setCargandoDatos(false)
+      console.error("[v0] Error al cargar datos semanales y mensuales:", error)
     }
   }
 
   useEffect(() => {
-    verificarCajaAbierta().then((abierta) => {
+    const inicializar = async () => {
+      setCargandoDatos(true)
+
+      await cargarDatosSemanalesYMensuales()
+
+      const abierta = await verificarCajaAbierta()
+
       if (abierta) {
-        cargarDatos()
-      } else {
-        setCargandoDatos(false)
+        await cargarDatosDiarios()
       }
-    })
+
+      setCargandoDatos(false)
+    }
+
+    inicializar()
   }, [obtenerPagosPorFecha, obtenerPagosPorRango, usuarios])
 
   return (
@@ -459,13 +409,15 @@ export default function ControlPagos() {
         <div className="flex justify-center py-8">
           <LoadingDumbbell size={32} className="text-yellow-500" />
         </div>
-      ) : cajaAbierta ? (
+      ) : (
         <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
-              <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
-            </div>
+            {cajaAbierta && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
+                <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
@@ -473,14 +425,16 @@ export default function ControlPagos() {
                 <GraficoSemanal datos={pagosSemana} />
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (hoy)</h2>
-                <GraficoMetodosDetallado
-                  pagosCuotas={pagosDiarios}
-                  ventasBebidas={ventasBebidas}
-                  titulo="Distribución de ingresos por método de pago"
-                />
-              </div>
+              {cajaAbierta && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                  <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (hoy)</h2>
+                  <GraficoMetodosDetallado
+                    pagosCuotas={pagosDiarios}
+                    ventasBebidas={ventasBebidas}
+                    titulo="Distribución de ingresos por método de pago"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -504,7 +458,7 @@ export default function ControlPagos() {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
 
       <Alert message={alertMessage} isOpen={showAlert} onClose={() => setShowAlert(false)} />
     </main>

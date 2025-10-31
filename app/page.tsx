@@ -80,21 +80,29 @@ export default function Home() {
         setFoundUser(usuario)
 
         try {
-          await fetch("/api/ingresos", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              dni: usuario.dni,
-              nombreApellido: usuario.nombreApellido,
-              actividad: usuario.actividad,
-              fechaVencimiento: usuario.fechaVencimiento,
-            }),
-          })
-          console.log("[v0] Ingreso registrado para:", usuario.nombreApellido)
+          const cajaResponse = await fetch("/api/caja/actual")
+          const cajaData = await cajaResponse.json()
+
+          if (cajaData.cajaAbierta) {
+            // Solo registrar ingreso si la caja está abierta
+            await fetch("/api/ingresos", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                dni: usuario.dni,
+                nombreApellido: usuario.nombreApellido,
+                actividad: usuario.actividad,
+                fechaVencimiento: usuario.fechaVencimiento,
+              }),
+            })
+            console.log("[v0] Ingreso registrado para:", usuario.nombreApellido)
+          } else {
+            console.log("[v0] Caja cerrada - No se registra ingreso para:", usuario.nombreApellido)
+          }
         } catch (error) {
-          console.error("[v0] Error al registrar ingreso:", error)
+          console.error("[v0] Error al verificar caja o registrar ingreso:", error)
         }
 
         if (soundEnabled) {

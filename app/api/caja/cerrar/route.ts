@@ -38,19 +38,17 @@ export async function POST(request: Request) {
     const collectionCierres = db.collection(COLLECTION_CIERRES)
     const collectionCajas = db.collection(COLLECTION_CAJAS)
 
-    if (tipoCierre === "completo") {
-      // Verificar que no exista ya un cierre completo para esta fecha
-      const cierreCompletoExistente = await collectionCierres.findOne({
-        fecha: new Date(fecha),
-        tipoCierre: "completo",
-      })
-      if (cierreCompletoExistente) {
-        return NextResponse.json({ error: "Ya existe un cierre completo de caja para esta fecha" }, { status: 400 })
-      }
+    const cajaAbierta = await collectionCajas.findOne({
+      estado: "abierta",
+    })
 
-      // Cerrar la caja actual
+    if (!cajaAbierta) {
+      return NextResponse.json({ error: "No hay ninguna caja abierta para cerrar" }, { status: 400 })
+    }
+
+    if (tipoCierre === "completo") {
       await collectionCajas.updateOne(
-        { fecha: new Date(fecha), estado: "abierta" },
+        { _id: cajaAbierta._id },
         {
           $set: {
             estado: "cerrada",
@@ -63,10 +61,12 @@ export async function POST(request: Request) {
           },
         },
       )
+      console.log("[v0] Caja cerrada con ID:", cajaAbierta._id)
     }
 
     // Preparar el documento para insertar
     const cierreParaInsertar = {
+      cajaId: cajaAbierta._id.toString(), // Guardar referencia al ID de la caja
       fecha: new Date(fecha),
       tipoCierre,
       totalEfectivo: Number.parseFloat(totalEfectivo) || 0,

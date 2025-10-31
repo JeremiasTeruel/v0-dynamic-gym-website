@@ -3,22 +3,13 @@ import { getMongoDb } from "@/lib/mongodb"
 
 const COLLECTION = "cajas"
 
-// GET para obtener la caja actual del día
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const fecha = searchParams.get("fecha")
-
-    if (!fecha) {
-      return NextResponse.json({ error: "Fecha requerida" }, { status: 400 })
-    }
-
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
-    // Buscar caja abierta para la fecha especificada
+    // Buscar cualquier caja que esté abierta (sin importar la fecha)
     const cajaActual = await collection.findOne({
-      fecha: new Date(fecha),
       estado: "abierta",
     })
 
