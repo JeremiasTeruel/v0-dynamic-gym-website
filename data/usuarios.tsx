@@ -1,12 +1,14 @@
 // Definición de la estructura de un usuario
 export interface Usuario {
-  _id: string
+  id?: string
+  _id?: string
   nombreApellido: string
   dni: string
   fechaInicio: string
   fechaVencimiento: string
   metodoPago: string
   actividad: string
+  fechaCreacion?: string // Fecha de creación del usuario en el sistema
 }
 
 // NOTA: En una aplicación real, estos datos estarían en una base de datos
@@ -25,6 +27,7 @@ export const usuariosIniciales: Usuario[] = [
     fechaVencimiento: "2023-02-15",
     metodoPago: "Efectivo",
     actividad: "Normal",
+    fechaCreacion: "2023-01-10",
   },
   {
     id: "2",
@@ -34,6 +37,7 @@ export const usuariosIniciales: Usuario[] = [
     fechaVencimiento: "2023-04-10",
     metodoPago: "Mercado Pago",
     actividad: "Familiar",
+    fechaCreacion: "2023-03-05",
   },
 ]
 
@@ -93,6 +97,7 @@ export const agregarUsuario = (usuarios: Usuario[], nuevoUsuario: Omit<Usuario, 
   const usuarioConId: Usuario = {
     ...nuevoUsuario,
     _id: generarIdUnico(),
+    fechaCreacion: new Date().toISOString(), // Agregar fecha de creación
   }
 
   // Agregar al array y guardar
