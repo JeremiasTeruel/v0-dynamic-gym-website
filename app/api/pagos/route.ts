@@ -40,11 +40,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const pago = await request.json()
-    console.log("[v0] API: Datos recibidos para registrar pago:", pago)
+    console.log("API: Datos recibidos para registrar pago:", pago)
 
     // Validar que los campos requeridos estén presentes
     if (!pago.userNombre || !pago.userDni || !pago.monto || !pago.metodoPago) {
-      console.error("[v0] API ERROR: Faltan campos requeridos:", pago)
+      console.error("API ERROR: Faltan campos requeridos:", pago)
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
     }
 
@@ -57,23 +57,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "El monto debe ser un número válido" }, { status: 400 })
     }
 
-    const fechaPago = new Date(pago.fecha || new Date())
-    console.log("[v0] API: Fecha del pago a registrar:", fechaPago.toISOString())
-
     // Incluir tipoPago en el documento a insertar
     const pagoParaInsertar = {
       userNombre: pago.userNombre,
       userDni: pago.userDni,
       monto: montoNumerico,
-      fecha: fechaPago,
+      fecha: new Date(pago.fecha || new Date()),
       metodoPago: pago.metodoPago,
       tipoPago: pago.tipoPago || "Pago de cuota", // Valor por defecto si no se especifica
     }
-
-    console.log("[v0] API: Documento a insertar:", {
-      ...pagoParaInsertar,
-      fecha: pagoParaInsertar.fecha.toISOString(),
-    })
 
     // Insertar el nuevo pago
     const resultado = await collection.insertOne(pagoParaInsertar)
@@ -84,15 +76,14 @@ export async function POST(request: Request) {
         ...pagoParaInsertar,
         id: resultado.insertedId.toString(),
       }
-      console.log("[v0] API: Pago registrado exitosamente con ID:", nuevoPago.id)
-      console.log("[v0] API: Fecha guardada:", nuevoPago.fecha.toISOString())
+      console.log("API: Pago registrado exitosamente:", nuevoPago)
       return NextResponse.json(nuevoPago)
     }
 
-    console.error("[v0] API ERROR: Error al insertar pago en la base de datos")
+    console.error("API ERROR: Error al insertar pago en la base de datos")
     return NextResponse.json({ error: "Error al registrar pago" }, { status: 500 })
   } catch (error) {
-    console.error("[v0] API ERROR: Error al registrar pago:", error)
+    console.error("API ERROR: Error al registrar pago:", error)
     return NextResponse.json(
       {
         error: "Error al registrar pago",
