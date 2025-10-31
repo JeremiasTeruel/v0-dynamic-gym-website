@@ -95,7 +95,6 @@ export default function Home() {
           console.log("[v0] Ingreso registrado para:", usuario.nombreApellido)
         } catch (error) {
           console.error("[v0] Error al registrar ingreso:", error)
-          // No mostrar error al usuario, solo registrar en consola
         }
 
         if (soundEnabled) {
@@ -118,8 +117,8 @@ export default function Home() {
           await soundGenerator.playAlarmSound()
         }
 
-        // Clear the DNI input after the alert is shown (3 seconds to match Alert auto-close)
         setTimeout(() => {
+          setShowAlert(false)
           setSearchDni("")
         }, 3000)
       }
