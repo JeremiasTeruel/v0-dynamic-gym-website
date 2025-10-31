@@ -8,7 +8,13 @@ const COLLECTION = "pagos"
 export async function GET(request: Request, { params }: { params: { fecha: string } }) {
   try {
     const fecha = params.fecha
+    const { searchParams } = new URL(request.url)
+    const desde = searchParams.get("desde") // Parámetro opcional para filtrar desde una hora específica
+
     console.log(`API: Intentando obtener pagos para la fecha ${fecha}...`)
+    if (desde) {
+      console.log(`API: Filtrando pagos desde ${desde}`)
+    }
 
     // Crear objetos Date para el inicio y fin del día
     const fechaInicio = new Date(fecha)
@@ -20,15 +26,15 @@ export async function GET(request: Request, { params }: { params: { fecha: strin
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
-    // Buscar pagos entre fechaInicio y fechaFin
-    const pagos = await collection
-      .find({
-        fecha: {
-          $gte: fechaInicio,
-          $lte: fechaFin,
-        },
-      })
-      .toArray()
+    const query: any = {
+      fecha: {
+        $gte: desde ? new Date(desde) : fechaInicio, // Si hay "desde", usar ese timestamp
+        $lte: fechaFin,
+      },
+    }
+
+    // Buscar pagos entre fechaInicio y fechaFin (o desde el timestamp especificado)
+    const pagos = await collection.find(query).toArray()
 
     console.log(`API: Se encontraron ${pagos.length} pagos para la fecha ${fecha}`)
 
