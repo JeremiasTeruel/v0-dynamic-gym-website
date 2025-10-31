@@ -3,6 +3,7 @@ import { getMongoDb } from "@/lib/mongodb"
 
 // Nombre de la colección en MongoDB
 const COLLECTION = "pagos"
+const CIERRES_COLLECTION = "cierres_caja"
 
 // GET para obtener pagos por fecha
 export async function GET(request: Request, { params }: { params: { fecha: string } }) {
@@ -19,12 +20,36 @@ export async function GET(request: Request, { params }: { params: { fecha: strin
 
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
+    const cierresCollection = db.collection(CIERRES_COLLECTION)
 
-    // Buscar pagos entre fechaInicio y fechaFin
-    const pagos = await collection
+    const ultimoCierreCompleto = await cierresCollection
       .find({
         fecha: {
           $gte: fechaInicio,
+          $lte: fechaFin,
+        },
+        tipoCierre: "completo",
+      })
+      .sort({ fechaCierre: -1 })
+      .limit(1)
+      .toArray()
+
+    let fechaDesde = fechaInicio
+
+    // Si hay un cierre completo, solo mostrar pagos posteriores a ese cierre
+    if (ultimoCierreCompleto.length > 0) {
+      fechaDesde = new Date(ultimoCierreCompleto[0].fechaCierre)
+      console.log(`API: Último cierre completo encontrado en ${fechaDesde.toISOString()}`)
+      console.log(`API: Mostrando solo pagos posteriores al cierre`)
+    } else {
+      console.log(`API: No hay cierre completo, mostrando todos los pagos del día`)
+    }
+
+    // Buscar pagos desde fechaDesde hasta fechaFin
+    const pagos = await collection
+      .find({
+        fecha: {
+          $gte: fechaDesde,
           $lte: fechaFin,
         },
       })
