@@ -117,6 +117,11 @@ export default function Home() {
         if (soundEnabled) {
           await soundGenerator.playAlarmSound()
         }
+
+        // Clear the DNI input after the alert is shown (3 seconds to match Alert auto-close)
+        setTimeout(() => {
+          setSearchDni("")
+        }, 3000)
       }
     } catch (error) {
       console.error("Error al buscar usuario:", error)
@@ -282,7 +287,8 @@ export default function Home() {
         message="Usuario no encontrado."
         isOpen={showAlert}
         onClose={() => setShowAlert(false)}
-        autoRedirect={true}
+        autoRedirect={false}
+        type="error"
       />
     </main>
   )
