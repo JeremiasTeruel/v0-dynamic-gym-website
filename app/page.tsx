@@ -154,18 +154,18 @@ export default function Home() {
   }, [searchDni])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start pt-16 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative">
-      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex flex-col items-end space-y-2">
-        <div className="text-sm md:text-base font-mono font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-md">
+    <main className="flex min-h-screen flex-col items-center justify-start pt-8 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative">
+      <div className="w-full max-w-4xl flex flex-col items-center space-y-3 mb-6 md:absolute md:top-6 md:right-6 md:w-auto md:space-y-2 md:items-end z-10">
+        <div className="text-sm md:text-base font-mono font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-md">
           {currentDate}
         </div>
-        <div className="text-5xl md:text-6xl font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-8 py-4 md:px-10 md:py-5 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
+        <div className="text-2xl md:text-6xl font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-4 py-2 md:px-10 md:py-5 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
           {currentTime}
         </div>
       </div>
 
       <div className="w-full max-w-4xl flex flex-col items-center space-y-6 mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-yellow-600 dark:text-yellow-400 text-center whitespace-nowrap">
+        <h1 className="text-3xl md:text-5xl font-bold text-yellow-600 dark:text-yellow-400 text-center whitespace-nowrap">
           High Performance Gym
         </h1>
 
