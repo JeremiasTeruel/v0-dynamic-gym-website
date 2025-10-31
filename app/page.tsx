@@ -9,6 +9,7 @@ import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
+import CajaCerradaModal from "@/components/caja-cerrada-modal"
 
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
@@ -18,6 +19,8 @@ export default function Home() {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [currentTime, setCurrentTime] = useState("")
   const [currentDate, setCurrentDate] = useState("")
+  const [showCajaCerradaModal, setShowCajaCerradaModal] = useState(false)
+  const [pendingSearchDni, setPendingSearchDni] = useState("")
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const { getSoundEnabled, setSoundEnabled: saveSoundEnabled } = useSoundPreferences()
@@ -64,9 +67,35 @@ export default function Home() {
     saveSoundEnabled(newSoundEnabled)
   }
 
-  const handleSearch = async () => {
-    if (!searchDni.trim() || isSearching) return
+  const handleAbrirCaja = async () => {
+    try {
+      const response = await fetch("/api/caja/abrir", {
+        method: "POST",
+      })
 
+      if (response.ok) {
+        const data = await response.json()
+        setShowCajaCerradaModal(false)
+
+        // Mostrar mensaje de éxito
+        alert("✅ Caja abierta exitosamente")
+
+        // Continuar con la búsqueda pendiente
+        if (pendingSearchDni) {
+          await ejecutarBusqueda(pendingSearchDni)
+          setPendingSearchDni("")
+        }
+      } else {
+        const errorData = await response.json()
+        alert(`❌ Error al abrir caja: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error("[v0] Error al abrir caja:", error)
+      alert("❌ Error al abrir caja")
+    }
+  }
+
+  const ejecutarBusqueda = async (dni: string) => {
     setIsSearching(true)
 
     try {
@@ -74,35 +103,28 @@ export default function Home() {
         await soundGenerator.playSearchSound()
       }
 
-      const usuario = await buscarUsuario(searchDni.trim())
+      const usuario = await buscarUsuario(dni)
 
       if (usuario) {
         setFoundUser(usuario)
 
+        // Registrar ingreso (la caja ya está abierta en este punto)
         try {
-          const cajaResponse = await fetch("/api/caja/actual")
-          const cajaData = await cajaResponse.json()
-
-          if (cajaData.cajaAbierta) {
-            // Solo registrar ingreso si la caja está abierta
-            await fetch("/api/ingresos", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                dni: usuario.dni,
-                nombreApellido: usuario.nombreApellido,
-                actividad: usuario.actividad,
-                fechaVencimiento: usuario.fechaVencimiento,
-              }),
-            })
-            console.log("[v0] Ingreso registrado para:", usuario.nombreApellido)
-          } else {
-            console.log("[v0] Caja cerrada - No se registra ingreso para:", usuario.nombreApellido)
-          }
+          await fetch("/api/ingresos", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              dni: usuario.dni,
+              nombreApellido: usuario.nombreApellido,
+              actividad: usuario.actividad,
+              fechaVencimiento: usuario.fechaVencimiento,
+            }),
+          })
+          console.log("[v0] Ingreso registrado para:", usuario.nombreApellido)
         } catch (error) {
-          console.error("[v0] Error al verificar caja o registrar ingreso:", error)
+          console.error("[v0] Error al registrar ingreso:", error)
         }
 
         if (soundEnabled) {
@@ -138,6 +160,29 @@ export default function Home() {
       }
     } finally {
       setIsSearching(false)
+    }
+  }
+
+  const handleSearch = async () => {
+    if (!searchDni.trim() || isSearching) return
+
+    try {
+      // Verificar si hay caja abierta
+      const cajaResponse = await fetch("/api/caja/actual")
+      const cajaData = await cajaResponse.json()
+
+      if (!cajaData.cajaAbierta) {
+        // Si no hay caja abierta, mostrar modal
+        setPendingSearchDni(searchDni.trim())
+        setShowCajaCerradaModal(true)
+        return
+      }
+
+      // Si hay caja abierta, ejecutar búsqueda normalmente
+      await ejecutarBusqueda(searchDni.trim())
+    } catch (error) {
+      console.error("[v0] Error al verificar caja:", error)
+      alert("❌ Error al verificar estado de caja")
     }
   }
 
@@ -296,6 +341,15 @@ export default function Home() {
         onClose={() => setShowAlert(false)}
         autoRedirect={false}
         type="error"
+      />
+
+      <CajaCerradaModal
+        isOpen={showCajaCerradaModal}
+        onClose={() => {
+          setShowCajaCerradaModal(false)
+          setPendingSearchDni("")
+        }}
+        onAbrirCaja={handleAbrirCaja}
       />
     </main>
   )
