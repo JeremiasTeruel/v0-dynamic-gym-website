@@ -57,13 +57,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "El monto debe ser un número válido" }, { status: 400 })
     }
 
-    // Preparar el documento para insertar
+    // Incluir tipoPago en el documento a insertar
     const pagoParaInsertar = {
       userNombre: pago.userNombre,
       userDni: pago.userDni,
       monto: montoNumerico,
       fecha: new Date(pago.fecha || new Date()),
       metodoPago: pago.metodoPago,
+      tipoPago: pago.tipoPago || "Pago de cuota", // Valor por defecto si no se especifica
     }
 
     // Insertar el nuevo pago

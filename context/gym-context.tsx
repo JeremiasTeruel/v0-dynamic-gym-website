@@ -11,6 +11,7 @@ export interface RegistroPago {
   monto: number
   fecha: string
   metodoPago: string
+  tipoPago?: "Nuevo" | "Pago de cuota" // Indica si es un usuario nuevo o pago de cuota
 }
 
 interface GymContextType {
@@ -214,6 +215,7 @@ export function GymProvider({ children }) {
         monto: montoPago,
         fecha: fechaActual,
         metodoPago: usuario.metodoPago,
+        tipoPago: "Nuevo",
       })
     } catch (err) {
       console.error("Error al agregar usuario:", err)
@@ -262,6 +264,7 @@ export function GymProvider({ children }) {
           monto: montoPago,
           fecha: fechaActual,
           metodoPago: metodoPago,
+          tipoPago: "Pago de cuota",
         })
       }
     } catch (err) {

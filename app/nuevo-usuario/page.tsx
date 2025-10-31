@@ -50,7 +50,6 @@ export default function NuevoUsuario() {
     montoMercadoPago: "0",
   })
 
-  // Efecto para actualizar el monto cuando cambia la actividad o método de pago
   useEffect(() => {
     const nuevoMonto = calcularMontoPorActividad(formData.actividad, formData.metodoPago)
     setFormData((prev) => ({
@@ -129,17 +128,16 @@ export default function NuevoUsuario() {
     try {
       setIsSubmitting(true)
 
-      // Si la actividad es "Dia", solo registrar el pago sin crear usuario
       if (pendingFormData.formData.actividad === "Dia") {
         console.log("Registrando pago de día sin crear usuario")
 
-        // Registrar solo el pago
         await registrarPago({
           userNombre: pendingFormData.formData.nombreApellido,
           userDni: pendingFormData.formData.dni,
           monto: pendingFormData.monto,
           fecha: pendingFormData.formData.fechaInicio,
           metodoPago: pendingFormData.formData.metodoPago,
+          tipoPago: "Nuevo",
         })
 
         if (getSoundEnabled()) {
@@ -155,7 +153,6 @@ export default function NuevoUsuario() {
           monto: pendingFormData.monto,
         })
       } else {
-        // Para otras actividades, crear el usuario normalmente
         const { montoPago, ...datosUsuario } = pendingFormData.formData
         const nuevoUsuario = {
           ...datosUsuario,
