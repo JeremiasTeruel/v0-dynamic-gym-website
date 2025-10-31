@@ -3,6 +3,7 @@ import { getMongoDb } from "@/lib/mongodb"
 
 // Nombre de la colección en MongoDB
 const COLLECTION = "ventas_bebidas"
+const CIERRES_COLLECTION = "cierres_caja"
 
 // GET para obtener ventas de bebidas por fecha
 export async function GET(request: Request, { params }: { params: { fecha: string } }) {
@@ -19,16 +20,36 @@ export async function GET(request: Request, { params }: { params: { fecha: strin
 
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
+    const cierresCollection = db.collection(CIERRES_COLLECTION)
 
-    // Buscar ventas entre fechaInicio y fechaFin
-    const ventas = await collection
-      .find({
+    const ultimoCierreCompleto = await cierresCollection.findOne(
+      {
         fecha: {
           $gte: fechaInicio,
           $lte: fechaFin,
         },
-      })
-      .toArray()
+        tipoCierre: "completo",
+      },
+      { sort: { horaCierre: -1 } },
+    )
+
+    console.log(`API: Último cierre completo encontrado:`, ultimoCierreCompleto?.horaCierre)
+
+    const query: any = {
+      fecha: {
+        $gte: fechaInicio,
+        $lte: fechaFin,
+      },
+    }
+
+    // Si existe un cierre completo, filtrar solo ventas después del cierre
+    if (ultimoCierreCompleto && ultimoCierreCompleto.horaCierre) {
+      query.fecha.$gt = ultimoCierreCompleto.horaCierre
+      console.log(`API: Filtrando ventas posteriores a ${ultimoCierreCompleto.horaCierre}`)
+    }
+
+    // Buscar ventas según el query
+    const ventas = await collection.find(query).toArray()
 
     console.log(`API: Se encontraron ${ventas.length} ventas de bebidas para la fecha ${fecha}`)
 
