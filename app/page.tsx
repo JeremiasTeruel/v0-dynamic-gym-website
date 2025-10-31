@@ -156,7 +156,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-start pt-16 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative">
       <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex flex-col items-end space-y-2">
-        <div className="text-sm md:text-base font-mono font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
+        <div className="text-sm md:text-base font-mono font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-md">
           {currentDate}
         </div>
         <div className="text-lg md:text-xl font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
