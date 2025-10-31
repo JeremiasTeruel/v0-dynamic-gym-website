@@ -6,9 +6,17 @@ interface ResumenIngresosProps {
   pagosCuotas: any[]
   ventasBebidas: any[]
   periodo: string
+  cajaAbierta?: boolean
+  onAbrirCaja?: () => void
 }
 
-export default function ResumenIngresos({ pagosCuotas, ventasBebidas, periodo }: ResumenIngresosProps) {
+export default function ResumenIngresos({
+  pagosCuotas,
+  ventasBebidas,
+  periodo,
+  cajaAbierta = true,
+  onAbrirCaja,
+}: ResumenIngresosProps) {
   // Calcular totales
   const totalCuotas = pagosCuotas.reduce((sum, pago) => sum + pago.monto, 0)
   const totalBebidas = ventasBebidas.reduce((sum, venta) => sum + venta.precioTotal, 0)
@@ -36,6 +44,30 @@ export default function ResumenIngresos({ pagosCuotas, ventasBebidas, periodo }:
 
   const calcularPorcentaje = (parte: number, total: number) => {
     return total > 0 ? Math.round((parte / total) * 100) : 0
+  }
+
+  if (!cajaAbierta) {
+    return (
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-8 border border-gray-200 dark:border-gray-600">
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <DollarSign className="h-16 w-16 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No hay ingresos registrados</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
+            La caja se encuentra cerrada. Debe abrir la caja para comenzar a registrar ventas y pagos.
+          </p>
+          {onAbrirCaja && (
+            <button
+              onClick={onAbrirCaja}
+              className="px-6 py-3 bg-green-600 dark:bg-green-700 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-medium"
+            >
+              Abrir Caja
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   if (totalGeneral === 0 && pagosCuotas.length === 0 && ventasBebidas.length === 0) {

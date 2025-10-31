@@ -9,6 +9,7 @@ import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import PinModal from "@/components/pin-modal"
+import CajaCerradaModal from "@/components/caja-cerrada-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 // Función para calcular el monto según actividad y método de pago
@@ -36,6 +37,9 @@ export default function PagarCuota() {
   const [pendingPaymentData, setPendingPaymentData] = useState(null)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
+  const [cajaAbierta, setCajaAbierta] = useState(true)
+  const [showCajaCerradaModal, setShowCajaCerradaModal] = useState(false)
+  const [verificandoCaja, setVerificandoCaja] = useState(true)
 
   const [formData, setFormData] = useState({
     dni: "",
@@ -58,6 +62,61 @@ export default function PagarCuota() {
       }))
     }
   }, [userFound, formData.metodoPago])
+
+  useEffect(() => {
+    verificarCajaAbierta()
+  }, [])
+
+  const verificarCajaAbierta = async () => {
+    try {
+      setVerificandoCaja(true)
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      const response = await fetch(`/api/caja/actual?fecha=${fechaHoy}`)
+      const data = await response.json()
+
+      setCajaAbierta(data.cajaAbierta)
+
+      if (!data.cajaAbierta) {
+        setShowCajaCerradaModal(true)
+      }
+    } catch (error) {
+      console.error("[v0] Error al verificar caja:", error)
+      setCajaAbierta(false)
+      setShowCajaCerradaModal(true)
+    } finally {
+      setVerificandoCaja(false)
+    }
+  }
+
+  const abrirCaja = async () => {
+    try {
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      const response = await fetch("/api/caja/abrir", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fecha: fechaHoy }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al abrir caja")
+      }
+
+      setCajaAbierta(true)
+      setShowCajaCerradaModal(false)
+      // Mostrar mensaje de éxito
+      setErrorLocal(null)
+    } catch (error) {
+      console.error("[v0] Error al abrir caja:", error)
+      setErrorLocal("Error al abrir caja: " + error.message)
+    }
+  }
 
   const handleChange = async (e) => {
     const { name, value } = e.target
@@ -115,6 +174,11 @@ export default function PagarCuota() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorLocal(null)
+
+    if (!cajaAbierta) {
+      setShowCajaCerradaModal(true)
+      return
+    }
 
     if (!formData.dni || !formData.fechaPago || !formData.montoPago) {
       setErrorLocal("Por favor complete todos los campos")
@@ -447,6 +511,12 @@ export default function PagarCuota() {
         isOpen={showAlert}
         onClose={() => setShowAlert(false)}
         autoRedirect={true}
+      />
+
+      <CajaCerradaModal
+        isOpen={showCajaCerradaModal}
+        onClose={() => setShowCajaCerradaModal(false)}
+        onAbrirCaja={abrirCaja}
       />
     </main>
   )

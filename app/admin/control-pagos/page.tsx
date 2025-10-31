@@ -15,6 +15,7 @@ import ThemeToggle from "@/components/theme-toggle"
 import ResumenIngresos from "@/components/resumen-ingresos"
 import { useMobile } from "@/hooks/use-mobile"
 import type { RegistroPago } from "@/context/gym-context"
+import Alert from "@/components/alert"
 
 export default function ControlPagos() {
   const { usuarios, cargando, obtenerPagosPorFecha, obtenerPagosPorRango } = useGymContext()
@@ -27,25 +28,70 @@ export default function ControlPagos() {
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [metodosMensualesData, setMetodosMensualesData] = useState([])
   const [ventasBebidas, setVentasBebidas] = useState([])
+  const [cajaAbierta, setCajaAbierta] = useState(false)
+  const [cargandoCaja, setCargandoCaja] = useState(true)
+  const [alertMessage, setAlertMessage] = useState("")
+  const [showAlert, setShowAlert] = useState(false)
 
-  useEffect(() => {
-    const hoy = new Date()
-    const fechaHoy = hoy.toISOString().split("T")[0]
-    console.log("[v0] Fecha actual para control de pagos:", fechaHoy)
-    console.log("[v0] Fecha completa:", hoy.toLocaleString("es-AR"))
-  }, [])
+  const verificarCajaAbierta = async () => {
+    try {
+      setCargandoCaja(true)
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
 
-  // Función para cerrar caja
+      const response = await fetch(`/api/caja/actual?fecha=${fechaHoy}`)
+      const data = await response.json()
+
+      console.log("[v0] Estado de caja:", data)
+      setCajaAbierta(data.cajaAbierta)
+      return data.cajaAbierta
+    } catch (error) {
+      console.error("[v0] Error al verificar caja:", error)
+      setCajaAbierta(false)
+      return false
+    } finally {
+      setCargandoCaja(false)
+    }
+  }
+
+  const abrirCaja = async () => {
+    try {
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      const response = await fetch("/api/caja/abrir", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fecha: fechaHoy }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al abrir caja")
+      }
+
+      console.log("[v0] Caja abierta exitosamente")
+      setCajaAbierta(true)
+      setAlertMessage("Caja abierta exitosamente")
+      setShowAlert(true)
+
+      await cargarDatos()
+    } catch (error) {
+      console.error("[v0] Error al abrir caja:", error)
+      setAlertMessage("Error al abrir caja: " + error.message)
+      setShowAlert(true)
+    }
+  }
+
   const cerrarCaja = async (tipoCierre: "parcial" | "completo" = "completo") => {
     try {
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
       console.log("[v0] Cerrando caja para fecha:", fechaHoy, "Tipo:", tipoCierre)
-      console.log("[v0] Pagos diarios:", pagosDiarios.length)
-      console.log("[v0] Ventas bebidas:", ventasBebidas.length)
 
-      // Calcular totales por método de pago (cuotas)
       const totalEfectivoCuotas = pagosDiarios
         .filter((pago) => pago.metodoPago === "Efectivo")
         .reduce((sum, pago) => sum + pago.monto, 0)
@@ -54,7 +100,6 @@ export default function ControlPagos() {
         .filter((pago) => pago.metodoPago === "Mercado Pago")
         .reduce((sum, pago) => sum + pago.monto, 0)
 
-      // Calcular totales por método de pago (bebidas)
       const totalEfectivoBebidas = ventasBebidas
         .filter((venta) => venta.metodoPago === "Efectivo")
         .reduce((sum, venta) => sum + venta.precioTotal, 0)
@@ -63,14 +108,12 @@ export default function ControlPagos() {
         .filter((venta) => venta.metodoPago === "Mercado Pago")
         .reduce((sum, venta) => sum + venta.precioTotal, 0)
 
-      // Totales combinados
       const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoBebidas
       const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoBebidas
       const totalCuotas = totalEfectivoCuotas + totalMercadoPagoCuotas
       const totalBebidas = totalEfectivoBebidas + totalMercadoPagoBebidas
       const totalGeneral = totalEfectivoFinal + totalMercadoPagoFinal
 
-      // Preparar detalle de ventas de bebidas para el registro
       const detalleVentasBebidas = ventasBebidas.map((venta) => ({
         nombreBebida: venta.nombreBebida,
         cantidad: venta.cantidad,
@@ -80,7 +123,6 @@ export default function ControlPagos() {
         fecha: venta.fecha,
       }))
 
-      // Registrar el cierre de caja
       const response = await fetch("/api/caja/cerrar", {
         method: "POST",
         headers: {
@@ -89,24 +131,17 @@ export default function ControlPagos() {
         body: JSON.stringify({
           fecha: fechaHoy,
           tipoCierre,
-          // Totales generales
           totalEfectivo: totalEfectivoFinal,
           totalMercadoPago: totalMercadoPagoFinal,
           totalGeneral,
-
-          // Totales de cuotas
           totalCuotas,
           totalCuotasEfectivo: totalEfectivoCuotas,
           totalCuotasMercadoPago: totalMercadoPagoCuotas,
           cantidadPagos: pagosDiarios.length,
-
-          // Totales de bebidas
           totalBebidas,
           totalBebidasEfectivo: totalEfectivoBebidas,
           totalBebidasMercadoPago: totalMercadoPagoBebidas,
           cantidadVentasBebidas: ventasBebidas.length,
-
-          // Detalle de ventas
           detalleVentasBebidas,
         }),
       })
@@ -128,41 +163,43 @@ export default function ControlPagos() {
 
           if (responseIngresos.ok) {
             console.log("[v0] Ingresos del día eliminados correctamente")
-          } else {
-            console.error("[v0] Error al eliminar ingresos del día")
           }
         } catch (error) {
           console.error("[v0] Error al eliminar ingresos:", error)
         }
 
+        setCajaAbierta(false)
+        setAlertMessage("Caja cerrada exitosamente")
+        setShowAlert(true)
+
         await cargarDatos()
       } else {
         console.log("[v0] Cierre parcial - Manteniendo datos del día sin cambios")
+        setAlertMessage("Cierre parcial realizado exitosamente")
+        setShowAlert(true)
       }
     } catch (error) {
       console.error("[v0] Error al cerrar caja:", error)
+      setAlertMessage("Error al cerrar caja: " + error.message)
+      setShowAlert(true)
       throw error
     }
   }
 
-  // Cargar datos al iniciar
   const cargarDatos = async () => {
     try {
       setCargandoDatos(true)
 
-      // Obtener fecha actual
       const hoy = new Date()
       const fechaHoy = hoy.toISOString().split("T")[0]
 
       console.log("[v0] Cargando datos para fecha:", fechaHoy)
 
-      // Cargar pagos del día
       const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
       console.log("[v0] Pagos del día cargados:", pagosHoy.length)
       console.log("[v0] Detalle de pagos del día:", pagosHoy)
       setPagosDiarios(pagosHoy)
 
-      // Cargar ventas de bebidas del día
       const ventasBebidasResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaHoy}`)
       let ventasBebidasHoy = []
       if (ventasBebidasResponse.ok) {
@@ -201,26 +238,21 @@ export default function ControlPagos() {
         { name: "Mixto", value: totalMixto || 1, fill: "#a78bfa" },
       ])
 
-      // Preparar datos para el gráfico semanal (incluyendo cuotas y bebidas)
       const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
       const pagosSemanaData = await Promise.all(
         diasSemana.map(async (dia, index) => {
-          // Calcular la fecha para este día de la semana actual
           const fechaDia = new Date(hoy)
           const diff = hoy.getDay() - (index + 1)
           fechaDia.setDate(hoy.getDate() - diff)
           const fechaStr = fechaDia.toISOString().split("T")[0]
 
-          // Obtener pagos de cuotas para esta fecha
           const pagosDia = await obtenerPagosPorFecha(fechaStr)
           let montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
 
-          // Si es el día actual, usar los pagos actuales
           if (fechaStr === fechaHoy) {
             montoCuotasDia = pagosHoy.reduce((sum, pago) => sum + pago.monto, 0)
           }
 
-          // Obtener ventas de bebidas para esta fecha
           const ventasBebidasDiaResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaStr}`)
           let montoBebidasDia = 0
           if (ventasBebidasDiaResponse.ok) {
@@ -228,14 +260,12 @@ export default function ControlPagos() {
             montoBebidasDia = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          // Si es el día actual, usar las ventas actuales
           if (fechaStr === fechaHoy) {
             montoBebidasDia = ventasBebidasHoy.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
           const montoTotalDia = montoCuotasDia + montoBebidasDia
 
-          // Verificar si hay un cierre de caja para este día
           try {
             const cierresResponse = await fetch("/api/caja/cerrar")
             if (cierresResponse.ok) {
@@ -265,27 +295,22 @@ export default function ControlPagos() {
 
       setPagosSemana(pagosSemanaData)
 
-      // Preparar datos para el gráfico mensual (incluyendo cuotas y bebidas)
       const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
       const pagosMensualesData = await Promise.all(
         meses.map(async (mes, index) => {
-          // Calcular el mes (0 = enero, 1 = febrero, etc.)
           const mesActual = hoy.getMonth()
           let mesIndex = (mesActual - 5 + index) % 12
           if (mesIndex < 0) mesIndex += 12
 
-          // Calcular el primer y último día del mes
           const primerDia = new Date(hoy.getFullYear(), mesIndex, 1)
           const ultimoDia = new Date(hoy.getFullYear(), mesIndex + 1, 0)
 
           const inicioPeriodo = primerDia.toISOString().split("T")[0]
           const finPeriodo = ultimoDia.toISOString().split("T")[0]
 
-          // Obtener pagos de cuotas para este mes
           const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
           const montoCuotasMes = pagosMes.reduce((sum, pago) => sum + pago.monto, 0)
 
-          // Obtener ventas de bebidas para este mes
           const ventasBebidasMesResponse = await fetch(
             `/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`,
           )
@@ -297,7 +322,6 @@ export default function ControlPagos() {
 
           let montoTotalMes = montoCuotasMes + montoBebidasMes
 
-          // Agregar cierres de caja del mes
           try {
             const cierresResponse = await fetch("/api/caja/cerrar")
             if (cierresResponse.ok) {
@@ -307,7 +331,6 @@ export default function ControlPagos() {
                 return fechaCierre >= primerDia && fechaCierre <= ultimoDia
               })
 
-              // Si hay cierres, usar esos datos en lugar de los calculados
               if (cierresMes.length > 0) {
                 const montoCierresCuotas = cierresMes.reduce(
                   (sum, cierre) => sum + (cierre.totalGeneral - cierre.totalBebidas),
@@ -333,22 +356,18 @@ export default function ControlPagos() {
       setPagosMensuales(pagosMensualesData)
 
       const usuariosMensualesData = meses.map((mes, index) => {
-        // Calcular el mes (0 = enero, 1 = febrero, etc.)
         const mesActual = hoy.getMonth()
         let mesIndex = (mesActual - 5 + index) % 12
         if (mesIndex < 0) mesIndex += 12
 
-        // Calcular el año correcto
         let anio = hoy.getFullYear()
         if (mesActual - 5 + index < 0) {
           anio -= 1
         }
 
-        // Calcular el primer y último día del mes
         const primerDia = new Date(anio, mesIndex, 1)
         const ultimoDia = new Date(anio, mesIndex + 1, 0)
 
-        // Contar usuarios creados en este mes
         const usuariosDelMes = usuarios.filter((usuario) => {
           if (!usuario.fechaCreacion) return false
 
@@ -366,14 +385,12 @@ export default function ControlPagos() {
 
       setUsuariosMensuales(usuariosMensualesData)
 
-      // Preparar datos para el gráfico de métodos de pago mensuales (basado en datos reales)
       const totalEfectivoMensual = pagosMensualesData.reduce((sum, mes) => {
-        // Aquí deberíamos calcular el efectivo real del mes, por ahora usamos una aproximación
-        return sum + (mes.monto > 0 ? mes.monto * 0.6 : 0) // 60% efectivo aproximado
+        return sum + (mes.monto > 0 ? mes.monto * 0.6 : 0)
       }, 0)
 
       const totalMercadoPagoMensual = pagosMensualesData.reduce((sum, mes) => {
-        return sum + (mes.monto > 0 ? mes.monto * 0.4 : 0) // 40% Mercado Pago aproximado
+        return sum + (mes.monto > 0 ? mes.monto * 0.4 : 0)
       }, 0)
 
       const totalMensual = totalEfectivoMensual + totalMercadoPagoMensual
@@ -406,7 +423,13 @@ export default function ControlPagos() {
   }
 
   useEffect(() => {
-    cargarDatos()
+    verificarCajaAbierta().then((abierta) => {
+      if (abierta) {
+        cargarDatos()
+      } else {
+        setCargandoDatos(false)
+      }
+    })
   }, [obtenerPagosPorFecha, obtenerPagosPorRango, usuarios])
 
   return (
@@ -422,18 +445,22 @@ export default function ControlPagos() {
         <ThemeToggle />
       </div>
 
-      {/* Resumen de ingresos */}
       <div className="mb-6">
-        <ResumenIngresos pagosCuotas={pagosDiarios} ventasBebidas={ventasBebidas} periodo="Hoy" />
+        <ResumenIngresos
+          pagosCuotas={pagosDiarios}
+          ventasBebidas={ventasBebidas}
+          periodo="Hoy"
+          cajaAbierta={cajaAbierta}
+          onAbrirCaja={abrirCaja}
+        />
       </div>
 
-      {cargando || cargandoDatos ? (
+      {cargando || cargandoDatos || cargandoCaja ? (
         <div className="flex justify-center py-8">
           <LoadingDumbbell size={32} className="text-yellow-500" />
         </div>
-      ) : (
+      ) : cajaAbierta ? (
         <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
-          {/* Sección izquierda */}
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
@@ -457,7 +484,6 @@ export default function ControlPagos() {
             </div>
           </div>
 
-          {/* Sección derecha */}
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Ingresos mensuales</h2>
@@ -478,7 +504,9 @@ export default function ControlPagos() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
+
+      <Alert message={alertMessage} isOpen={showAlert} onClose={() => setShowAlert(false)} />
     </main>
   )
 }

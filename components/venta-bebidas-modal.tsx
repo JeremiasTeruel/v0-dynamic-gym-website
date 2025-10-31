@@ -5,6 +5,7 @@ import { X, ShoppingCart, Minus, Plus, CreditCard, Banknote, Split } from "lucid
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import Alert from "@/components/alert"
+import CajaCerradaModal from "@/components/caja-cerrada-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 interface Bebida {
@@ -31,6 +32,8 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
   const [cargandoBebidas, setCargandoBebidas] = useState(false)
   const [procesandoVenta, setProcesandoVenta] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
+  const [showCajaCerradaModal, setShowCajaCerradaModal] = useState(false)
+  const [cajaAbierta, setCajaAbierta] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",
@@ -42,6 +45,7 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
   // Cargar bebidas cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
+      verificarCajaAbierta()
       cargarBebidas()
       // Reset form
       setBebidaSeleccionada("")
@@ -69,6 +73,53 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
       setError("Error al cargar las bebidas disponibles")
     } finally {
       setCargandoBebidas(false)
+    }
+  }
+
+  const verificarCajaAbierta = async () => {
+    try {
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      const response = await fetch(`/api/caja/actual?fecha=${fechaHoy}`)
+      const data = await response.json()
+
+      setCajaAbierta(data.cajaAbierta)
+
+      if (!data.cajaAbierta) {
+        setShowCajaCerradaModal(true)
+      }
+    } catch (error) {
+      console.error("[v0] Error al verificar caja:", error)
+      setCajaAbierta(false)
+      setShowCajaCerradaModal(true)
+    }
+  }
+
+  const abrirCaja = async () => {
+    try {
+      const hoy = new Date()
+      const fechaHoy = hoy.toISOString().split("T")[0]
+
+      const response = await fetch("/api/caja/abrir", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fecha: fechaHoy }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Error al abrir caja")
+      }
+
+      setCajaAbierta(true)
+      setShowCajaCerradaModal(false)
+      setError(null)
+    } catch (error) {
+      console.error("[v0] Error al abrir caja:", error)
+      setError("Error al abrir caja: " + error.message)
     }
   }
 
@@ -100,6 +151,11 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
 
   const handleConfirmarVenta = () => {
     setError(null)
+
+    if (!cajaAbierta) {
+      setShowCajaCerradaModal(true)
+      return
+    }
 
     if (!bebidaSeleccionada) {
       setError("Seleccione una bebida")
@@ -526,6 +582,13 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
         onSuccess={handlePinSuccess}
         title="Confirmar Venta de Bebida"
         description={`Esta acción registrará la venta de ${bebidaActual?.nombre} x${cantidad} por un total de ${formatMonto(precioTotal)}${metodoPago === "Mixto" ? ` (Efectivo: ${formatMonto(Number.parseFloat(montoEfectivo) || 0)}, Mercado Pago: ${formatMonto(Number.parseFloat(montoMercadoPago) || 0)})` : ` (${metodoPago})`}. Ingrese el PIN de seguridad para continuar.`}
+      />
+
+      {/* Modal de Caja Cerrada */}
+      <CajaCerradaModal
+        isOpen={showCajaCerradaModal}
+        onClose={() => setShowCajaCerradaModal(false)}
+        onAbrirCaja={abrirCaja}
       />
 
       {/* Alerta */}
