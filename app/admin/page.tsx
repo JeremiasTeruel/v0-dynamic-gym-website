@@ -110,6 +110,16 @@ export default function Admin() {
     return date.toLocaleDateString("es-ES")
   }
 
+  const formatTime = (isoString) => {
+    if (!isoString) return "N/A"
+    const date = new Date(isoString)
+    return date.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+  }
+
   const handleEliminar = async (id: string) => {
     const usuario = usuarios.find((u) => u.id === id)
     if (!usuario) return
@@ -300,7 +310,7 @@ export default function Admin() {
         <div className="mb-8 flex flex-wrap gap-4 justify-center">
           <button
             onClick={() => setListaUsuariosModalAbierto(true)}
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-50 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-colors"
           >
             <Users className="h-5 w-5" />
             Lista de Usuarios
@@ -403,6 +413,9 @@ export default function Admin() {
                             </div>
                           )}
                         </div>
+                        <p className="text-gray-700 dark:text-gray-300 mt-2">
+                          <span className="font-medium">Hora:</span> {formatTime(ingreso.hora)}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -419,6 +432,7 @@ export default function Admin() {
                         <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
                         <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
                         <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
+                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Hora</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -451,6 +465,7 @@ export default function Admin() {
                               </div>
                             )}
                           </td>
+                          <td className="p-3 text-gray-900 dark:text-gray-100">{formatTime(ingreso.hora)}</td>
                         </tr>
                       ))}
                     </tbody>
