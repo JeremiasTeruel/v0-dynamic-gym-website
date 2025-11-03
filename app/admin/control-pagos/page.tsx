@@ -261,15 +261,38 @@ export default function ControlPagos() {
 
       setPagosSemana(pagosSemanaData)
 
-      const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
-      const pagosMensualesData = await Promise.all(
-        meses.map(async (mes, index) => {
-          const mesActual = hoy.getMonth()
-          let mesIndex = (mesActual - 5 + index) % 12
-          if (mesIndex < 0) mesIndex += 12
+      const nombresMeses = [
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+      ]
 
-          const primerDia = new Date(hoy.getFullYear(), mesIndex, 1)
-          const ultimoDia = new Date(hoy.getFullYear(), mesIndex + 1, 0)
+      const mesActual = hoy.getMonth() // 0-11
+      const anioActual = hoy.getFullYear()
+
+      const ultimos6Meses = []
+      for (let i = 5; i >= 0; i--) {
+        const fecha = new Date(anioActual, mesActual - i, 1)
+        ultimos6Meses.push({
+          nombre: nombresMeses[fecha.getMonth()],
+          mes: fecha.getMonth(),
+          anio: fecha.getFullYear(),
+        })
+      }
+
+      const pagosMensualesData = await Promise.all(
+        ultimos6Meses.map(async (mesInfo) => {
+          const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
+          const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
 
           const inicioPeriodo = primerDia.toISOString().split("T")[0]
           const finPeriodo = ultimoDia.toISOString().split("T")[0]
@@ -289,7 +312,7 @@ export default function ControlPagos() {
           const montoTotalMes = montoCuotasMes + montoBebidasMes
 
           return {
-            mes,
+            mes: mesInfo.nombre,
             monto: montoTotalMes,
             cuotas: montoCuotasMes,
             bebidas: montoBebidasMes,
@@ -299,18 +322,9 @@ export default function ControlPagos() {
 
       setPagosMensuales(pagosMensualesData)
 
-      const usuariosMensualesData = meses.map((mes, index) => {
-        const mesActual = hoy.getMonth()
-        let mesIndex = (mesActual - 5 + index) % 12
-        if (mesIndex < 0) mesIndex += 12
-
-        let anio = hoy.getFullYear()
-        if (mesActual - 5 + index < 0) {
-          anio -= 1
-        }
-
-        const primerDia = new Date(anio, mesIndex, 1)
-        const ultimoDia = new Date(anio, mesIndex + 1, 0)
+      const usuariosMensualesData = ultimos6Meses.map((mesInfo) => {
+        const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
+        const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
 
         const usuariosDelMes = usuarios.filter((usuario) => {
           if (!usuario.fechaCreacion) return false
@@ -319,10 +333,10 @@ export default function ControlPagos() {
           return fechaCreacion >= primerDia && fechaCreacion <= ultimoDia
         })
 
-        console.log(`[v0] Usuarios creados en ${mes} ${anio}:`, usuariosDelMes.length)
+        console.log(`[v0] Usuarios creados en ${mesInfo.nombre} ${mesInfo.anio}:`, usuariosDelMes.length)
 
         return {
-          mes,
+          mes: mesInfo.nombre,
           usuarios: usuariosDelMes.length,
         }
       })
