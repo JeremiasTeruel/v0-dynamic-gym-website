@@ -399,13 +399,10 @@ export default function ControlPagos() {
   return (
     <main className="flex min-h-screen flex-col p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="flex items-center mb-6">
-        <Link
-          href="/admin"
-          className="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
+        <Link href="/admin" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <ArrowLeft className="h-6 w-6" />
         </Link>
-        <h1 className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 flex-1">Control de Pagos</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400 flex-1">Control de Pagos</h1>
         <ThemeToggle />
       </div>
 
