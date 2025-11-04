@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
@@ -24,6 +24,8 @@ export default function Home() {
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const { getSoundEnabled, setSoundEnabled: saveSoundEnabled } = useSoundPreferences()
+
+  const dniInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setSoundEnabled(getSoundEnabled())
@@ -85,6 +87,10 @@ export default function Home() {
           await ejecutarBusqueda(pendingSearchDni)
           setPendingSearchDni("")
         }
+
+        setTimeout(() => {
+          dniInputRef.current?.focus()
+        }, 100)
       } else {
         const errorData = await response.json()
         alert(`❌ Error al abrir caja: ${errorData.error}`)
@@ -138,6 +144,7 @@ export default function Home() {
         setTimeout(() => {
           setFoundUser(null)
           setSearchDni("")
+          dniInputRef.current?.focus()
         }, 5000)
       } else {
         setFoundUser(null)
@@ -150,6 +157,7 @@ export default function Home() {
         setTimeout(() => {
           setShowAlert(false)
           setSearchDni("")
+          dniInputRef.current?.focus()
         }, 3000)
       }
     } catch (error) {
@@ -261,6 +269,7 @@ export default function Home() {
           <div className="max-w-2xl mx-auto mb-8">
             <div className="flex mb-6">
               <input
+                ref={dniInputRef}
                 type="text"
                 placeholder="Ingresá tu DNI..."
                 value={searchDni}
@@ -355,6 +364,9 @@ export default function Home() {
         onClose={() => {
           setShowCajaCerradaModal(false)
           setPendingSearchDni("")
+          setTimeout(() => {
+            dniInputRef.current?.focus()
+          }, 100)
         }}
         onAbrirCaja={handleAbrirCaja}
       />
