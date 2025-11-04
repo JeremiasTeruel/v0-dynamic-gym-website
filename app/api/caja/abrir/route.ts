@@ -4,14 +4,10 @@ import { getMongoDb } from "@/lib/mongodb"
 const COLLECTION = "cajas"
 
 // POST para abrir una nueva caja
+// IMPORTANTE: El sistema NO se rige por fecha. Las cajas permanecen abiertas
+// indefinidamente hasta que se cierren manualmente, incluso si cambia la fecha.
 export async function POST(request: Request) {
   try {
-    const { fecha } = await request.json()
-
-    if (!fecha) {
-      return NextResponse.json({ error: "Fecha requerida" }, { status: 400 })
-    }
-
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
@@ -26,10 +22,10 @@ export async function POST(request: Request) {
       )
     }
 
-    // Crear nueva caja con ID único
+    const ahora = new Date()
     const nuevaCaja = {
-      fecha: new Date(fecha),
-      fechaApertura: new Date(),
+      fecha: ahora, // Fecha de referencia (solo informativa)
+      fechaApertura: ahora, // Fecha/hora exacta de apertura
       fechaCierre: null,
       estado: "abierta",
       totalEfectivo: 0,

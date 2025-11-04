@@ -69,15 +69,8 @@ export default function Home() {
 
   const handleAbrirCaja = async () => {
     try {
-      const hoy = new Date()
-      const fechaHoy = hoy.toISOString().split("T")[0]
-
       const response = await fetch("/api/caja/abrir", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ fecha: fechaHoy }),
       })
 
       if (response.ok) {

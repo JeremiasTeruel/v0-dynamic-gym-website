@@ -5,6 +5,8 @@ const COLLECTION_CIERRES = "cierres_caja"
 const COLLECTION_CAJAS = "cajas"
 
 // POST para registrar un cierre de caja
+// IMPORTANTE: El sistema NO se rige por fecha. Las cajas solo se cierran manualmente
+// cuando se llama a este endpoint. No hay cierre automático por cambio de fecha.
 export async function POST(request: Request) {
   try {
     const {
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
           },
         },
       )
-      console.log("[v0] Caja cerrada con ID:", cajaAbierta._id)
+      console.log("[v0] Caja cerrada manualmente con ID:", cajaAbierta._id)
     }
 
     // Preparar el documento para insertar

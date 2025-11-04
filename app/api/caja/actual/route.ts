@@ -3,12 +3,14 @@ import { getMongoDb } from "@/lib/mongodb"
 
 const COLLECTION = "cajas"
 
+// GET para obtener la caja actual
+// IMPORTANTE: El sistema NO se rige por fecha. Busca cualquier caja con estado "abierta"
+// sin importar cuándo fue abierta. Las cajas permanecen abiertas hasta cierre manual.
 export async function GET() {
   try {
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION)
 
-    // Buscar cualquier caja que esté abierta (sin importar la fecha)
     const cajaActual = await collection.findOne({
       estado: "abierta",
     })
