@@ -113,15 +113,21 @@ export default function PagarCuota() {
 
   const handleChange = async (e) => {
     const { name, value } = e.target
+
+    let processedValue = value
+    if (name === "dni") {
+      processedValue = value.replace(/[^0-9]/g, "")
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }))
 
-    if (name === "dni" && value.length > 5) {
+    if (name === "dni" && processedValue.length > 5) {
       setIsSearching(true)
       try {
-        const usuario = await buscarUsuario(value)
+        const usuario = await buscarUsuario(processedValue)
         setUserFound(usuario)
 
         // Actualizar el monto según la actividad del usuario encontrado

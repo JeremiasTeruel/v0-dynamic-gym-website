@@ -112,10 +112,19 @@ export default function NuevoUsuario() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+
+    if (name === "dni") {
+      const numericValue = value.replace(/[^0-9]/g, "")
+      setFormData((prev) => ({
+        ...prev,
+        [name]: numericValue,
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }))
+    }
   }
 
   const handleMontoMixtoChange = (e) => {

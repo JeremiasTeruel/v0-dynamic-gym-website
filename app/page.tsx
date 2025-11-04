@@ -193,6 +193,13 @@ export default function Home() {
     }
   }
 
+  const handleDniChange = (e) => {
+    const value = e.target.value
+    // Solo permitir números
+    const numericValue = value.replace(/[^0-9]/g, "")
+    setSearchDni(numericValue)
+  }
+
   const isPaymentDue = (dueDate) => {
     const today = new Date()
     const paymentDate = new Date(dueDate)
@@ -257,7 +264,7 @@ export default function Home() {
                 type="text"
                 placeholder="Ingresá tu DNI..."
                 value={searchDni}
-                onChange={(e) => setSearchDni(e.target.value)}
+                onChange={handleDniChange}
                 onKeyPress={handleKeyPress}
                 className="flex-1 p-5 text-lg border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isSearching}
