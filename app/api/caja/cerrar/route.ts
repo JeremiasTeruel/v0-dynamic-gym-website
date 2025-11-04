@@ -110,15 +110,21 @@ export async function GET() {
     const db = await getMongoDb()
     const collection = db.collection(COLLECTION_CIERRES)
 
-    const cierres = await collection.find({}).sort({ fecha: -1 }).toArray()
+    const cierres = await collection.find({}).sort({ fechaCierre: -1 }).toArray()
 
-    const cierresFormateados = cierres.map((cierre) => ({
-      ...cierre,
-      id: cierre._id.toString(),
-      _id: undefined,
-      fecha: cierre.fecha.toISOString().split("T")[0],
-      fechaCierre: cierre.fechaCierre.toISOString(),
-    }))
+    console.log("[v0] Total de cierres encontrados en la base de datos:", cierres.length)
+
+    const cierresFormateados = cierres.map((cierre) => {
+      const { _id, ...cierreData } = cierre
+      return {
+        ...cierreData,
+        id: _id.toString(),
+        fecha: cierre.fecha.toISOString().split("T")[0],
+        fechaCierre: cierre.fechaCierre.toISOString(),
+      }
+    })
+
+    console.log("[v0] Cierres formateados para enviar:", cierresFormateados.length)
 
     return NextResponse.json(cierresFormateados)
   } catch (error) {
