@@ -1,10 +1,50 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, FileText, Download, Calendar, DollarSign, CreditCard, Banknote, ShoppingCart } from "lucide-react"
+import {
+  X,
+  FileText,
+  Download,
+  Calendar,
+  DollarSign,
+  CreditCard,
+  Banknote,
+  ShoppingCart,
+  Users,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import Alert from "@/components/alert"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
+
+interface DetallePagoCuota {
+  nombreApellido: string
+  dni: string
+  monto: number
+  metodoPago: string
+  fecha: string
+  actividad: string
+}
+
+interface DetalleVentaBebida {
+  nombreBebida: string
+  cantidad: number
+  precioUnitario: number
+  precioTotal: number
+  metodoPago: string
+  fecha: string
+}
+
+interface DetalleNuevoUsuario {
+  nombreApellido: string
+  dni: string
+  actividad: string
+  metodoPago: string
+  fechaInicio: string
+  fechaVencimiento: string
+  fechaCreacion: string
+}
 
 interface CierreCaja {
   id: string
@@ -21,7 +61,9 @@ interface CierreCaja {
   totalBebidasEfectivo: number
   totalBebidasMercadoPago: number
   cantidadVentasBebidas: number
-  detalleVentasBebidas: any[]
+  detalleVentasBebidas: DetalleVentaBebida[]
+  detallePagosCuotas: DetallePagoCuota[]
+  detalleNuevosUsuarios: DetalleNuevoUsuario[]
   fechaCierre: string
 }
 
@@ -35,6 +77,9 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fechaFiltro, setFechaFiltro] = useState("")
+  const [seccionesExpandidas, setSeccionesExpandidas] = useState<{
+    [key: string]: { pagos: boolean; ventas: boolean; usuarios: boolean }
+  }>({})
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",
     visible: false,
@@ -91,8 +136,28 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
     })
   }
 
+  const formatFechaHora = (fecha: string) => {
+    return new Date(fecha).toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
   const calcularPorcentaje = (parte: number, total: number) => {
     return total > 0 ? Math.round((parte / total) * 100) : 0
+  }
+
+  const toggleSeccion = (cierreId: string, seccion: "pagos" | "ventas" | "usuarios") => {
+    setSeccionesExpandidas((prev) => ({
+      ...prev,
+      [cierreId]: {
+        ...prev[cierreId],
+        [seccion]: !prev[cierreId]?.[seccion],
+      },
+    }))
   }
 
   const exportarReporte = (cierre: CierreCaja) => {
@@ -118,6 +183,26 @@ Efectivo: ${formatMonto(cierre.totalCuotasEfectivo)}
 Mercado Pago: ${formatMonto(cierre.totalCuotasMercadoPago)}
 Cantidad de pagos: ${cierre.cantidadPagos}
 
+${
+  cierre.detallePagosCuotas && cierre.detallePagosCuotas.length > 0
+    ? `
+DETALLE DE PAGOS DE CUOTAS
+===========================
+${cierre.detallePagosCuotas
+  .map(
+    (pago, index) =>
+      `${index + 1}. ${pago.nombreApellido} (DNI: ${pago.dni})
+   Actividad: ${pago.actividad}
+   Monto: ${formatMonto(pago.monto)}
+   Método de pago: ${pago.metodoPago}
+   Fecha: ${formatFechaHora(pago.fecha)}
+`,
+  )
+  .join("\n")}
+`
+    : ""
+}
+
 VENTAS DE BEBIDAS
 ================
 Total bebidas: ${formatMonto(cierre.totalBebidas)}
@@ -131,7 +216,38 @@ ${
 DETALLE DE VENTAS DE BEBIDAS
 ===========================
 ${cierre.detalleVentasBebidas
-  .map((venta) => `${venta.nombreBebida} x${venta.cantidad} - ${formatMonto(venta.precioTotal)} (${venta.metodoPago})`)
+  .map(
+    (venta, index) =>
+      `${index + 1}. ${venta.nombreBebida} x${venta.cantidad}
+   Precio unitario: ${formatMonto(venta.precioUnitario)}
+   Total: ${formatMonto(venta.precioTotal)}
+   Método de pago: ${venta.metodoPago}
+   Fecha: ${formatFechaHora(venta.fecha)}
+`,
+  )
+  .join("\n")}
+`
+    : ""
+}
+
+${
+  cierre.detalleNuevosUsuarios && cierre.detalleNuevosUsuarios.length > 0
+    ? `
+NUEVOS USUARIOS AGREGADOS
+=========================
+Total de nuevos usuarios: ${cierre.detalleNuevosUsuarios.length}
+
+${cierre.detalleNuevosUsuarios
+  .map(
+    (usuario, index) =>
+      `${index + 1}. ${usuario.nombreApellido} (DNI: ${usuario.dni})
+   Actividad: ${usuario.actividad}
+   Método de pago: ${usuario.metodoPago}
+   Fecha inicio: ${new Date(usuario.fechaInicio).toLocaleDateString("es-ES")}
+   Fecha vencimiento: ${new Date(usuario.fechaVencimiento).toLocaleDateString("es-ES")}
+   Registrado el: ${formatFechaHora(usuario.fechaCreacion)}
+`,
+  )
   .join("\n")}
 `
     : ""
@@ -298,7 +414,7 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                     </div>
 
                     {/* Desglose detallado */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       {/* Resumen por método de pago */}
                       <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
                         <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Métodos de pago</h4>
@@ -379,6 +495,205 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                           </div>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="space-y-3 mt-4">
+                      {/* Detalle de Pagos de Cuotas */}
+                      {cierre.detallePagosCuotas && cierre.detallePagosCuotas.length > 0 && (
+                        <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleSeccion(cierre.id, "pagos")}
+                            className="w-full flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="h-5 w-5 text-blue-600" />
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                Detalle de Pagos de Cuotas ({cierre.detallePagosCuotas.length})
+                              </span>
+                            </div>
+                            {seccionesExpandidas[cierre.id]?.pagos ? (
+                              <ChevronUp className="h-5 w-5 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-gray-600" />
+                            )}
+                          </button>
+                          {seccionesExpandidas[cierre.id]?.pagos && (
+                            <div className="p-4 bg-white dark:bg-gray-800 max-h-96 overflow-y-auto">
+                              <div className="space-y-3">
+                                {cierre.detallePagosCuotas.map((pago, index) => (
+                                  <div
+                                    key={index}
+                                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                                  >
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div>
+                                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                                          {pago.nombreApellido}
+                                        </p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">DNI: {pago.dni}</p>
+                                      </div>
+                                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                        {formatMonto(pago.monto)}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Actividad:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">{pago.actividad}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Método:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">{pago.metodoPago}</span>
+                                      </div>
+                                      <div className="col-span-2">
+                                        <span className="text-gray-600 dark:text-gray-400">Fecha:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {formatFechaHora(pago.fecha)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Detalle de Ventas de Bebidas */}
+                      {cierre.detalleVentasBebidas && cierre.detalleVentasBebidas.length > 0 && (
+                        <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleSeccion(cierre.id, "ventas")}
+                            className="w-full flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <ShoppingCart className="h-5 w-5 text-green-600" />
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                Detalle de Ventas de Bebidas ({cierre.detalleVentasBebidas.length})
+                              </span>
+                            </div>
+                            {seccionesExpandidas[cierre.id]?.ventas ? (
+                              <ChevronUp className="h-5 w-5 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-gray-600" />
+                            )}
+                          </button>
+                          {seccionesExpandidas[cierre.id]?.ventas && (
+                            <div className="p-4 bg-white dark:bg-gray-800 max-h-96 overflow-y-auto">
+                              <div className="space-y-3">
+                                {cierre.detalleVentasBebidas.map((venta, index) => (
+                                  <div
+                                    key={index}
+                                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                                  >
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div>
+                                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                                          {venta.nombreBebida}
+                                        </p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                          Cantidad: {venta.cantidad} x {formatMonto(venta.precioUnitario)}
+                                        </p>
+                                      </div>
+                                      <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                                        {formatMonto(venta.precioTotal)}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Método:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {venta.metodoPago}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Fecha:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {formatFechaHora(venta.fecha)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Detalle de Nuevos Usuarios */}
+                      {cierre.detalleNuevosUsuarios && cierre.detalleNuevosUsuarios.length > 0 && (
+                        <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleSeccion(cierre.id, "usuarios")}
+                            className="w-full flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Users className="h-5 w-5 text-purple-600" />
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                Nuevos Usuarios Agregados ({cierre.detalleNuevosUsuarios.length})
+                              </span>
+                            </div>
+                            {seccionesExpandidas[cierre.id]?.usuarios ? (
+                              <ChevronUp className="h-5 w-5 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-gray-600" />
+                            )}
+                          </button>
+                          {seccionesExpandidas[cierre.id]?.usuarios && (
+                            <div className="p-4 bg-white dark:bg-gray-800 max-h-96 overflow-y-auto">
+                              <div className="space-y-3">
+                                {cierre.detalleNuevosUsuarios.map((usuario, index) => (
+                                  <div
+                                    key={index}
+                                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                                  >
+                                    <div className="mb-2">
+                                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                                        {usuario.nombreApellido}
+                                      </p>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400">DNI: {usuario.dni}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Actividad:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {usuario.actividad}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Método de pago:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {usuario.metodoPago}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Inicio:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {new Date(usuario.fechaInicio).toLocaleDateString("es-ES")}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-600 dark:text-gray-400">Vencimiento:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {new Date(usuario.fechaVencimiento).toLocaleDateString("es-ES")}
+                                        </span>
+                                      </div>
+                                      <div className="col-span-2">
+                                        <span className="text-gray-600 dark:text-gray-400">Registrado:</span>
+                                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                          {formatFechaHora(usuario.fechaCreacion)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
