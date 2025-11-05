@@ -181,20 +181,37 @@ export default function ControlPagos() {
 
   const cargarDatosDiarios = async () => {
     try {
-      const hoy = new Date()
-      const fechaHoy = hoy.toISOString().split("T")[0]
+      const cajaResponse = await fetch("/api/caja/actual")
+      const cajaData = await cajaResponse.json()
 
-      console.log("[v0] Cargando datos diarios para fecha:", fechaHoy)
+      if (!cajaData.cajaAbierta || !cajaData.caja) {
+        console.log("[v0] No hay caja abierta, mostrando valores en 0")
+        setPagosDiarios([])
+        setVentasBebidas([])
+        setMetodosPago([
+          { name: "Efectivo", value: 1, fill: "#4ade80" },
+          { name: "Mercado Pago", value: 1, fill: "#3b82f6" },
+          { name: "Mixto", value: 1, fill: "#a78bfa" },
+        ])
+        return
+      }
 
-      const pagosHoy = await obtenerPagosPorFecha(fechaHoy)
-      console.log("[v0] Pagos del día cargados:", pagosHoy.length)
+      const cajaId = cajaData.caja.id
+      console.log("[v0] Cargando datos diarios para caja ID:", cajaId)
+
+      const pagosResponse = await fetch(`/api/pagos/caja/${cajaId}`)
+      let pagosHoy = []
+      if (pagosResponse.ok) {
+        pagosHoy = await pagosResponse.json()
+        console.log("[v0] Pagos de la caja actual cargados:", pagosHoy.length)
+      }
       setPagosDiarios(pagosHoy)
 
-      const ventasBebidasResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaHoy}`)
+      const ventasBebidasResponse = await fetch(`/api/ventas-bebidas/caja/${cajaId}`)
       let ventasBebidasHoy = []
       if (ventasBebidasResponse.ok) {
         ventasBebidasHoy = await ventasBebidasResponse.json()
-        console.log("[v0] Ventas de bebidas del día cargadas:", ventasBebidasHoy.length)
+        console.log("[v0] Ventas de bebidas de la caja actual cargadas:", ventasBebidasHoy.length)
       }
       setVentasBebidas(ventasBebidasHoy)
 
