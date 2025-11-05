@@ -1,10 +1,11 @@
 "use client"
 
-import { DollarSign, TrendingUp, BarChart3, PieChart } from "lucide-react"
+import { DollarSign, TrendingUp, BarChart3, PieChart, TrendingDown } from "lucide-react"
 
 interface ResumenIngresosProps {
   pagosCuotas: any[]
   ventasBebidas: any[]
+  egresos?: any[]
   periodo: string
   cajaAbierta?: boolean
   onAbrirCaja?: () => void
@@ -13,6 +14,7 @@ interface ResumenIngresosProps {
 export default function ResumenIngresos({
   pagosCuotas,
   ventasBebidas,
+  egresos = [],
   periodo,
   cajaAbierta = true,
   onAbrirCaja,
@@ -37,6 +39,9 @@ export default function ResumenIngresos({
 
   const totalEfectivo = efectivoCuotas + efectivoBebidas
   const totalMercadoPago = mercadoPagoCuotas + mercadoPagoBebidas
+
+  const totalEgresos = egresos.reduce((sum, egreso) => sum + egreso.monto, 0)
+  const totalNeto = totalGeneral - totalEgresos
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
@@ -91,7 +96,9 @@ export default function ResumenIngresos({
   return (
     <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Resumen de Ingresos - {periodo}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Resumen de Ingresos y Egresos - {periodo}
+        </h3>
         <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
       </div>
 
@@ -126,6 +133,27 @@ export default function ResumenIngresos({
           <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatMonto(totalBebidas)}</div>
           <div className="text-sm text-gray-600 dark:text-gray-400">Bebidas ({ventasBebidas.length})</div>
         </div>
+      </div>
+
+      <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 mb-6 border border-red-200 dark:border-red-800">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+            <TrendingDown className="h-4 w-4 mr-2 text-red-600 dark:text-red-400" />
+            Egresos
+          </h4>
+        </div>
+        {totalEgresos > 0 ? (
+          <div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{formatMonto(totalEgresos)}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{egresos.length} egresos registrados</div>
+            <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800">
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Balance neto:</div>
+              <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatMonto(totalNeto)}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 dark:text-gray-400 italic">No se han registrado egresos todavía</div>
+        )}
       </div>
 
       {/* Desglose por método de pago */}

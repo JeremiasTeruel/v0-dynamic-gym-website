@@ -6,6 +6,7 @@ import { useGymContext } from "@/context/gym-context"
 import { ArrowLeft } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import VentasDelDia from "@/components/ventas-del-dia"
+import EgresosDelDia from "@/components/egresos-del-dia"
 import GraficoSemanal from "@/components/grafico-semanal"
 import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import GraficoMensual from "@/components/grafico-mensual"
@@ -28,6 +29,8 @@ export default function ControlPagos() {
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [metodosMensualesData, setMetodosMensualesData] = useState([])
   const [ventasBebidas, setVentasBebidas] = useState([])
+  const [egresosDiarios, setEgresosDiarios] = useState([])
+  const [egresosMensuales, setEgresosMensuales] = useState([])
   const [cajaAbierta, setCajaAbierta] = useState(false)
   const [cargandoCaja, setCargandoCaja] = useState(true)
   const [alertMessage, setAlertMessage] = useState("")
@@ -162,6 +165,7 @@ export default function ControlPagos() {
         setPagosDiarios([])
         setVentasBebidas([])
         setMetodosPago([])
+        setEgresosDiarios([])
         setAlertMessage("Caja cerrada exitosamente")
         setShowAlert(true)
 
@@ -188,6 +192,7 @@ export default function ControlPagos() {
         console.log("[v0] No hay caja abierta, mostrando valores en 0")
         setPagosDiarios([])
         setVentasBebidas([])
+        setEgresosDiarios([])
         setMetodosPago([
           { name: "Efectivo", value: 1, fill: "#4ade80" },
           { name: "Mercado Pago", value: 1, fill: "#3b82f6" },
@@ -214,6 +219,14 @@ export default function ControlPagos() {
         console.log("[v0] Ventas de bebidas de la caja actual cargadas:", ventasBebidasHoy.length)
       }
       setVentasBebidas(ventasBebidasHoy)
+
+      const egresosResponse = await fetch(`/api/egresos/caja/${cajaId}`)
+      let egresosHoy = []
+      if (egresosResponse.ok) {
+        egresosHoy = await egresosResponse.json()
+        console.log("[v0] Egresos de la caja actual cargados:", egresosHoy.length)
+      }
+      setEgresosDiarios(egresosHoy)
 
       const efectivoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Efectivo").length
       const mercadoPagoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
@@ -286,7 +299,7 @@ export default function ControlPagos() {
         "Diciembre",
       ]
 
-      const mesActual = hoy.getMonth() // 0-11
+      const mesActual = hoy.getMonth()
       const anioActual = hoy.getFullYear()
 
       const ultimos6Meses = []
@@ -331,6 +344,30 @@ export default function ControlPagos() {
       )
 
       setPagosMensuales(pagosMensualesData)
+
+      const egresosMensualesData = await Promise.all(
+        ultimos6Meses.map(async (mesInfo) => {
+          const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
+          const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
+
+          const inicioPeriodo = primerDia.toISOString().split("T")[0]
+          const finPeriodo = ultimoDia.toISOString().split("T")[0]
+
+          const egresosResponse = await fetch(`/api/egresos?inicio=${inicioPeriodo}&fin=${finPeriodo}`)
+          let montoEgresosMes = 0
+          if (egresosResponse.ok) {
+            const egresosData = await egresosResponse.json()
+            montoEgresosMes = egresosData.reduce((sum, egreso) => sum + egreso.monto, 0)
+          }
+
+          return {
+            mes: mesInfo.nombre,
+            monto: montoEgresosMes,
+          }
+        }),
+      )
+
+      setEgresosMensuales(egresosMensualesData)
 
       const usuariosMensualesData = ultimos6Meses.map((mesInfo) => {
         const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
@@ -420,6 +457,7 @@ export default function ControlPagos() {
         <ResumenIngresos
           pagosCuotas={pagosDiarios}
           ventasBebidas={ventasBebidas}
+          egresos={egresosDiarios}
           periodo="Hoy"
           cajaAbierta={cajaAbierta}
           onAbrirCaja={abrirCaja}
@@ -434,10 +472,17 @@ export default function ControlPagos() {
         <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
           <div className="space-y-6">
             {cajaAbierta && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
-                <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
-              </div>
+              <>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
+                  <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Egresos del día</h2>
+                  <EgresosDelDia egresos={egresosDiarios} />
+                </div>
+              </>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -463,6 +508,11 @@ export default function ControlPagos() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Ingresos mensuales</h2>
               <GraficoMensual datos={pagosMensuales} />
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Egresos mensuales</h2>
+              <GraficoMensual datos={egresosMensuales} colorBarra="#ef4444" />
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
