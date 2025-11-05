@@ -13,6 +13,7 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
+  TrendingDown,
 } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import Alert from "@/components/alert"
@@ -46,6 +47,13 @@ interface DetalleNuevoUsuario {
   fechaCreacion: string
 }
 
+interface DetalleEgreso {
+  monto: number
+  descripcion: string
+  nombre: string
+  fecha: string
+}
+
 interface CierreCaja {
   id: string
   fecha: string
@@ -64,6 +72,9 @@ interface CierreCaja {
   detalleVentasBebidas: DetalleVentaBebida[]
   detallePagosCuotas: DetallePagoCuota[]
   detalleNuevosUsuarios: DetalleNuevoUsuario[]
+  detalleEgresos?: DetalleEgreso[]
+  totalEgresos?: number
+  cantidadEgresos?: number
   fechaCierre: string
 }
 
@@ -78,7 +89,7 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
   const [error, setError] = useState<string | null>(null)
   const [fechaFiltro, setFechaFiltro] = useState("")
   const [seccionesExpandidas, setSeccionesExpandidas] = useState<{
-    [key: string]: { pagos: boolean; ventas: boolean; usuarios: boolean }
+    [key: string]: { pagos: boolean; ventas: boolean; usuarios: boolean; egresos: boolean }
   }>({})
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",
@@ -150,7 +161,7 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
     return total > 0 ? Math.round((parte / total) * 100) : 0
   }
 
-  const toggleSeccion = (cierreId: string, seccion: "pagos" | "ventas" | "usuarios") => {
+  const toggleSeccion = (cierreId: string, seccion: "pagos" | "ventas" | "usuarios" | "egresos") => {
     setSeccionesExpandidas((prev) => ({
       ...prev,
       [cierreId]: {
@@ -223,6 +234,30 @@ ${cierre.detalleVentasBebidas
    Total: ${formatMonto(venta.precioTotal)}
    Método de pago: ${venta.metodoPago}
    Fecha: ${formatFechaHora(venta.fecha)}
+`,
+  )
+  .join("\n")}
+`
+    : ""
+}
+
+${
+  cierre.detalleEgresos && cierre.detalleEgresos.length > 0
+    ? `
+EGRESOS
+=======
+Total egresos: ${formatMonto(cierre.totalEgresos || 0)}
+Cantidad de egresos: ${cierre.cantidadEgresos || 0}
+
+DETALLE DE EGRESOS
+==================
+${cierre.detalleEgresos
+  .map(
+    (egreso, index) =>
+      `${index + 1}. ${egreso.descripcion}
+   Monto: ${formatMonto(egreso.monto)}
+   Responsable: ${egreso.nombre}
+   Fecha: ${formatFechaHora(egreso.fecha)}
 `,
   )
   .join("\n")}
@@ -497,6 +532,25 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                       </div>
                     </div>
 
+                    {cierre.detalleEgresos && cierre.detalleEgresos.length > 0 && (
+                      <div className="mb-4">
+                        <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                            <TrendingDown className="h-4 w-4 text-red-600" />
+                            Egresos ({cierre.cantidadEgresos || 0})
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-400">Total:</span>
+                              <span className="font-medium text-red-600 dark:text-red-400">
+                                -{formatMonto(cierre.totalEgresos || 0)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-3 mt-4">
                       {/* Detalle de Pagos de Cuotas */}
                       {cierre.detallePagosCuotas && cierre.detallePagosCuotas.length > 0 && (
@@ -613,6 +667,59 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                                           {formatFechaHora(venta.fecha)}
                                         </span>
                                       </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {cierre.detalleEgresos && cierre.detalleEgresos.length > 0 && (
+                        <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleSeccion(cierre.id, "egresos")}
+                            className="w-full flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <TrendingDown className="h-5 w-5 text-red-600" />
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                Detalle de Egresos ({cierre.detalleEgresos.length})
+                              </span>
+                            </div>
+                            {seccionesExpandidas[cierre.id]?.egresos ? (
+                              <ChevronUp className="h-5 w-5 text-gray-600" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-gray-600" />
+                            )}
+                          </button>
+                          {seccionesExpandidas[cierre.id]?.egresos && (
+                            <div className="p-4 bg-white dark:bg-gray-800 max-h-96 overflow-y-auto">
+                              <div className="space-y-3">
+                                {cierre.detalleEgresos.map((egreso, index) => (
+                                  <div
+                                    key={index}
+                                    className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
+                                  >
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div>
+                                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                                          {egreso.descripcion}
+                                        </p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                          Responsable: {egreso.nombre}
+                                        </p>
+                                      </div>
+                                      <span className="text-lg font-bold text-red-600 dark:text-red-400">
+                                        -{formatMonto(egreso.monto)}
+                                      </span>
+                                    </div>
+                                    <div className="text-sm">
+                                      <span className="text-gray-600 dark:text-gray-400">Fecha:</span>
+                                      <span className="ml-2 text-gray-900 dark:text-gray-100">
+                                        {formatFechaHora(egreso.fecha)}
+                                      </span>
                                     </div>
                                   </div>
                                 ))}

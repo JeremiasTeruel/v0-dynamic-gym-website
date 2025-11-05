@@ -6,6 +6,7 @@ const COLLECTION_CAJAS = "cajas"
 const COLLECTION_PAGOS = "pagos"
 const COLLECTION_VENTAS = "ventas_bebidas"
 const COLLECTION_USUARIOS = "usuarios"
+const COLLECTION_EGRESOS = "egresos"
 
 // POST para registrar un cierre de caja
 // IMPORTANTE: El sistema NO se rige por fecha. Las cajas solo se cierran manualmente
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
     const collectionPagos = db.collection(COLLECTION_PAGOS)
     const collectionVentas = db.collection(COLLECTION_VENTAS)
     const collectionUsuarios = db.collection(COLLECTION_USUARIOS)
+    const collectionEgresos = db.collection(COLLECTION_EGRESOS)
 
     const cajaAbierta = await collectionCajas.findOne({
       estado: "abierta",
@@ -102,10 +104,22 @@ export async function POST(request: Request) {
       fechaCreacion: usuario.fechaCreacion,
     }))
 
+    const egresos = await collectionEgresos.find({ cajaId }).toArray()
+    const detalleEgresos = egresos.map((egreso) => ({
+      monto: egreso.monto,
+      descripcion: egreso.descripcion,
+      nombre: egreso.nombre,
+      fecha: egreso.fecha,
+    }))
+
+    const totalEgresos = egresos.reduce((sum, egreso) => sum + egreso.monto, 0)
+
     console.log("[v0] Detalles recopilados:", {
       pagos: detallePagosCuotas.length,
       ventas: detalleVentasBebidasCompleto.length,
       nuevosUsuarios: detalleNuevosUsuarios.length,
+      egresos: detalleEgresos.length,
+      totalEgresos,
     })
 
     if (tipoCierre === "completo") {
@@ -144,6 +158,9 @@ export async function POST(request: Request) {
       detalleVentasBebidas: detalleVentasBebidasCompleto,
       detallePagosCuotas: detallePagosCuotas,
       detalleNuevosUsuarios: detalleNuevosUsuarios,
+      detalleEgresos: detalleEgresos,
+      totalEgresos: totalEgresos,
+      cantidadEgresos: egresos.length,
       fechaCierre: fechaCierreActual,
     }
 
@@ -154,7 +171,7 @@ export async function POST(request: Request) {
         ...cierreParaInsertar,
         id: resultado.insertedId.toString(),
       }
-      console.log("[v0] Cierre de caja registrado exitosamente con detalles completos")
+      console.log("[v0] Cierre de caja registrado exitosamente con detalles completos incluyendo egresos")
       return NextResponse.json(nuevoCierre)
     }
 
