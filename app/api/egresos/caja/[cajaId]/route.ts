@@ -20,14 +20,17 @@ export async function GET(request: Request, { params }: { params: { cajaId: stri
       id: egreso._id.toString(),
       monto: egreso.monto,
       descripcion: egreso.descripcion,
-      fecha: egreso.fecha,
-      profe: egreso.profe,
+      fecha: egreso.fecha.toISOString(),
+      nombre: egreso.nombre,
       cajaId: egreso.cajaId,
+      fechaRegistro: egreso.fechaRegistro?.toISOString(),
     }))
+
+    console.log(`[v0] Egresos encontrados para caja ${cajaId}:`, egresosFormateados.length)
 
     return NextResponse.json(egresosFormateados)
   } catch (error) {
     console.error("[v0] Error al obtener egresos por caja:", error)
-    return NextResponse.json({ error: "Error al obtener egresos" }, { status: 500 })
+    return NextResponse.json({ error: "Error al obtener egresos", details: error.message }, { status: 500 })
   }
 }

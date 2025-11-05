@@ -6,7 +6,6 @@ import { useGymContext } from "@/context/gym-context"
 import { ArrowLeft } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import VentasDelDia from "@/components/ventas-del-dia"
-import EgresosDelDia from "@/components/egresos-del-dia"
 import GraficoSemanal from "@/components/grafico-semanal"
 import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import GraficoMensual from "@/components/grafico-mensual"
@@ -164,8 +163,8 @@ export default function ControlPagos() {
         setCajaAbierta(false)
         setPagosDiarios([])
         setVentasBebidas([])
+        setEgresosDiarios([]) // Reset egresos when no open cash register
         setMetodosPago([])
-        setEgresosDiarios([])
         setAlertMessage("Caja cerrada exitosamente")
         setShowAlert(true)
 
@@ -192,7 +191,7 @@ export default function ControlPagos() {
         console.log("[v0] No hay caja abierta, mostrando valores en 0")
         setPagosDiarios([])
         setVentasBebidas([])
-        setEgresosDiarios([])
+        setEgresosDiarios([]) // Reset egresos when no open cash register
         setMetodosPago([
           { name: "Efectivo", value: 1, fill: "#4ade80" },
           { name: "Mercado Pago", value: 1, fill: "#3b82f6" },
@@ -299,7 +298,7 @@ export default function ControlPagos() {
         "Diciembre",
       ]
 
-      const mesActual = hoy.getMonth()
+      const mesActual = hoy.getMonth() // 0-11
       const anioActual = hoy.getFullYear()
 
       const ultimos6Meses = []
@@ -344,30 +343,6 @@ export default function ControlPagos() {
       )
 
       setPagosMensuales(pagosMensualesData)
-
-      const egresosMensualesData = await Promise.all(
-        ultimos6Meses.map(async (mesInfo) => {
-          const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
-          const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
-
-          const inicioPeriodo = primerDia.toISOString().split("T")[0]
-          const finPeriodo = ultimoDia.toISOString().split("T")[0]
-
-          const egresosResponse = await fetch(`/api/egresos?inicio=${inicioPeriodo}&fin=${finPeriodo}`)
-          let montoEgresosMes = 0
-          if (egresosResponse.ok) {
-            const egresosData = await egresosResponse.json()
-            montoEgresosMes = egresosData.reduce((sum, egreso) => sum + egreso.monto, 0)
-          }
-
-          return {
-            mes: mesInfo.nombre,
-            monto: montoEgresosMes,
-          }
-        }),
-      )
-
-      setEgresosMensuales(egresosMensualesData)
 
       const usuariosMensualesData = ultimos6Meses.map((mesInfo) => {
         const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
@@ -420,6 +395,30 @@ export default function ControlPagos() {
             ]
 
       setMetodosMensualesData(metodosMensualesData)
+
+      const egresosMensualesData = await Promise.all(
+        ultimos6Meses.map(async (mesInfo) => {
+          const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
+          const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
+
+          const inicioPeriodo = primerDia.toISOString().split("T")[0]
+          const finPeriodo = ultimoDia.toISOString().split("T")[0]
+
+          const egresosResponse = await fetch(`/api/egresos/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`)
+          let montoEgresosMes = 0
+          if (egresosResponse.ok) {
+            const egresosData = await egresosResponse.json()
+            montoEgresosMes = egresosData.reduce((sum, egreso) => sum + egreso.monto, 0)
+          }
+
+          return {
+            mes: mesInfo.nombre,
+            monto: montoEgresosMes,
+          }
+        }),
+      )
+
+      setEgresosMensuales(egresosMensualesData)
     } catch (error) {
       console.error("[v0] Error al cargar datos semanales y mensuales:", error)
     }
@@ -457,7 +456,6 @@ export default function ControlPagos() {
         <ResumenIngresos
           pagosCuotas={pagosDiarios}
           ventasBebidas={ventasBebidas}
-          egresos={egresosDiarios}
           periodo="Hoy"
           cajaAbierta={cajaAbierta}
           onAbrirCaja={abrirCaja}
@@ -472,17 +470,43 @@ export default function ControlPagos() {
         <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
           <div className="space-y-6">
             {cajaAbierta && (
-              <>
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
-                  <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
-                </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
+                <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
+              </div>
+            )}
 
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Egresos del día</h2>
-                  <EgresosDelDia egresos={egresosDiarios} />
+            {cajaAbierta && egresosDiarios.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Egresos del día</h2>
+                <div className="space-y-3">
+                  {egresosDiarios.map((egreso) => (
+                    <div
+                      key={egreso.id}
+                      className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">{egreso.descripcion}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Por: {egreso.nombre}</p>
+                        </div>
+                        <p className="text-lg font-bold text-red-600 dark:text-red-400">-${egreso.monto.toFixed(2)}</p>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(egreso.fecha).toLocaleDateString("es-ES")}
+                      </p>
+                    </div>
+                  ))}
+                  <div className="border-t border-gray-300 dark:border-gray-600 pt-3 mt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">Total Egresos:</span>
+                      <span className="text-xl font-bold text-red-600 dark:text-red-400">
+                        -${egresosDiarios.reduce((sum, e) => sum + e.monto, 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </>
+              </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -511,11 +535,6 @@ export default function ControlPagos() {
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Egresos mensuales</h2>
-              <GraficoMensual datos={egresosMensuales} colorBarra="#ef4444" />
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nuevos usuarios por mes</h2>
               <GraficoUsuarios datos={usuariosMensuales} />
             </div>
@@ -526,6 +545,37 @@ export default function ControlPagos() {
                 Datos basados en tendencias históricas
               </div>
               <GraficoMetodosMensual datos={metodosMensualesData} />
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Egresos mensuales</h2>
+              <div className="h-64">
+                {egresosMensuales.length > 0 ? (
+                  <div className="space-y-2">
+                    {egresosMensuales.map((mes) => (
+                      <div key={mes.mes} className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 w-20">{mes.mes}</span>
+                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6 relative overflow-hidden">
+                          <div
+                            className="bg-red-500 dark:bg-red-600 h-full rounded-full flex items-center justify-end pr-2"
+                            style={{
+                              width: `${Math.min((mes.monto / Math.max(...egresosMensuales.map((m) => m.monto), 1)) * 100, 100)}%`,
+                            }}
+                          >
+                            {mes.monto > 0 && (
+                              <span className="text-xs font-semibold text-white">${mes.monto.toFixed(0)}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                    No hay egresos registrados
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

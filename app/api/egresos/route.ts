@@ -3,7 +3,47 @@ import { getMongoDb } from "@/lib/mongodb"
 
 const COLLECTION_EGRESOS = "egresos"
 
-// GET: Obtener todos los egresos
+export async function POST(request: Request) {
+  try {
+    const { monto, descripcion, fecha, nombre, cajaId } = await request.json()
+
+    if (!monto || !descripcion || !fecha || !nombre) {
+      return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 })
+    }
+
+    if (!cajaId) {
+      return NextResponse.json(
+        { error: "No hay caja abierta. Debe abrir una caja para registrar egresos." },
+        { status: 400 },
+      )
+    }
+
+    const db = await getMongoDb()
+    const collection = db.collection(COLLECTION_EGRESOS)
+
+    const nuevoEgreso = {
+      monto: Number(monto),
+      descripcion,
+      fecha: new Date(fecha),
+      nombre,
+      cajaId,
+      fechaRegistro: new Date(),
+    }
+
+    const resultado = await collection.insertOne(nuevoEgreso)
+
+    console.log("[v0] Egreso registrado:", resultado.insertedId)
+
+    return NextResponse.json({
+      success: true,
+      id: resultado.insertedId.toString(),
+    })
+  } catch (error) {
+    console.error("[v0] Error al registrar egreso:", error)
+    return NextResponse.json({ error: "Error al registrar egreso", details: error.message }, { status: 500 })
+  }
+}
+
 export async function GET() {
   try {
     const db = await getMongoDb()
@@ -15,64 +55,15 @@ export async function GET() {
       id: egreso._id.toString(),
       monto: egreso.monto,
       descripcion: egreso.descripcion,
-      fecha: egreso.fecha,
-      profe: egreso.profe,
+      fecha: egreso.fecha.toISOString(),
+      nombre: egreso.nombre,
       cajaId: egreso.cajaId,
+      fechaRegistro: egreso.fechaRegistro?.toISOString(),
     }))
 
     return NextResponse.json(egresosFormateados)
   } catch (error) {
     console.error("[v0] Error al obtener egresos:", error)
-    return NextResponse.json({ error: "Error al obtener egresos" }, { status: 500 })
-  }
-}
-
-// POST: Crear un nuevo egreso
-export async function POST(request: Request) {
-  try {
-    const { monto, descripcion, fecha, profe, cajaId } = await request.json()
-
-    // Validaciones
-    if (!monto || monto <= 0) {
-      return NextResponse.json({ error: "Monto inválido" }, { status: 400 })
-    }
-
-    if (!descripcion || descripcion.trim() === "") {
-      return NextResponse.json({ error: "Descripción requerida" }, { status: 400 })
-    }
-
-    if (!fecha) {
-      return NextResponse.json({ error: "Fecha requerida" }, { status: 400 })
-    }
-
-    if (!profe || profe.trim() === "") {
-      return NextResponse.json({ error: "Profe requerido" }, { status: 400 })
-    }
-
-    if (!cajaId) {
-      return NextResponse.json({ error: "ID de caja requerido" }, { status: 400 })
-    }
-
-    const db = await getMongoDb()
-    const collection = db.collection(COLLECTION_EGRESOS)
-
-    const nuevoEgreso = {
-      monto: Number.parseFloat(monto),
-      descripcion: descripcion.trim(),
-      fecha: new Date(fecha),
-      profe: profe.trim(),
-      cajaId,
-      fechaCreacion: new Date(),
-    }
-
-    const resultado = await collection.insertOne(nuevoEgreso)
-
-    return NextResponse.json({
-      id: resultado.insertedId.toString(),
-      ...nuevoEgreso,
-    })
-  } catch (error) {
-    console.error("[v0] Error al crear egreso:", error)
-    return NextResponse.json({ error: "Error al crear egreso" }, { status: 500 })
+    return NextResponse.json({ error: "Error al obtener egresos", details: error.message }, { status: 500 })
   }
 }

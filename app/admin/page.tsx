@@ -18,7 +18,6 @@ import {
   CreditCard,
   ShoppingCart,
   Users,
-  TrendingDown,
 } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
@@ -26,7 +25,7 @@ import PinModal from "@/components/pin-modal"
 import StockBebidasModal from "@/components/stock-bebidas-modal"
 import ReporteCierreCaja from "@/components/reporte-cierre-caja"
 import VentaBebidasModal from "@/components/venta-bebidas-modal"
-import { EgresoModal } from "@/components/egreso-modal"
+import EgresosModal from "@/components/egresos-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import Alert from "@/components/alert"
@@ -54,7 +53,7 @@ export default function Admin() {
   const [reporteModalAbierto, setReporteModalAbierto] = useState(false)
   const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const [listaUsuariosModalAbierto, setListaUsuariosModalAbierto] = useState(false)
-  const [egresoModalAbierto, setEgresoModalAbierto] = useState(false)
+  const [egresosModalAbierto, setEgresosModalAbierto] = useState(false)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
@@ -344,10 +343,10 @@ export default function Admin() {
           </button>
 
           <button
-            onClick={() => setEgresoModalAbierto(true)}
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-orange-600 font-medium hover:bg-orange-50 transition-colors"
+            onClick={() => setEgresosModalAbierto(true)}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-gray-700/50 transition-colors"
           >
-            <TrendingDown className="h-5 w-5" />
+            <FileText className="h-5 w-5" />
             Egresos
           </button>
 
@@ -699,10 +698,16 @@ export default function Admin() {
 
         <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
 
-        <EgresoModal
-          open={egresoModalAbierto}
-          onOpenChange={setEgresoModalAbierto}
-          onEgresoCreado={cargarIngresosDia}
+        <EgresosModal
+          isOpen={egresosModalAbierto}
+          onClose={() => setEgresosModalAbierto(false)}
+          onSuccess={() => {
+            setAlertaInfo({
+              mensaje: "Egreso registrado correctamente",
+              visible: true,
+              tipo: "success",
+            })
+          }}
         />
 
         <PinModal
