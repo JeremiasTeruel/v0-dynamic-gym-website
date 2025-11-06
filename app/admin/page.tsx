@@ -245,15 +245,25 @@ export default function Admin() {
   const cargarIngresosDia = async () => {
     try {
       setCargandoIngresos(true)
-      const hoy = new Date().toISOString().split("T")[0]
-      const response = await fetch(`/api/ingresos?fecha=${hoy}`)
 
-      if (response.ok) {
-        const ingresos = await response.json()
-        console.log("[v0] Ingresos del día cargados:", ingresos.length)
-        setIngresosDia(ingresos)
+      const cajaResponse = await fetch("/api/caja/actual")
+      const cajaData = await cajaResponse.json()
+
+      if (cajaData.cajaAbierta && cajaData.caja) {
+        console.log("[v0] Cargando ingresos para caja:", cajaData.caja.id)
+        const response = await fetch(`/api/ingresos/caja/${cajaData.caja.id}`)
+
+        if (response.ok) {
+          const ingresos = await response.json()
+          console.log("[v0] Ingresos de la caja cargados:", ingresos.length)
+          setIngresosDia(ingresos)
+        } else {
+          console.error("[v0] Error al cargar ingresos:", response.status)
+          setIngresosDia([])
+        }
       } else {
-        console.error("[v0] Error al cargar ingresos:", response.status)
+        // Si no hay caja abierta, mostrar lista vacía
+        console.log("[v0] No hay caja abierta, mostrando lista vacía")
         setIngresosDia([])
       }
     } catch (error) {

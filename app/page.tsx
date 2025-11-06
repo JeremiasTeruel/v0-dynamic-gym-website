@@ -114,21 +114,28 @@ export default function Home() {
       if (usuario) {
         setFoundUser(usuario)
 
-        // Registrar ingreso (la caja ya está abierta en este punto)
         try {
-          await fetch("/api/ingresos", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              dni: usuario.dni,
-              nombreApellido: usuario.nombreApellido,
-              actividad: usuario.actividad,
-              fechaVencimiento: usuario.fechaVencimiento,
-            }),
-          })
-          console.log("[v0] Ingreso registrado para:", usuario.nombreApellido)
+          const cajaResponse = await fetch("/api/caja/actual")
+          const cajaData = await cajaResponse.json()
+
+          if (cajaData.cajaAbierta && cajaData.caja) {
+            await fetch("/api/ingresos", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                dni: usuario.dni,
+                nombreApellido: usuario.nombreApellido,
+                actividad: usuario.actividad,
+                fechaVencimiento: usuario.fechaVencimiento,
+                cajaId: cajaData.caja.id, // Vincular al ID de caja actual
+              }),
+            })
+            console.log("[v0] Ingreso registrado para:", usuario.nombreApellido, "en caja:", cajaData.caja.id)
+          } else {
+            console.error("[v0] No hay caja abierta para registrar ingreso")
+          }
         } catch (error) {
           console.error("[v0] Error al registrar ingreso:", error)
         }

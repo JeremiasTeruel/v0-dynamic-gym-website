@@ -5,10 +5,14 @@ import { getMongoDb } from "@/lib/mongodb"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { dni, nombreApellido, actividad, fechaVencimiento } = body
+    const { dni, nombreApellido, actividad, fechaVencimiento, cajaId } = body
 
     if (!dni || !nombreApellido) {
       return NextResponse.json({ error: "DNI y nombre son requeridos" }, { status: 400 })
+    }
+
+    if (!cajaId) {
+      return NextResponse.json({ error: "ID de caja es requerido" }, { status: 400 })
     }
 
     const db = await getMongoDb()
@@ -18,29 +22,30 @@ export async function POST(request: Request) {
     const hoy = new Date()
     const fechaHoy = hoy.toISOString().split("T")[0]
 
-    // Verificar si el usuario ya ingresó hoy
     const ingresoExistente = await ingresosCollection.findOne({
       dni,
-      fecha: fechaHoy,
+      cajaId,
     })
 
     if (ingresoExistente) {
-      // Usuario ya registró su ingreso hoy, no hacer nada
-      return NextResponse.json({ message: "Usuario ya registrado hoy", ingreso: ingresoExistente })
+      // Usuario ya registró su ingreso en esta caja, no hacer nada
+      return NextResponse.json({ message: "Usuario ya registrado en esta caja", ingreso: ingresoExistente })
     }
 
-    // Registrar el ingreso
     const nuevoIngreso = {
       dni,
       nombreApellido,
       actividad: actividad || "Normal",
       fechaVencimiento,
-      fecha: fechaHoy,
+      cajaId, // Vinculado al ID de caja
+      fecha: fechaHoy, // Mantener fecha para referencia
       hora: hoy.toISOString(),
       timestamp: hoy.getTime(),
     }
 
     const result = await ingresosCollection.insertOne(nuevoIngreso)
+
+    console.log("[v0] Ingreso registrado para caja:", cajaId)
 
     return NextResponse.json({
       message: "Ingreso registrado correctamente",
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
   }
 }
 
-// GET - Obtener ingresos del día
+// GET - Obtener ingresos (mantener compatibilidad con fecha)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
