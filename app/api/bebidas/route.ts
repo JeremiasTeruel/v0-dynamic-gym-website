@@ -48,6 +48,13 @@ const bebidasIniciales = [
     categoria: "Agua",
     activo: true,
   },
+  {
+    nombre: "Café",
+    precio: 1200,
+    stock: 40,
+    categoria: "Café",
+    activo: true,
+  },
 ]
 
 // Inicializar la base de datos si está vacía

@@ -47,7 +47,7 @@ export default function StockBebidasModal({ isOpen, onClose }: StockBebidasModal
     categoria: "",
   })
 
-  const categorias = ["Agua", "Deportiva", "Gaseosa", "Proteína", "Energética", "Jugos", "Otros"]
+  const categorias = ["Agua", "Deportiva", "Gaseosa", "Proteína", "Energética", "Jugos", "Café", "Otros"]
 
   // Cargar bebidas cuando se abre el modal
   useEffect(() => {
