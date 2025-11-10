@@ -7,7 +7,7 @@ interface DatoMensual {
   mes: string
   monto: number
   cuotas?: number
-  bebidas?: number
+  productos?: number
 }
 
 interface GraficoMensualProps {
@@ -36,7 +36,7 @@ export default function GraficoMensual({ datos }: GraficoMensualProps) {
   const datosConDesglose = datos.map((item) => ({
     ...item,
     cuotas: item.cuotas || 0,
-    bebidas: item.bebidas || 0,
+    productos: item.productos || 0,
   }))
 
   return (
@@ -57,7 +57,7 @@ export default function GraficoMensual({ datos }: GraficoMensualProps) {
           <Tooltip
             formatter={(value, name) => [
               `$${value.toLocaleString("es-AR")}`,
-              name === "cuotas" ? "Cuotas" : name === "bebidas" ? "Bebidas" : "Total",
+              name === "cuotas" ? "Cuotas" : name === "productos" ? "Productos" : "Total",
             ]}
             contentStyle={{
               backgroundColor: isDark ? "#1f2937" : "#ffffff",
@@ -72,7 +72,7 @@ export default function GraficoMensual({ datos }: GraficoMensualProps) {
             }}
           />
           <Bar dataKey="cuotas" stackId="ingresos" fill={isDark ? "#3b82f6" : "#2563eb"} name="Cuotas" />
-          <Bar dataKey="bebidas" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Bebidas" />
+          <Bar dataKey="productos" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Productos" />
         </BarChart>
       </ResponsiveContainer>
     </div>
