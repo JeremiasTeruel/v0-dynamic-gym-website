@@ -96,7 +96,7 @@ export default function GraficoMetodosDetallado({ pagosCuotas, ventasBebidas, ti
               axisLine={{ stroke: isDark ? "#6b7280" : "#9ca3af" }}
             />
             <Tooltip
-              formatter={(value, name) => [formatMonto(Number(value)), name === "cuotas" ? "Cuotas" : "Bebidas"]}
+              formatter={(value, name) => [formatMonto(Number(value)), name === "cuotas" ? "Cuotas" : "Productos"]}
               contentStyle={{
                 backgroundColor: isDark ? "#1f2937" : "#ffffff",
                 border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
@@ -106,7 +106,7 @@ export default function GraficoMetodosDetallado({ pagosCuotas, ventasBebidas, ti
               }}
             />
             <Bar dataKey="cuotas" stackId="ingresos" fill={isDark ? "#3b82f6" : "#2563eb"} name="Cuotas" />
-            <Bar dataKey="bebidas" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Bebidas" />
+            <Bar dataKey="bebidas" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Productos" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -117,7 +117,7 @@ export default function GraficoMetodosDetallado({ pagosCuotas, ventasBebidas, ti
           <div key={item.name} className="bg-gray-50 dark:bg-gray-700 rounded p-2">
             <div className="font-medium text-gray-900 dark:text-gray-100">{item.name}</div>
             <div className="text-gray-600 dark:text-gray-400">Cuotas: {formatMonto(item.cuotas)}</div>
-            <div className="text-gray-600 dark:text-gray-400">Bebidas: {formatMonto(item.bebidas)}</div>
+            <div className="text-gray-600 dark:text-gray-400">Productos: {formatMonto(item.bebidas)}</div>
             <div className="font-medium text-gray-900 dark:text-gray-100">Total: {formatMonto(item.total)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
               {totalGeneral > 0 ? Math.round((item.total / totalGeneral) * 100) : 0}% del total

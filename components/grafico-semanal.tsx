@@ -59,7 +59,7 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
           <Tooltip
             formatter={(value, name) => [
               `$${value.toLocaleString("es-AR")}`,
-              name === "cuotas" ? "Cuotas" : name === "bebidas" ? "Bebidas" : name === "otros" ? "Otros" : "Total", // Added otros to tooltip formatter
+              name === "cuotas" ? "Cuotas" : name === "bebidas" ? "Productos" : name === "otros" ? "Otros" : "Total", // Updated "Bebidas" to "Productos" in tooltip
             ]}
             contentStyle={{
               backgroundColor: isDark ? "#1f2937" : "#ffffff",
@@ -74,7 +74,8 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
             }}
           />
           <Bar dataKey="cuotas" stackId="ingresos" fill={isDark ? "#3b82f6" : "#2563eb"} name="Cuotas" />
-          <Bar dataKey="bebidas" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Bebidas" />
+          <Bar dataKey="bebidas" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Productos" />{" "}
+          {/* Updated name to "Productos" */}
           <Bar dataKey="otros" stackId="ingresos" fill={isDark ? "#f59e0b" : "#d97706"} name="Otros" />{" "}
           {/* Added new bar for otros with amber color */}
         </BarChart>
