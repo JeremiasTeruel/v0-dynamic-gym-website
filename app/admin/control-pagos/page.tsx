@@ -92,18 +92,18 @@ export default function ControlPagos() {
         .filter((pago) => pago.metodoPago === "Mercado Pago")
         .reduce((sum, pago) => sum + pago.monto, 0)
 
-      const totalEfectivoBebidas = ventasBebidas
+      const totalEfectivoProductos = ventasBebidas
         .filter((venta) => venta.metodoPago === "Efectivo")
         .reduce((sum, venta) => sum + venta.precioTotal, 0)
 
-      const totalMercadoPagoBebidas = ventasBebidas
+      const totalMercadoPagoProductos = ventasBebidas
         .filter((venta) => venta.metodoPago === "Mercado Pago")
         .reduce((sum, venta) => sum + venta.precioTotal, 0)
 
-      const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoBebidas
-      const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoBebidas
+      const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoProductos
+      const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoProductos
       const totalCuotas = totalEfectivoCuotas + totalMercadoPagoCuotas
-      const totalBebidas = totalEfectivoBebidas + totalMercadoPagoBebidas
+      const totalProductos = totalEfectivoProductos + totalMercadoPagoProductos
       const totalGeneral = totalEfectivoFinal + totalMercadoPagoFinal
 
       const detalleVentasBebidas = ventasBebidas.map((venta) => ({
@@ -130,9 +130,9 @@ export default function ControlPagos() {
           totalCuotasEfectivo: totalEfectivoCuotas,
           totalCuotasMercadoPago: totalMercadoPagoCuotas,
           cantidadPagos: pagosDiarios.length,
-          totalBebidas,
-          totalBebidasEfectivo: totalEfectivoBebidas,
-          totalBebidasMercadoPago: totalMercadoPagoBebidas,
+          totalBebidas: totalProductos,
+          totalBebidasEfectivo: totalEfectivoProductos,
+          totalBebidasMercadoPago: totalMercadoPagoProductos,
           cantidadVentasBebidas: ventasBebidas.length,
           detalleVentasBebidas,
         }),
@@ -215,7 +215,7 @@ export default function ControlPagos() {
       let ventasBebidasHoy = []
       if (ventasBebidasResponse.ok) {
         ventasBebidasHoy = await ventasBebidasResponse.json()
-        console.log("[v0] Ventas de bebidas de la caja actual cargadas:", ventasBebidasHoy.length)
+        console.log("[v0] Ventas de productos de la caja actual cargadas:", ventasBebidasHoy.length)
       }
       setVentasBebidas(ventasBebidasHoy)
 
@@ -231,13 +231,13 @@ export default function ControlPagos() {
       const mercadoPagoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Mercado Pago").length
       const mixtoCuotas = pagosHoy.filter((pago) => pago.metodoPago === "Mixto").length
 
-      const efectivoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Efectivo").length
-      const mercadoPagoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Mercado Pago").length
-      const mixtoBebidas = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Mixto").length
+      const efectivoProductos = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Efectivo").length
+      const mercadoPagoProductos = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Mercado Pago").length
+      const mixtoProductos = ventasBebidasHoy.filter((venta) => venta.metodoPago === "Mixto").length
 
-      const totalEfectivo = efectivoCuotas + efectivoBebidas
-      const totalMercadoPago = mercadoPagoCuotas + mercadoPagoBebidas
-      const totalMixto = mixtoCuotas + mixtoBebidas
+      const totalEfectivo = efectivoCuotas + efectivoProductos
+      const totalMercadoPago = mercadoPagoCuotas + mercadoPagoProductos
+      const totalMixto = mixtoCuotas + mixtoProductos
 
       setMetodosPago([
         { name: "Efectivo", value: totalEfectivo || 1, fill: "#4ade80" },
@@ -264,19 +264,19 @@ export default function ControlPagos() {
           const montoCuotasDia = pagosDia.reduce((sum, pago) => sum + pago.monto, 0)
 
           const ventasBebidasDiaResponse = await fetch(`/api/ventas-bebidas/fecha/${fechaStr}`)
-          let montoBebidasDia = 0
+          let montoProductosDia = 0
           if (ventasBebidasDiaResponse.ok) {
             const ventasData = await ventasBebidasDiaResponse.json()
-            montoBebidasDia = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
+            montoProductosDia = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          const montoTotalDia = montoCuotasDia + montoBebidasDia
+          const montoTotalDia = montoCuotasDia + montoProductosDia
 
           return {
             dia,
             monto: montoTotalDia,
             cuotas: montoCuotasDia,
-            bebidas: montoBebidasDia,
+            bebidas: montoProductosDia,
           }
         }),
       )
@@ -298,7 +298,7 @@ export default function ControlPagos() {
         "Diciembre",
       ]
 
-      const mesActual = hoy.getMonth() // 0-11
+      const mesActual = hoy.getMonth()
       const anioActual = hoy.getFullYear()
 
       const ultimos6Meses = []
@@ -325,19 +325,19 @@ export default function ControlPagos() {
           const ventasBebidasMesResponse = await fetch(
             `/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`,
           )
-          let montoBebidasMes = 0
+          let montoProductosMes = 0
           if (ventasBebidasMesResponse.ok) {
             const ventasData = await ventasBebidasMesResponse.json()
-            montoBebidasMes = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
+            montoProductosMes = ventasData.reduce((sum, venta) => sum + venta.precioTotal, 0)
           }
 
-          const montoTotalMes = montoCuotasMes + montoBebidasMes
+          const montoTotalMes = montoCuotasMes + montoProductosMes
 
           return {
             mes: mesInfo.nombre,
             monto: montoTotalMes,
             cuotas: montoCuotasMes,
-            bebidas: montoBebidasMes,
+            productos: montoProductosMes,
           }
         }),
       )
