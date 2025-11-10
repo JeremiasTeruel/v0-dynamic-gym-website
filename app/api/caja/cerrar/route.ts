@@ -61,10 +61,17 @@ export async function POST(request: Request) {
     const pagos = await collectionPagos.find({ cajaId }).toArray()
     const detallePagosCuotas = await Promise.all(
       pagos.map(async (pago) => {
-        const usuario = await collectionUsuarios.findOne({ dni: pago.dni })
+        const usuario = await collectionUsuarios.findOne({ dni: pago.userDni })
+
+        console.log("[v0] Procesando pago:", {
+          userDni: pago.userDni,
+          usuarioEncontrado: !!usuario,
+          nombreApellido: usuario?.nombreApellido || "No encontrado",
+        })
+
         return {
           nombreApellido: usuario?.nombreApellido || "Usuario no encontrado",
-          dni: pago.dni,
+          dni: pago.userDni || "",
           monto: pago.monto,
           metodoPago: pago.metodoPago,
           fecha: pago.fecha,
