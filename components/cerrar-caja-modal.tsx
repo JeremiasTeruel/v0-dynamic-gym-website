@@ -228,7 +228,7 @@ export default function CerrarCajaModal({
                     <div className="flex items-center">
                       <ShoppingCart className="h-6 w-6 text-green-600 dark:text-green-400 mr-2" />
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Bebidas</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Productos</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {ventasBebidas.length} {ventasBebidas.length === 1 ? "venta" : "ventas"}
                         </p>

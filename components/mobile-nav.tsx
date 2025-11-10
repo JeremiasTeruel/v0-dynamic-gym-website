@@ -43,7 +43,7 @@ export default function MobileNav() {
           className="flex flex-col items-center p-2 transition-colors text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
         >
           <ShoppingCart className="h-6 w-6" />
-          <span className="text-xs">Bebidas</span>
+          <span className="text-xs">Productos</span>
         </button>
         <Link
           href="/admin"

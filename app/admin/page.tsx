@@ -315,7 +315,7 @@ export default function Admin() {
             className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
           >
             <ShoppingCart className="h-5 w-5" />
-            Venta de Bebidas
+            Venta de Productos
           </button>
         </div>
 
@@ -341,7 +341,7 @@ export default function Admin() {
             className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-blue-600 font-medium hover:bg-blue-50 transition-colors"
           >
             <Package className="h-5 w-5" />
-            Stock de Bebidas
+            Stock de Productos
           </button>
 
           <button

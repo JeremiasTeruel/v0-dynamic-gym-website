@@ -95,7 +95,7 @@ export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarC
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-700 dark:text-green-300">Bebidas</p>
+              <p className="text-sm font-medium text-green-700 dark:text-green-300">Productos</p>
               <p className="text-2xl font-bold text-green-900 dark:text-green-100">{formatMonto(totalBebidas)}</p>
               <p className="text-xs text-green-600 dark:text-green-400">{ventasBebidas.length} ventas</p>
             </div>
@@ -188,7 +188,7 @@ export default function VentasDelDia({ pagos = [], ventasBebidas = [], onCerrarC
         {ventasBebidas.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              Ventas de Bebidas ({ventasBebidas.length})
+              Ventas de Productos ({ventasBebidas.length})
             </h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

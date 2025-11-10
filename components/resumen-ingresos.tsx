@@ -90,7 +90,7 @@ export default function ResumenIngresos({
             No hay ingresos registrados {periodo.toLowerCase()}
           </h3>
           <p className="text-gray-500 dark:text-gray-400">
-            Los pagos de cuotas y ventas de bebidas aparecerán aquí cuando se registren.
+            Los pagos de cuotas y ventas de productos aparecerán aquí cuando se registren.
           </p>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function ResumenIngresos({
             </span>
           </div>
           <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatMonto(totalBebidas)}</div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Bebidas ({ventasBebidas.length})</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">Productos ({ventasBebidas.length})</div>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ export default function ResumenIngresos({
             <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">💵 Efectivo</div>
             <div className="text-lg font-bold text-green-600 dark:text-green-400">{formatMonto(totalEfectivo)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Cuotas: {formatMonto(efectivoCuotas)}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Bebidas: {formatMonto(efectivoBebidas)}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Productos: {formatMonto(efectivoBebidas)}</div>
             {efectivoEgresos > 0 && (
               <div className="text-xs text-red-500 dark:text-red-400">Egresos: -{formatMonto(efectivoEgresos)}</div>
             )}
@@ -182,7 +182,7 @@ export default function ResumenIngresos({
             <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">💳 Mercado Pago</div>
             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatMonto(totalMercadoPago)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Cuotas: {formatMonto(mercadoPagoCuotas)}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Bebidas: {formatMonto(mercadoPagoBebidas)}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Productos: {formatMonto(mercadoPagoBebidas)}</div>
             {mercadoPagoEgresos > 0 && (
               <div className="text-xs text-red-500 dark:text-red-400">Egresos: -{formatMonto(mercadoPagoEgresos)}</div>
             )}

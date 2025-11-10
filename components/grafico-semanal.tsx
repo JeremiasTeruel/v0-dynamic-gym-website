@@ -8,6 +8,7 @@ interface DatoSemanal {
   monto: number
   cuotas?: number
   bebidas?: number
+  otros?: number // Added otros field for other income
 }
 
 interface GraficoSemanalProps {
@@ -37,6 +38,7 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
     ...item,
     cuotas: item.cuotas || 0,
     bebidas: item.bebidas || 0,
+    otros: item.otros || 0, // Include otros in the data mapping
   }))
 
   return (
@@ -57,7 +59,7 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
           <Tooltip
             formatter={(value, name) => [
               `$${value.toLocaleString("es-AR")}`,
-              name === "cuotas" ? "Cuotas" : name === "bebidas" ? "Bebidas" : "Total",
+              name === "cuotas" ? "Cuotas" : name === "bebidas" ? "Bebidas" : name === "otros" ? "Otros" : "Total", // Added otros to tooltip formatter
             ]}
             contentStyle={{
               backgroundColor: isDark ? "#1f2937" : "#ffffff",
@@ -73,6 +75,8 @@ export default function GraficoSemanal({ datos }: GraficoSemanalProps) {
           />
           <Bar dataKey="cuotas" stackId="ingresos" fill={isDark ? "#3b82f6" : "#2563eb"} name="Cuotas" />
           <Bar dataKey="bebidas" stackId="ingresos" fill={isDark ? "#10b981" : "#059669"} name="Bebidas" />
+          <Bar dataKey="otros" stackId="ingresos" fill={isDark ? "#f59e0b" : "#d97706"} name="Otros" />{" "}
+          {/* Added new bar for otros with amber color */}
         </BarChart>
       </ResponsiveContainer>
     </div>
