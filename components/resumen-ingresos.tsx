@@ -1,10 +1,11 @@
 "use client"
 
-import { DollarSign, TrendingUp, BarChart3, PieChart } from "lucide-react"
+import { DollarSign, TrendingUp, BarChart3, PieChart, TrendingDown } from "lucide-react"
 
 interface ResumenIngresosProps {
   pagosCuotas: any[]
   ventasBebidas: any[]
+  egresos?: any[]
   periodo: string
   cajaAbierta?: boolean
   onAbrirCaja?: () => void
@@ -13,14 +14,19 @@ interface ResumenIngresosProps {
 export default function ResumenIngresos({
   pagosCuotas,
   ventasBebidas,
+  egresos = [],
   periodo,
   cajaAbierta = true,
   onAbrirCaja,
 }: ResumenIngresosProps) {
-  // Calcular totales
+  // Calcular totales de ingresos
   const totalCuotas = pagosCuotas.reduce((sum, pago) => sum + pago.monto, 0)
   const totalBebidas = ventasBebidas.reduce((sum, venta) => sum + venta.precioTotal, 0)
-  const totalGeneral = totalCuotas + totalBebidas
+  const totalIngresos = totalCuotas + totalBebidas
+
+  const totalEgresos = egresos.reduce((sum, egreso) => sum + egreso.monto, 0)
+
+  const totalGeneral = totalIngresos - totalEgresos
 
   // Calcular por método de pago
   const efectivoCuotas = pagosCuotas.filter((p) => p.metodoPago === "Efectivo").reduce((sum, p) => sum + p.monto, 0)
@@ -35,8 +41,11 @@ export default function ResumenIngresos({
     .filter((v) => v.metodoPago === "Mercado Pago")
     .reduce((sum, v) => sum + v.precioTotal, 0)
 
-  const totalEfectivo = efectivoCuotas + efectivoBebidas
-  const totalMercadoPago = mercadoPagoCuotas + mercadoPagoBebidas
+  const efectivoEgresos = egresos.filter((e) => e.metodoPago === "Efectivo").reduce((sum, e) => sum + e.monto, 0)
+  const mercadoPagoEgresos = egresos.filter((e) => e.metodoPago === "Mercado Pago").reduce((sum, e) => sum + e.monto, 0)
+
+  const totalEfectivo = efectivoCuotas + efectivoBebidas - efectivoEgresos
+  const totalMercadoPago = mercadoPagoCuotas + mercadoPagoBebidas - mercadoPagoEgresos
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
@@ -70,7 +79,7 @@ export default function ResumenIngresos({
     )
   }
 
-  if (totalGeneral === 0 && pagosCuotas.length === 0 && ventasBebidas.length === 0) {
+  if (totalIngresos === 0 && pagosCuotas.length === 0 && ventasBebidas.length === 0) {
     return (
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-8 border border-gray-200 dark:border-gray-600">
         <div className="text-center">
@@ -95,11 +104,31 @@ export default function ResumenIngresos({
         <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
       </div>
 
-      {/* Total General */}
       <div className="text-center mb-6">
-        <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{formatMonto(totalGeneral)}</div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          {pagosCuotas.length + ventasBebidas.length} transacciones totales
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Ingresos Brutos</div>
+        <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-2">{formatMonto(totalIngresos)}</div>
+
+        {totalEgresos > 0 && (
+          <>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">Egresos</span>
+              <span className="text-lg font-semibold text-red-600 dark:text-red-400">-{formatMonto(totalEgresos)}</span>
+            </div>
+            <div className="border-t border-gray-300 dark:border-gray-600 pt-2 mt-2">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Neto</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatMonto(totalGeneral)}</div>
+            </div>
+          </>
+        )}
+
+        {totalEgresos === 0 && (
+          <div className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">{formatMonto(totalGeneral)}</div>
+        )}
+
+        <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          {pagosCuotas.length + ventasBebidas.length} transacciones
+          {egresos.length > 0 && ` • ${egresos.length} egresos`}
         </div>
       </div>
 
@@ -109,7 +138,7 @@ export default function ResumenIngresos({
           <div className="flex items-center justify-between mb-2">
             <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-              {calcularPorcentaje(totalCuotas, totalGeneral)}%
+              {calcularPorcentaje(totalCuotas, totalIngresos)}%
             </span>
           </div>
           <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatMonto(totalCuotas)}</div>
@@ -120,7 +149,7 @@ export default function ResumenIngresos({
           <div className="flex items-center justify-between mb-2">
             <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
             <span className="text-xs font-medium text-green-600 dark:text-green-400">
-              {calcularPorcentaje(totalBebidas, totalGeneral)}%
+              {calcularPorcentaje(totalBebidas, totalIngresos)}%
             </span>
           </div>
           <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatMonto(totalBebidas)}</div>
@@ -132,7 +161,7 @@ export default function ResumenIngresos({
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
           <PieChart className="h-4 w-4 mr-2" />
-          Por método de pago
+          Por método de pago {totalEgresos > 0 && "(neto después de egresos)"}
         </h4>
 
         <div className="grid grid-cols-2 gap-3">
@@ -141,8 +170,11 @@ export default function ResumenIngresos({
             <div className="text-lg font-bold text-green-600 dark:text-green-400">{formatMonto(totalEfectivo)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Cuotas: {formatMonto(efectivoCuotas)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Bebidas: {formatMonto(efectivoBebidas)}</div>
+            {efectivoEgresos > 0 && (
+              <div className="text-xs text-red-500 dark:text-red-400">Egresos: -{formatMonto(efectivoEgresos)}</div>
+            )}
             <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
-              {calcularPorcentaje(totalEfectivo, totalGeneral)}% del total
+              {calcularPorcentaje(totalEfectivo, totalGeneral)}% del total neto
             </div>
           </div>
 
@@ -151,8 +183,11 @@ export default function ResumenIngresos({
             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatMonto(totalMercadoPago)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Cuotas: {formatMonto(mercadoPagoCuotas)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Bebidas: {formatMonto(mercadoPagoBebidas)}</div>
+            {mercadoPagoEgresos > 0 && (
+              <div className="text-xs text-red-500 dark:text-red-400">Egresos: -{formatMonto(mercadoPagoEgresos)}</div>
+            )}
             <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
-              {calcularPorcentaje(totalMercadoPago, totalGeneral)}% del total
+              {calcularPorcentaje(totalMercadoPago, totalGeneral)}% del total neto
             </div>
           </div>
         </div>

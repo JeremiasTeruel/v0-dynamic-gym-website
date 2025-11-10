@@ -18,6 +18,7 @@ export default function EgresosModal({ isOpen, onClose, onSuccess }: EgresosModa
   const [descripcion, setDescripcion] = useState("")
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0])
   const [nombre, setNombre] = useState("")
+  const [metodoPago, setMetodoPago] = useState("Efectivo") // Agregando estado para método de pago
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState("")
   const [showPinModal, setShowPinModal] = useState(false)
@@ -27,13 +28,14 @@ export default function EgresosModal({ isOpen, onClose, onSuccess }: EgresosModa
     fecha: string
     nombre: string
     cajaId: string
+    metodoPago: string // Agregando metodoPago a los datos pendientes
   } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    if (!monto || !descripcion || !fecha || !nombre) {
+    if (!monto || !descripcion || !fecha || !nombre || !metodoPago) {
       setError("Todos los campos son requeridos")
       return
     }
@@ -59,6 +61,7 @@ export default function EgresosModal({ isOpen, onClose, onSuccess }: EgresosModa
         fecha,
         nombre,
         cajaId: cajaData.caja.id,
+        metodoPago,
       })
       setShowPinModal(true)
     } catch (error) {
@@ -91,6 +94,7 @@ export default function EgresosModal({ isOpen, onClose, onSuccess }: EgresosModa
       setDescripcion("")
       setFecha(new Date().toISOString().split("T")[0])
       setNombre("")
+      setMetodoPago("Efectivo") // Resetear método de pago a valor por defecto
       setPendingEgresoData(null)
 
       if (onSuccess) {
@@ -190,6 +194,22 @@ export default function EgresosModal({ isOpen, onClose, onSuccess }: EgresosModa
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Método de Pago *
+              </label>
+              <select
+                value={metodoPago}
+                onChange={(e) => setMetodoPago(e.target.value)}
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                disabled={guardando}
+                required
+              >
+                <option value="Efectivo">Efectivo</option>
+                <option value="Mercado Pago">Mercado Pago</option>
+              </select>
+            </div>
+
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
@@ -223,7 +243,7 @@ export default function EgresosModal({ isOpen, onClose, onSuccess }: EgresosModa
         onClose={handlePinClose}
         onSuccess={handlePinSuccess}
         title="Registrar Egreso de Dinero"
-        description={`Esta acción registrará un egreso de $${monto} por concepto de "${descripcion}". Ingrese el PIN de seguridad para continuar.`}
+        description={`Esta acción registrará un egreso de $${monto} por concepto de "${descripcion}" mediante ${metodoPago}. Ingrese el PIN de seguridad para continuar.`}
       />
     </>
   )

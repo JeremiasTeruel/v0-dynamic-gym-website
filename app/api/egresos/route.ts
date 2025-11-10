@@ -5,9 +5,9 @@ const COLLECTION_EGRESOS = "egresos"
 
 export async function POST(request: Request) {
   try {
-    const { monto, descripcion, fecha, nombre, cajaId } = await request.json()
+    const { monto, descripcion, fecha, nombre, cajaId, metodoPago } = await request.json()
 
-    if (!monto || !descripcion || !fecha || !nombre) {
+    if (!monto || !descripcion || !fecha || !nombre || !metodoPago) {
       return NextResponse.json({ error: "Todos los campos son requeridos" }, { status: 400 })
     }
 
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       fecha: new Date(fecha),
       nombre,
       cajaId,
+      metodoPago,
       fechaRegistro: new Date(),
     }
 
@@ -58,6 +59,7 @@ export async function GET() {
       fecha: egreso.fecha.toISOString(),
       nombre: egreso.nombre,
       cajaId: egreso.cajaId,
+      metodoPago: egreso.metodoPago || "Efectivo",
       fechaRegistro: egreso.fechaRegistro?.toISOString(),
     }))
 

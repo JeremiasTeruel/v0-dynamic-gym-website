@@ -191,7 +191,7 @@ export default function ControlPagos() {
         console.log("[v0] No hay caja abierta, mostrando valores en 0")
         setPagosDiarios([])
         setVentasBebidas([])
-        setEgresosDiarios([]) // Reset egresos when no open cash register
+        setEgresosDiarios([])
         setMetodosPago([
           { name: "Efectivo", value: 1, fill: "#4ade80" },
           { name: "Mercado Pago", value: 1, fill: "#3b82f6" },
@@ -456,6 +456,7 @@ export default function ControlPagos() {
         <ResumenIngresos
           pagosCuotas={pagosDiarios}
           ventasBebidas={ventasBebidas}
+          egresos={egresosDiarios}
           periodo="Hoy"
           cajaAbierta={cajaAbierta}
           onAbrirCaja={abrirCaja}
@@ -489,6 +490,7 @@ export default function ControlPagos() {
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900 dark:text-gray-100">{egreso.descripcion}</p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Por: {egreso.nombre}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Método: {egreso.metodoPago}</p>
                         </div>
                         <p className="text-lg font-bold text-red-600 dark:text-red-400">-${egreso.monto.toFixed(2)}</p>
                       </div>

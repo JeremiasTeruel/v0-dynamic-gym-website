@@ -22,6 +22,7 @@ export async function GET(request: Request, { params }: { params: { cajaId: stri
       descripcion: egreso.descripcion,
       fecha: egreso.fecha.toISOString(),
       nombre: egreso.nombre,
+      metodoPago: egreso.metodoPago || "Efectivo",
       cajaId: egreso.cajaId,
       fechaRegistro: egreso.fechaRegistro?.toISOString(),
     }))
