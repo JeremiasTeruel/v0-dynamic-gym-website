@@ -11,27 +11,25 @@ import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import GraficoMensual from "@/components/grafico-mensual"
 import GraficoUsuarios from "@/components/grafico-usuarios"
 import GraficoMetodosMensual from "@/components/grafico-metodos-mensual"
-import GraficoActividadesMensual from "@/components/grafico-actividades-mensual"
 import ThemeToggle from "@/components/theme-toggle"
 import ResumenIngresos from "@/components/resumen-ingresos"
 import { useMobile } from "@/hooks/use-mobile"
 import type { RegistroPago } from "@/context/gym-context"
 import Alert from "@/components/alert"
 
-export default function ControlPagosPage() {
+export default function ControlPagos() {
   const { usuarios, cargando, obtenerPagosPorFecha, obtenerPagosPorRango } = useGymContext()
   const isMobile = useMobile()
   const [pagosDiarios, setPagosDiarios] = useState<RegistroPago[]>([])
   const [pagosSemana, setPagosSemana] = useState([])
   const [pagosMensuales, setPagosMensuales] = useState([])
-  const [usuariosMensuales, setUsuariosMensuales] = useState<{ mes: string; cantidad: number }[]>([])
-  const [actividadesMensuales, setActividadesMensuales] = useState<any[]>([])
+  const [usuariosMensuales, setUsuariosMensuales] = useState([])
   const [metodosPago, setMetodosPago] = useState([])
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [metodosMensualesData, setMetodosMensualesData] = useState([])
   const [ventasBebidas, setVentasBebidas] = useState([])
-  const [egresosDiarios, setEgresosDiarios] = useState<{ mes: string; monto: number }[]>([])
-  const [egresosMensuales, setEgresosMensuales] = useState<{ mes: string; monto: number }[]>([])
+  const [egresosDiarios, setEgresosDiarios] = useState([])
+  const [egresosMensuales, setEgresosMensuales] = useState([])
   const [cajaAbierta, setCajaAbierta] = useState(false)
   const [cargandoCaja, setCargandoCaja] = useState(true)
   const [alertMessage, setAlertMessage] = useState("")
@@ -443,93 +441,25 @@ export default function ControlPagosPage() {
   }
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setCargandoDatos(true)
+    const inicializar = async () => {
+      setCargandoDatos(true)
 
-        // Calcular fechas para el rango mensual (últimos 6 meses)
-        const hoy = new Date()
-        const hace6Meses = new Date()
-        hace6Meses.setMonth(hace6Meses.getMonth() - 5)
-        hace6Meses.setDate(1)
+      await cargarDatosSemanalesYMensuales()
 
-        // Calcular fechas para la última semana
-        const hace7Dias = new Date()
-        hace7Dias.setDate(hace7Dias.getDate() - 6)
+      const abierta = await verificarCajaAbierta()
 
-        // Formato para las fechas
-        const formatoFecha = (fecha: Date) => fecha.toISOString().split("T")[0]
-        const fechaInicio = formatoFecha(hace6Meses)
-        const fechaFin = formatoFecha(hoy)
-        const fechaInicioSemana = formatoFecha(hace7Dias)
-        const fechaHoy = formatoFecha(hoy)
-
-        // Obtener todos los usuarios para el gráfico de actividades
-        const resUsuarios = await fetch("/api/usuarios")
-        const dataUsuarios = await resUsuarios.json()
-        console.log("Usuarios obtenidos:", dataUsuarios.length)
-
-        const actividadesPorMes: { [key: string]: { [actividad: string]: number } } = {}
-        const meses = []
-        for (let i = 5; i >= 0; i--) {
-          const fecha = new Date()
-          fecha.setMonth(fecha.getMonth() - i)
-          const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`
-          const mesNombre = fecha.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")
-          meses.push({ key: mesKey, nombre: mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1) })
-          actividadesPorMes[mesKey] = {
-            Normal: 0,
-            Familiar: 0,
-            BJJ: 0,
-            MMA: 0,
-            Boxeo: 0,
-            Convenio: 0,
-            Dia: 0,
-            Referees: 0,
-          }
-        }
-
-        // Contar usuarios por actividad - contamos todos los usuarios activos en cada mes
-        // Un usuario cuenta en un mes si su fechaCreacion es anterior o igual al último día del mes
-        if (Array.isArray(dataUsuarios)) {
-          meses.forEach(({ key }) => {
-            const [year, month] = key.split("-").map(Number)
-            const ultimoDiaMes = new Date(year, month, 0) // Último día del mes
-
-            dataUsuarios.forEach((usuario: any) => {
-              if (usuario.actividad && actividadesPorMes[key]) {
-                const fechaCreacion = usuario.fechaCreacion
-                  ? new Date(usuario.fechaCreacion)
-                  : new Date(usuario.fechaInicio || "2020-01-01")
-
-                // El usuario cuenta si fue creado antes o durante este mes
-                if (fechaCreacion <= ultimoDiaMes) {
-                  if (actividadesPorMes[key][usuario.actividad] !== undefined) {
-                    actividadesPorMes[key][usuario.actividad]++
-                  }
-                }
-              }
-            })
-          })
-        }
-
-        const actividadesData = meses.map(({ key, nombre }) => ({
-          mes: nombre,
-          ...actividadesPorMes[key],
-        }))
-        setActividadesMensuales(actividadesData)
-      } catch (error) {
-        console.error("Error al cargar datos:", error)
-      } finally {
-        setCargandoDatos(false)
+      if (abierta) {
+        await cargarDatosDiarios()
       }
+
+      setCargandoDatos(false)
     }
 
-    fetchData()
-  }, [])
+    inicializar()
+  }, [obtenerPagosPorFecha, obtenerPagosPorRango, usuarios])
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <main className="flex min-h-screen flex-col p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="flex items-center mb-6">
         <Link href="/admin" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <ArrowLeft className="h-6 w-6" />
@@ -629,17 +559,10 @@ export default function ControlPagosPage() {
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (mensual)</h2>
-              <GraficoMetodosMensual datos={metodosMensualesData} />
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                Usuarios por actividad (mensual)
-              </h2>
-              <div className="text-center text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Total de usuarios activos por tipo de actividad
+              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Datos basados en tendencias históricas
               </div>
-              <GraficoActividadesMensual datos={actividadesMensuales} />
+              <GraficoMetodosMensual datos={metodosMensualesData} />
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
@@ -677,6 +600,6 @@ export default function ControlPagosPage() {
       )}
 
       <Alert message={alertMessage} isOpen={showAlert} onClose={() => setShowAlert(false)} />
-    </div>
+    </main>
   )
 }
