@@ -11,6 +11,7 @@ import GraficoMetodosDetallado from "@/components/grafico-metodos-detallado"
 import GraficoMensual from "@/components/grafico-mensual"
 import GraficoUsuarios from "@/components/grafico-usuarios"
 import GraficoMetodosMensual from "@/components/grafico-metodos-mensual"
+import GraficoUsuariosActividad from "@/components/grafico-usuarios-actividad" // Importar nuevo componente de gráfico de usuarios por actividad
 import ThemeToggle from "@/components/theme-toggle"
 import ResumenIngresos from "@/components/resumen-ingresos"
 import { useMobile } from "@/hooks/use-mobile"
@@ -558,10 +559,12 @@ export default function ControlPagos() {
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Usuarios por actividad</h2>
+              <GraficoUsuariosActividad usuarios={usuarios} />
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Métodos de pago (mensual)</h2>
-              <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-                Datos basados en tendencias históricas
-              </div>
               <GraficoMetodosMensual datos={metodosMensualesData} />
             </div>
 
