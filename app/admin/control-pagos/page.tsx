@@ -365,34 +365,54 @@ export default function ControlPagos() {
 
       setUsuariosMensuales(usuariosMensualesData)
 
-      const totalEfectivoMensual = pagosMensualesData.reduce((sum, mes) => {
-        return sum + (mes.monto > 0 ? mes.monto * 0.6 : 0)
-      }, 0)
+      const metodosMensualesData = await Promise.all(
+        ultimos6Meses.map(async (mesInfo) => {
+          const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
+          const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
 
-      const totalMercadoPagoMensual = pagosMensualesData.reduce((sum, mes) => {
-        return sum + (mes.monto > 0 ? mes.monto * 0.4 : 0)
-      }, 0)
+          const inicioPeriodo = primerDia.toISOString().split("T")[0]
+          const finPeriodo = ultimoDia.toISOString().split("T")[0]
 
-      const totalMensual = totalEfectivoMensual + totalMercadoPagoMensual
+          // Obtener pagos de cuotas del mes
+          const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
 
-      const metodosMensualesData =
-        totalMensual > 0
-          ? [
-              {
-                name: "Efectivo",
-                value: Math.round((totalEfectivoMensual / totalMensual) * 100),
-                fill: "#4ade80",
-              },
-              {
-                name: "Mercado Pago",
-                value: Math.round((totalMercadoPagoMensual / totalMensual) * 100),
-                fill: "#3b82f6",
-              },
-            ]
-          : [
-              { name: "Efectivo", value: 50, fill: "#4ade80" },
-              { name: "Mercado Pago", value: 50, fill: "#3b82f6" },
-            ]
+          // Calcular totales por método de pago de cuotas
+          let efectivoCuotas = 0
+          let mercadoPagoCuotas = 0
+
+          pagosMes.forEach((pago) => {
+            if (pago.metodoPago === "Efectivo") {
+              efectivoCuotas += pago.monto
+            } else if (pago.metodoPago === "Mercado Pago") {
+              mercadoPagoCuotas += pago.monto
+            }
+          })
+
+          // Obtener ventas de productos del mes
+          const ventasProductosMesResponse = await fetch(
+            `/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`,
+          )
+          let efectivoProductos = 0
+          let mercadoPagoProductos = 0
+
+          if (ventasProductosMesResponse.ok) {
+            const ventasData = await ventasProductosMesResponse.json()
+            ventasData.forEach((venta: any) => {
+              if (venta.metodoPago === "Efectivo") {
+                efectivoProductos += venta.precioTotal
+              } else if (venta.metodoPago === "Mercado Pago") {
+                mercadoPagoProductos += venta.precioTotal
+              }
+            })
+          }
+
+          return {
+            mes: mesInfo.nombre,
+            efectivo: efectivoCuotas + efectivoProductos,
+            mercadoPago: mercadoPagoCuotas + mercadoPagoProductos,
+          }
+        }),
+      )
 
       setMetodosMensualesData(metodosMensualesData)
 

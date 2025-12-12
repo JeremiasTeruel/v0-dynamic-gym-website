@@ -30,7 +30,7 @@ importers:
         specifier: ^0.454.0
         version: 0.454.0(react@19.0.0)
       mongodb:
-        specifier: latest
+        specifier: ^6.19.0
         version: 6.20.0(@aws-sdk/credential-providers@3.879.0)(@mongodb-js/zstd@2.0.1)(gcp-metadata@7.0.1)(kerberos@2.2.2)(mongodb-client-encryption@6.5.0)(snappy@7.3.2)(socks@2.8.7)
       mongodb-client-encryption:
         specifier: ^6.5.0
@@ -45,7 +45,7 @@ importers:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
       recharts:
-        specifier: latest
+        specifier: ^3.1.2
         version: 3.3.0(@types/react@19.0.0)(react-dom@19.0.0(react@19.0.0))(react-is@18.3.1)(react@19.0.0)(redux@5.0.1)
       snappy:
         specifier: ^7.3.2
@@ -61,7 +61,7 @@ importers:
         version: 1.0.7(tailwindcss@3.4.17)
     devDependencies:
       '@types/node':
-        specifier: ^22
+        specifier: ^22.0.0
         version: 22.0.0
       '@types/react':
         specifier: ^19.0.0
@@ -73,13 +73,13 @@ importers:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.5.3)
       postcss:
-        specifier: ^8.5
+        specifier: ^8.5.3
         version: 8.5.3
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.17
       typescript:
-        specifier: ^5
+        specifier: ^5.0.2
         version: 5.0.2
 
 packages:
@@ -1243,6 +1243,7 @@ packages:
   next@15.2.4:
     resolution: {integrity: sha512-VwL+LAaPSxEkd3lU2xWbgEOtrM8oedmyhBqaVNmgKB+GvZlCy9rgaEc+y2on0wv+l0oSFqLtYD6dcC1eAedUaQ==}
     engines: {node: ^18.18.0 || ^19.8.0 || >= 20.0.0}
+    deprecated: This version has a security vulnerability. Please upgrade to a patched version. See https://nextjs.org/blog/CVE-2025-66478 for more details.
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
