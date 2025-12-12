@@ -344,6 +344,53 @@ export default function ControlPagos() {
 
       setPagosMensuales(pagosMensualesData)
 
+      const metodosMensualesDataReal = await Promise.all(
+        ultimos6Meses.map(async (mesInfo) => {
+          const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
+          const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
+
+          const inicioPeriodo = primerDia.toISOString().split("T")[0]
+          const finPeriodo = ultimoDia.toISOString().split("T")[0]
+
+          const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
+
+          const efectivoCuotas = pagosMes
+            .filter((pago) => pago.metodoPago === "Efectivo")
+            .reduce((sum, pago) => sum + pago.monto, 0)
+
+          const mercadoPagoCuotas = pagosMes
+            .filter((pago) => pago.metodoPago === "Mercado Pago")
+            .reduce((sum, pago) => sum + pago.monto, 0)
+
+          const ventasResponse = await fetch(`/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`)
+
+          let efectivoProductos = 0
+          let mercadoPagoProductos = 0
+
+          if (ventasResponse.ok) {
+            const ventasData = await ventasResponse.json()
+            efectivoProductos = ventasData
+              .filter((venta: any) => venta.metodoPago === "Efectivo")
+              .reduce((sum: number, venta: any) => sum + venta.precioTotal, 0)
+
+            mercadoPagoProductos = ventasData
+              .filter((venta: any) => venta.metodoPago === "Mercado Pago")
+              .reduce((sum: number, venta: any) => sum + venta.precioTotal, 0)
+          }
+
+          const totalEfectivo = efectivoCuotas + efectivoProductos
+          const totalMercadoPago = mercadoPagoCuotas + mercadoPagoProductos
+
+          return {
+            mes: mesInfo.nombre,
+            efectivo: totalEfectivo,
+            mercadoPago: totalMercadoPago,
+          }
+        }),
+      )
+
+      setMetodosMensualesData(metodosMensualesDataReal)
+
       const usuariosMensualesData = ultimos6Meses.map((mesInfo) => {
         const primerDia = new Date(mesInfo.anio, mesInfo.mes, 1)
         const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
@@ -364,37 +411,6 @@ export default function ControlPagos() {
       })
 
       setUsuariosMensuales(usuariosMensualesData)
-
-      const totalEfectivoMensual = pagosMensualesData.reduce((sum, mes) => {
-        return sum + (mes.monto > 0 ? mes.monto * 0.6 : 0)
-      }, 0)
-
-      const totalMercadoPagoMensual = pagosMensualesData.reduce((sum, mes) => {
-        return sum + (mes.monto > 0 ? mes.monto * 0.4 : 0)
-      }, 0)
-
-      const totalMensual = totalEfectivoMensual + totalMercadoPagoMensual
-
-      const metodosMensualesData =
-        totalMensual > 0
-          ? [
-              {
-                name: "Efectivo",
-                value: Math.round((totalEfectivoMensual / totalMensual) * 100),
-                fill: "#4ade80",
-              },
-              {
-                name: "Mercado Pago",
-                value: Math.round((totalMercadoPagoMensual / totalMensual) * 100),
-                fill: "#3b82f6",
-              },
-            ]
-          : [
-              { name: "Efectivo", value: 50, fill: "#4ade80" },
-              { name: "Mercado Pago", value: 50, fill: "#3b82f6" },
-            ]
-
-      setMetodosMensualesData(metodosMensualesData)
 
       const egresosMensualesData = await Promise.all(
         ultimos6Meses.map(async (mesInfo) => {
