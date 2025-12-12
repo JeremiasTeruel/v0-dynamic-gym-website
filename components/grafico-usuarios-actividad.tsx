@@ -1,13 +1,14 @@
 "use client"
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
-import { useTheme } from "next-themes" // Import directly from next-themes
+import { useTheme } from "next-themes"
 
 interface Usuario {
   id?: string
   nombreApellido: string
   dni: string
   actividad: string
+  fechaCreacion?: string // Agregado para identificar usuarios nuevos
 }
 
 interface GraficoUsuariosActividadProps {
@@ -26,30 +27,44 @@ const COLORES_ACTIVIDADES: Record<string, string> = {
   Referees: "#ec4899", // pink
 }
 
+const esUsuarioNuevo = (fechaCreacion?: string): boolean => {
+  if (!fechaCreacion) return false
+  const fecha = new Date(fechaCreacion)
+  const ahora = new Date()
+  return fecha.getMonth() === ahora.getMonth() && fecha.getFullYear() === ahora.getFullYear()
+}
+
 export default function GraficoUsuariosActividad({ usuarios }: GraficoUsuariosActividadProps) {
   const { theme } = useTheme()
   const isDark = theme === "dark"
 
-  // Contar usuarios por actividad
   const conteoActividades = usuarios.reduce(
     (acc, usuario) => {
       const actividad = usuario.actividad || "Sin actividad"
-      acc[actividad] = (acc[actividad] || 0) + 1
+      if (!acc[actividad]) {
+        acc[actividad] = { total: 0, nuevos: 0 }
+      }
+      acc[actividad].total += 1
+      if (esUsuarioNuevo(usuario.fechaCreacion)) {
+        acc[actividad].nuevos += 1
+      }
       return acc
     },
-    {} as Record<string, number>,
+    {} as Record<string, { total: number; nuevos: number }>,
   )
 
   // Convertir a formato para el gráfico y ordenar por cantidad
   const datos = Object.entries(conteoActividades)
-    .map(([actividad, cantidad]) => ({
+    .map(([actividad, { total, nuevos }]) => ({
       actividad,
-      cantidad,
+      cantidad: total,
+      nuevos,
       color: COLORES_ACTIVIDADES[actividad] || "#6b7280",
     }))
     .sort((a, b) => b.cantidad - a.cantidad)
 
   const totalUsuarios = usuarios.length
+  const totalNuevos = datos.reduce((acc, item) => acc + item.nuevos, 0)
 
   if (datos.length === 0) {
     return (
@@ -84,11 +99,30 @@ export default function GraficoUsuariosActividad({ usuarios }: GraficoUsuariosAc
                 borderRadius: "8px",
                 color: isDark ? "#f3f4f6" : "#111827",
               }}
-              formatter={(value: number, name: string, props: any) => {
-                const porcentaje = ((value / totalUsuarios) * 100).toFixed(1)
-                return [`${value} usuarios (${porcentaje}%)`, props.payload.actividad]
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload
+                  const porcentaje = ((data.cantidad / totalUsuarios) * 100).toFixed(1)
+                  return (
+                    <div
+                      className="p-3 rounded-lg shadow-lg"
+                      style={{
+                        backgroundColor: isDark ? "#1f2937" : "#ffffff",
+                        border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
+                      }}
+                    >
+                      <p className="font-semibold" style={{ color: data.color }}>
+                        {data.actividad}
+                      </p>
+                      <p className="text-sm" style={{ color: isDark ? "#d1d5db" : "#4b5563" }}>
+                        Total: {data.cantidad} usuarios ({porcentaje}%)
+                      </p>
+                      <p className="text-sm text-green-500">Nuevos este mes: {data.nuevos}</p>
+                    </div>
+                  )
+                }
+                return null
               }}
-              labelFormatter={() => ""}
             />
             <Bar dataKey="cantidad" radius={[0, 4, 4, 0]}>
               {datos.map((entry, index) => (
@@ -99,21 +133,35 @@ export default function GraficoUsuariosActividad({ usuarios }: GraficoUsuariosAc
         </ResponsiveContainer>
       </div>
 
-      {/* Leyenda con colores y totales */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
         {datos.map((item) => (
-          <div key={item.actividad} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-            <span className="text-gray-600 dark:text-gray-300 truncate">{item.actividad}</span>
-            <span className="font-semibold text-gray-900 dark:text-gray-100 ml-auto">{item.cantidad}</span>
+          <div key={item.actividad} className="flex flex-col p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+              <span className="text-gray-600 dark:text-gray-300 truncate">{item.actividad}</span>
+              <span className="font-semibold text-gray-900 dark:text-gray-100 ml-auto">{item.cantidad}</span>
+            </div>
+            {item.nuevos > 0 && (
+              <span className="text-xs text-green-600 dark:text-green-400 ml-5">
+                +{item.nuevos} nuevo{item.nuevos > 1 ? "s" : ""} este mes
+              </span>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Total */}
-      <div className="text-center pt-2 border-t border-gray-200 dark:border-gray-700">
-        <span className="text-gray-500 dark:text-gray-400">Total de usuarios: </span>
-        <span className="font-bold text-gray-900 dark:text-gray-100">{totalUsuarios}</span>
+      <div className="text-center pt-2 border-t border-gray-200 dark:border-gray-700 space-y-1">
+        <div>
+          <span className="text-gray-500 dark:text-gray-400">Total de usuarios: </span>
+          <span className="font-bold text-gray-900 dark:text-gray-100">{totalUsuarios}</span>
+        </div>
+        {totalNuevos > 0 && (
+          <div className="text-sm">
+            <span className="text-green-600 dark:text-green-400">
+              +{totalNuevos} usuario{totalNuevos > 1 ? "s" : ""} nuevo{totalNuevos > 1 ? "s" : ""} este mes
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )
