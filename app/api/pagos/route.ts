@@ -56,11 +56,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "El monto debe ser un número válido" }, { status: 400 })
     }
 
+    const fechaPago = new Date(pago.fecha || new Date())
+    const inicioDia = new Date(fechaPago)
+    inicioDia.setHours(0, 0, 0, 0)
+    const finDia = new Date(fechaPago)
+    finDia.setHours(23, 59, 59, 999)
+
+    const pagoExistente = await collection.findOne({
+      userDni: pago.userDni,
+      tipoPago: "Pago de cuota",
+      fecha: {
+        $gte: inicioDia,
+        $lte: finDia,
+      },
+    })
+
+    if (pagoExistente) {
+      console.log("API: Ya existe un pago de cuota para este DNI hoy:", pago.userDni)
+      return NextResponse.json(
+        {
+          error: "Ya existe un pago de cuota registrado para este DNI en el día de hoy",
+        },
+        { status: 400 },
+      )
+    }
+
     const pagoParaInsertar = {
       userNombre: pago.userNombre,
       userDni: pago.userDni,
       monto: montoNumerico,
-      fecha: new Date(pago.fecha || new Date()),
+      fecha: fechaPago,
       metodoPago: pago.metodoPago,
       tipoPago: pago.tipoPago || "Pago de cuota",
       cajaId: pago.cajaId, // ID de la caja actual
