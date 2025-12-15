@@ -22,14 +22,21 @@ export async function POST(request: Request) {
     const hoy = new Date()
     const fechaHoy = hoy.toISOString().split("T")[0]
 
-    const ingresoExistente = await ingresosCollection.findOne({
+    const ingresoExistenteHoy = await ingresosCollection.findOne({
       dni,
-      cajaId,
+      fecha: fechaHoy,
     })
 
-    if (ingresoExistente) {
-      // Usuario ya registró su ingreso en esta caja, no hacer nada
-      return NextResponse.json({ message: "Usuario ya registrado en esta caja", ingreso: ingresoExistente })
+    if (ingresoExistenteHoy) {
+      // Usuario ya registró su ingreso hoy, devolver código especial
+      return NextResponse.json(
+        {
+          error: "DNI_YA_REGISTRADO_HOY",
+          message: "Este DNI ya fue registrado en el día de hoy",
+          ingreso: ingresoExistenteHoy,
+        },
+        { status: 409 },
+      ) // 409 Conflict
     }
 
     const nuevoIngreso = {
@@ -37,8 +44,8 @@ export async function POST(request: Request) {
       nombreApellido,
       actividad: actividad || "Normal",
       fechaVencimiento,
-      cajaId, // Vinculado al ID de caja
-      fecha: fechaHoy, // Mantener fecha para referencia
+      cajaId,
+      fecha: fechaHoy,
       hora: hoy.toISOString(),
       timestamp: hoy.getTime(),
     }

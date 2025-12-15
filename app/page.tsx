@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Settings, Volume2, VolumeX } from "lucide-react"
+import { CheckCircle, XCircle, Settings, Volume2, VolumeX, AlertTriangle } from "lucide-react"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
@@ -21,6 +21,8 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState("")
   const [showCajaCerradaModal, setShowCajaCerradaModal] = useState(false)
   const [pendingSearchDni, setPendingSearchDni] = useState("")
+  const [showDniYaRegistradoAlert, setShowDniYaRegistradoAlert] = useState(false)
+  const [dniYaRegistradoNombre, setDniYaRegistradoNombre] = useState("")
   const { usuarios, buscarUsuario, cargando } = useGymContext()
   const router = useRouter()
   const { getSoundEnabled, setSoundEnabled: saveSoundEnabled } = useSoundPreferences()
@@ -112,14 +114,12 @@ export default function Home() {
       const usuario = await buscarUsuario(dni)
 
       if (usuario) {
-        setFoundUser(usuario)
-
         try {
           const cajaResponse = await fetch("/api/caja/actual")
           const cajaData = await cajaResponse.json()
 
           if (cajaData.cajaAbierta && cajaData.caja) {
-            await fetch("/api/ingresos", {
+            const ingresoResponse = await fetch("/api/ingresos", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -129,9 +129,31 @@ export default function Home() {
                 nombreApellido: usuario.nombreApellido,
                 actividad: usuario.actividad,
                 fechaVencimiento: usuario.fechaVencimiento,
-                cajaId: cajaData.caja.id, // Vincular al ID de caja actual
+                cajaId: cajaData.caja.id,
               }),
             })
+
+            const ingresoData = await ingresoResponse.json()
+
+            if (ingresoResponse.status === 409 && ingresoData.error === "DNI_YA_REGISTRADO_HOY") {
+              setDniYaRegistradoNombre(usuario.nombreApellido)
+              setShowDniYaRegistradoAlert(true)
+
+              if (soundEnabled) {
+                await soundGenerator.playAlarmSound()
+              }
+
+              setTimeout(() => {
+                setShowDniYaRegistradoAlert(false)
+                setDniYaRegistradoNombre("")
+                setSearchDni("")
+                dniInputRef.current?.focus()
+              }, 3000)
+
+              setIsSearching(false)
+              return
+            }
+
             console.log("[v0] Ingreso registrado para:", usuario.nombreApellido, "en caja:", cajaData.caja.id)
           } else {
             console.error("[v0] No hay caja abierta para registrar ingreso")
@@ -139,6 +161,8 @@ export default function Home() {
         } catch (error) {
           console.error("[v0] Error al registrar ingreso:", error)
         }
+
+        setFoundUser(usuario)
 
         if (soundEnabled) {
           if (isPaymentDue(usuario.fechaVencimiento)) {
@@ -182,18 +206,15 @@ export default function Home() {
     if (!searchDni.trim() || isSearching) return
 
     try {
-      // Verificar si hay caja abierta
       const cajaResponse = await fetch("/api/caja/actual")
       const cajaData = await cajaResponse.json()
 
       if (!cajaData.cajaAbierta) {
-        // Si no hay caja abierta, mostrar modal
         setPendingSearchDni(searchDni.trim())
         setShowCajaCerradaModal(true)
         return
       }
 
-      // Si hay caja abierta, ejecutar búsqueda normalmente
       await ejecutarBusqueda(searchDni.trim())
     } catch (error) {
       console.error("[v0] Error al verificar caja:", error)
@@ -210,7 +231,6 @@ export default function Home() {
 
   const handleDniChange = (e) => {
     const value = e.target.value
-    // Solo permitir números
     const numericValue = value.replace(/[^0-9]/g, "")
     setSearchDni(numericValue)
   }
@@ -312,6 +332,23 @@ export default function Home() {
                 {soundEnabled && " • ✅ Cuota al día • ⚠️ Cuota vencida"}
               </p>
             </div>
+
+            {showDniYaRegistradoAlert && (
+              <div className="border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 rounded-lg p-6 mb-6 shadow-lg animate-pulse">
+                <div className="flex items-center justify-center space-x-3">
+                  <AlertTriangle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold text-amber-700 dark:text-amber-300">
+                      Usuario ya registrado hoy
+                    </h3>
+                    <p className="text-amber-600 dark:text-amber-400 mt-1">
+                      <span className="font-medium">{dniYaRegistradoNombre}</span> ya registró su asistencia el día de
+                      hoy
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {foundUser && (
               <div
