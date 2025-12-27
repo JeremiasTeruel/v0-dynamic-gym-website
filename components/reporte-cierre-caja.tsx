@@ -423,6 +423,11 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                           >
                             {cierre.tipoCierre === "parcial" ? "Parcial" : "Completo"}
                           </span>
+                          {cierre.totalGeneral === 0 && (
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                              Sin ingresos
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Cerrado el {new Date(cierre.fechaCierre).toLocaleString("es-ES")}
@@ -434,7 +439,9 @@ Reporte generado el ${new Date().toLocaleString("es-ES")}
                             {formatMonto(cierre.totalGeneral)}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {cierre.cantidadPagos + cierre.cantidadVentasBebidas} transacciones
+                            {cierre.cantidadPagos + cierre.cantidadVentasBebidas === 0
+                              ? "Sin transacciones"
+                              : `${cierre.cantidadPagos + cierre.cantidadVentasBebidas} transacciones`}
                           </p>
                         </div>
                         <button

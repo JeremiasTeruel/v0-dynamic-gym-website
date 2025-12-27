@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { X, DollarSign, CreditCard, Banknote, ShoppingCart } from "lucide-react"
+import { X, DollarSign, CreditCard, Banknote, ShoppingCart, AlertCircle } from "lucide-react"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import PinModal from "@/components/pin-modal"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
@@ -66,6 +66,8 @@ export default function CerrarCajaModal({
   // Totales por tipo de ingreso
   const totalCuotas = totalEfectivoCuotas + totalMercadoPagoCuotas
   const totalBebidas = totalEfectivoBebidas + totalMercadoPagoBebidas
+
+  const hayIngresos = totalDia > 0
 
   const formatMonto = (monto: number) => {
     return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" }).format(monto)
@@ -181,116 +183,137 @@ export default function CerrarCajaModal({
               </div>
             </div>
 
-            {/* Desglose por tipo de ingreso */}
-            <div className="space-y-4 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose de ingresos</h3>
+            {!hayIngresos && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-amber-800 dark:text-amber-300">Sin ingresos registrados</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                      No se registraron ingresos en el día de la fecha. El cierre de caja se realizará con un total de
+                      $0.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-              {/* Cuotas */}
-              {totalCuotas > 0 && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Cuotas</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {pagosDia.length} {pagosDia.length === 1 ? "pago" : "pagos"}
+            {/* Desglose por tipo de ingreso - Solo mostrar si hay ingresos */}
+            {hayIngresos && (
+              <div className="space-y-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Desglose de ingresos</h3>
+
+                {/* Cuotas */}
+                {totalCuotas > 0 && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center">
+                        <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">Cuotas</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {pagosDia.length} {pagosDia.length === 1 ? "pago" : "pagos"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{formatMonto(totalCuotas)}</p>
+                      </div>
+                    </div>
+
+                    {/* Desglose por método de pago de cuotas */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {formatMonto(totalEfectivoCuotas)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {formatMonto(totalMercadoPagoCuotas)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bebidas */}
+                {totalBebidas > 0 && (
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center">
+                        <ShoppingCart className="h-6 w-6 text-green-600 dark:text-green-400 mr-2" />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">Productos</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {ventasBebidas.length} {ventasBebidas.length === 1 ? "venta" : "ventas"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                          {formatMonto(totalBebidas)}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-blue-700 dark:text-blue-300">{formatMonto(totalCuotas)}</p>
+
+                    {/* Desglose por método de pago de bebidas */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {formatMonto(totalEfectivoBebidas)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {formatMonto(totalMercadoPagoBebidas)}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Desglose por método de pago de cuotas */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {formatMonto(totalEfectivoCuotas)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {formatMonto(totalMercadoPagoCuotas)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Bebidas */}
-              {totalBebidas > 0 && (
-                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <ShoppingCart className="h-6 w-6 text-green-600 dark:text-green-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-gray-100">Productos</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {ventasBebidas.length} {ventasBebidas.length === 1 ? "venta" : "ventas"}
+                {/* Resumen final por método de pago */}
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Resumen por método de pago</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center">
+                        <Banknote className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Efectivo</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-700 dark:text-green-300">
+                          {formatMonto(totalEfectivoFinal)}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {totalDia > 0 ? Math.round((totalEfectivoFinal / totalDia) * 100) : 0}%
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-700 dark:text-green-300">
-                        {formatMonto(totalBebidas)}
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Desglose por método de pago de bebidas */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Efectivo:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {formatMonto(totalEfectivoBebidas)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Mercado Pago:</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">
-                        {formatMonto(totalMercadoPagoBebidas)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Resumen final por método de pago */}
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Resumen por método de pago</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
-                    <div className="flex items-center">
-                      <Banknote className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Efectivo</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-700 dark:text-green-300">{formatMonto(totalEfectivoFinal)}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {totalDia > 0 ? Math.round((totalEfectivoFinal / totalDia) * 100) : 0}%
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
-                    <div className="flex items-center">
-                      <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Mercado Pago</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-blue-700 dark:text-blue-300">{formatMonto(totalMercadoPagoFinal)}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {totalDia > 0 ? Math.round((totalMercadoPagoFinal / totalDia) * 100) : 0}%
-                      </p>
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center">
+                        <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Mercado Pago</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-blue-700 dark:text-blue-300">
+                          {formatMonto(totalMercadoPagoFinal)}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {totalDia > 0 ? Math.round((totalMercadoPagoFinal / totalDia) * 100) : 0}%
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div
               className={`border rounded-lg p-4 mb-6 ${
@@ -335,7 +358,7 @@ export default function CerrarCajaModal({
                     ? "bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600"
                     : "bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-600"
                 }`}
-                disabled={isClosing || totalDia === 0}
+                disabled={isClosing}
               >
                 {isClosing ? (
                   <>
@@ -347,12 +370,6 @@ export default function CerrarCajaModal({
                 )}
               </button>
             </div>
-
-            {totalDia === 0 && (
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
-                No hay ingresos para cerrar la caja
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -367,7 +384,7 @@ export default function CerrarCajaModal({
           tipoCierre === "parcial"
             ? "Se generará un reporte con los datos actuales sin cerrar el día."
             : "Esta acción cerrará la caja del día y reseteará los ingresos."
-        } Total: ${formatMonto(totalDia)}. Desglose: Cuotas ${formatMonto(totalCuotas)} (Efectivo: ${formatMonto(totalEfectivoCuotas)}, MP: ${formatMonto(totalMercadoPagoCuotas)}), Bebidas ${formatMonto(totalBebidas)} (Efectivo: ${formatMonto(totalEfectivoBebidas)}, MP: ${formatMonto(totalMercadoPagoBebidas)}). Ingrese el PIN de seguridad para continuar.`}
+        } Total: ${formatMonto(totalDia)}. ${hayIngresos ? `Desglose: Cuotas ${formatMonto(totalCuotas)} (Efectivo: ${formatMonto(totalEfectivoCuotas)}, MP: ${formatMonto(totalMercadoPagoCuotas)}), Productos ${formatMonto(totalBebidas)} (Efectivo: ${formatMonto(totalEfectivoBebidas)}, MP: ${formatMonto(totalMercadoPagoBebidas)}).` : "No se registraron ingresos en el día."} Ingrese el PIN de seguridad para continuar.`}
       />
     </>
   )
