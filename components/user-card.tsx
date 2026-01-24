@@ -15,7 +15,22 @@ export default function UserCard({ usuario, onEdit, onDelete, isDeleting, format
   return (
     <div className="relative overflow-hidden border rounded-md mb-4 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
       <div className="p-4">
-        <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{usuario.nombreApellido}</h3>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border flex-shrink-0">
+            {usuario.foto ? (
+              <img
+                src={usuario.foto || "/placeholder.svg"}
+                alt={usuario.nombreApellido}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-sm text-muted-foreground">
+                {usuario.nombreApellido.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{usuario.nombreApellido}</h3>
+        </div>
 
         <div className="grid grid-cols-2 gap-2 text-sm mt-2">
           <div>

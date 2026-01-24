@@ -11,6 +11,7 @@ import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import PinModal from "@/components/pin-modal"
 import CajaCerradaModal from "@/components/caja-cerrada-modal"
+import FotoUsuario from "@/components/foto-usuario"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 const calcularMontoPorActividad = (actividad: string, metodoPago: string): string => {
@@ -42,6 +43,8 @@ export default function NuevoUsuario() {
   const [cajaAbierta, setCajaAbierta] = useState(true)
   const [showCajaCerradaModal, setShowCajaCerradaModal] = useState(false)
   const [verificandoCaja, setVerificandoCaja] = useState(true)
+
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     nombreApellido: "",
@@ -233,6 +236,7 @@ export default function NuevoUsuario() {
         const nuevoUsuario = {
           ...datosUsuario,
           fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
+          foto: fotoUrl || undefined,
         }
 
         console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
@@ -308,6 +312,16 @@ export default function NuevoUsuario() {
             required
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
+          />
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Foto del Usuario</label>
+          <FotoUsuario
+            foto={fotoUrl}
+            onFotoChange={(url) => setFotoUrl(url)}
+            size="md"
+            editable={!isSubmitting}
           />
         </div>
 

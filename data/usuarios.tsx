@@ -9,6 +9,7 @@ export interface Usuario {
   metodoPago: string
   actividad: string
   fechaCreacion?: string // Fecha de creación del usuario en el sistema
+  foto?: string // URL de la foto del usuario
 }
 
 // NOTA: En una aplicación real, estos datos estarían en una base de datos

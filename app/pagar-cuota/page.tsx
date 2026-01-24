@@ -10,6 +10,7 @@ import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
 import PinModal from "@/components/pin-modal"
 import CajaCerradaModal from "@/components/caja-cerrada-modal"
+import FotoUsuario from "@/components/foto-usuario"
 import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 // Función para calcular el monto según actividad y método de pago
@@ -310,11 +311,35 @@ export default function PagarCuota() {
           </div>
           {userFound && (
             <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md">
-              <p className="text-sm font-medium text-green-800 dark:text-green-300">
-                Usuario encontrado: {userFound.nombreApellido}
-              </p>
-              <div className="text-xs text-green-700 dark:text-green-400 mt-1 grid grid-cols-2 gap-2">
-                <div>Actividad: {userFound.actividad || "Normal"}</div>
+              <div className="flex items-center gap-3">
+                <FotoUsuario
+                  foto={userFound.foto}
+                  onFotoChange={async (url) => {
+                    // Actualizar foto del usuario
+                    try {
+                      await fetch(`/api/usuarios/actualizar/${userFound.id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ...userFound, foto: url }),
+                      })
+                      setUserFound({ ...userFound, foto: url })
+                    } catch (e) {
+                      console.error("Error al actualizar foto:", e)
+                    }
+                  }}
+                  userId={userFound.id}
+                  oldUrl={userFound.foto}
+                  size="md"
+                  editable={true}
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                    Usuario encontrado: {userFound.nombreApellido}
+                  </p>
+                  <div className="text-xs text-green-700 dark:text-green-400 mt-1">
+                    <div>Actividad: {userFound.actividad || "Normal"}</div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

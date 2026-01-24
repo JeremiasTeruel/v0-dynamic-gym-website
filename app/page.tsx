@@ -358,9 +358,24 @@ export default function Home() {
                     : "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20"
                 }`}
               >
-                <h2 className="text-3xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                  {foundUser.nombreApellido}
-                </h2>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-border flex-shrink-0">
+                    {foundUser.foto ? (
+                      <img
+                        src={foundUser.foto || "/placeholder.svg"}
+                        alt={foundUser.nombreApellido}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-2xl text-muted-foreground">
+                        {foundUser.nombreApellido.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
+                    {foundUser.nombreApellido}
+                  </h2>
+                </div>
                 <div className="grid grid-cols-2 gap-4 text-lg">
                   <div>
                     <span className="font-medium text-gray-700 dark:text-gray-300">DNI:</span>
