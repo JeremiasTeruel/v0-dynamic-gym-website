@@ -403,10 +403,25 @@ export default function Admin() {
                       key={ingreso._id}
                       className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{ingreso.nombreApellido}</h3>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">#{index + 1}</span>
-                      </div>
+<div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border flex-shrink-0">
+                                            {ingreso.foto ? (
+                                              <img
+                                                src={ingreso.foto || "/placeholder.svg"}
+                                                alt={ingreso.nombreApellido}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            ) : (
+                                              <span className="text-xs text-muted-foreground">
+                                                {ingreso.nombreApellido?.charAt(0).toUpperCase() || "?"}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">{ingreso.nombreApellido}</h3>
+                                        </div>
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">#{index + 1}</span>
+                                      </div>
                       <div className="space-y-1 text-sm">
                         <p className="text-gray-700 dark:text-gray-300">
                           <span className="font-medium">DNI:</span> {ingreso.dni}
@@ -444,26 +459,42 @@ export default function Admin() {
                 {/* Vista desktop */}
                 <div className="hidden md:block border dark:border-gray-600 rounded-md overflow-hidden">
                   <table className="w-full">
-                    <thead className="bg-gray-100 dark:bg-gray-700">
-                      <tr>
-                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">#</th>
-                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Nombre y Apellido</th>
-                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
-                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
-                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
-                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
-                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Hora</th>
-                      </tr>
-                    </thead>
+<thead className="bg-gray-100 dark:bg-gray-700">
+                                      <tr>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">#</th>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Imagen</th>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Nombre y Apellido</th>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Vencimiento</th>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Estado</th>
+                                        <th className="p-3 text-left text-gray-900 dark:text-gray-100">Hora</th>
+                                      </tr>
+                                    </thead>
                     <tbody>
                       {ingresosDia.map((ingreso, index) => (
-                        <tr
-                          key={ingreso._id}
-                          className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                        >
-                          <td className="p-3 text-gray-900 dark:text-gray-100">{index + 1}</td>
-                          <td className="p-3 text-gray-900 dark:text-gray-100">{ingreso.nombreApellido}</td>
-                          <td className="p-3 text-gray-900 dark:text-gray-100">{ingreso.dni}</td>
+<tr
+                                          key={ingreso._id}
+                                          className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                        >
+                                          <td className="p-3 text-gray-900 dark:text-gray-100">{index + 1}</td>
+                                          <td className="p-3">
+                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border">
+                                              {ingreso.foto ? (
+                                                <img
+                                                  src={ingreso.foto || "/placeholder.svg"}
+                                                  alt={ingreso.nombreApellido}
+                                                  className="w-full h-full object-cover"
+                                                />
+                                              ) : (
+                                                <span className="text-xs text-muted-foreground">
+                                                  {ingreso.nombreApellido?.charAt(0).toUpperCase() || "?"}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="p-3 text-gray-900 dark:text-gray-100">{ingreso.nombreApellido}</td>
+                                          <td className="p-3 text-gray-900 dark:text-gray-100">{ingreso.dni}</td>
                           <td className="p-3">
                             <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
                               {ingreso.actividad}
