@@ -5,7 +5,7 @@ import { getMongoDb } from "@/lib/mongodb"
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { dni, nombreApellido, actividad, fechaVencimiento, cajaId } = body
+    const { dni, nombreApellido, actividad, fechaVencimiento, foto, cajaId } = body
 
     if (!dni || !nombreApellido) {
       return NextResponse.json({ error: "DNI y nombre son requeridos" }, { status: 400 })
@@ -44,6 +44,7 @@ export async function POST(request: Request) {
       nombreApellido,
       actividad: actividad || "Normal",
       fechaVencimiento,
+      foto: foto || null,
       cajaId,
       fecha: fechaHoy,
       hora: hoy.toISOString(),

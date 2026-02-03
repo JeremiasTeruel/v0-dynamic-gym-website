@@ -129,6 +129,7 @@ export default function Home() {
                 nombreApellido: usuario.nombreApellido,
                 actividad: usuario.actividad,
                 fechaVencimiento: usuario.fechaVencimiento,
+                foto: usuario.foto,
                 cajaId: cajaData.caja.id,
               }),
             })
