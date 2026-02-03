@@ -12,21 +12,33 @@ export async function GET(request: Request, { params }: { params: { cajaId: stri
 
     const db = await getMongoDb()
     const ingresosCollection = db.collection("ingresos")
-
-    console.log("[v0] Obteniendo ingresos para caja:", cajaId)
+    const usuariosCollection = db.collection("usuarios")
 
     // Buscar ingresos de la caja específica
     const ingresos = await ingresosCollection.find({ cajaId }).sort({ timestamp: 1 }).toArray()
 
-    console.log("[v0] Ingresos encontrados:", ingresos.length)
+    // Para cada ingreso, buscar la foto actual del usuario si no tiene foto guardada
+    const ingresosConFoto = await Promise.all(
+      ingresos.map(async (ingreso) => {
+        let foto = ingreso.foto
 
-    // Convertir ObjectId a string
-    const ingresosFormateados = ingresos.map((ingreso) => ({
-      ...ingreso,
-      _id: ingreso._id.toString(),
-    }))
+        // Si el ingreso no tiene foto, buscar la foto actual del usuario
+        if (!foto && ingreso.dni) {
+          const usuario = await usuariosCollection.findOne({ dni: ingreso.dni })
+          if (usuario && usuario.foto) {
+            foto = usuario.foto
+          }
+        }
 
-    return NextResponse.json(ingresosFormateados)
+        return {
+          ...ingreso,
+          _id: ingreso._id.toString(),
+          foto: foto || null,
+        }
+      })
+    )
+
+    return NextResponse.json(ingresosConFoto)
   } catch (error) {
     console.error("[v0] Error al obtener ingresos de caja:", error)
     return NextResponse.json({ error: "Error al obtener ingresos: " + error.message }, { status: 500 })
