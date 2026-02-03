@@ -359,8 +359,8 @@ export default function Home() {
                     : "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20"
                 }`}
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-border flex-shrink-0">
+                <div className="flex items-center gap-5 mb-4">
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-muted flex items-center justify-center border-3 border-border flex-shrink-0 shadow-lg">
                     {foundUser.foto ? (
                       <img
                         src={foundUser.foto || "/placeholder.svg"}
@@ -368,7 +368,7 @@ export default function Home() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-2xl text-muted-foreground">
+                      <span className="text-4xl text-muted-foreground font-semibold">
                         {foundUser.nombreApellido.charAt(0).toUpperCase()}
                       </span>
                     )}

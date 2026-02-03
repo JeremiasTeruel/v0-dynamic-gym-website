@@ -404,8 +404,8 @@ export default function Admin() {
                       className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50"
                     >
 <div className="flex justify-between items-start mb-2">
-                                        <div className="flex items-center gap-2">
-                                          <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border flex-shrink-0">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-border flex-shrink-0 shadow-md">
                                             {ingreso.foto ? (
                                               <img
                                                 src={ingreso.foto || "/placeholder.svg"}
@@ -413,7 +413,7 @@ export default function Admin() {
                                                 className="w-full h-full object-cover"
                                               />
                                             ) : (
-                                              <span className="text-xs text-muted-foreground">
+                                              <span className="text-lg font-medium text-muted-foreground">
                                                 {ingreso.nombreApellido?.charAt(0).toUpperCase() || "?"}
                                               </span>
                                             )}
@@ -479,7 +479,7 @@ export default function Admin() {
                                         >
                                           <td className="p-3 text-gray-900 dark:text-gray-100">{index + 1}</td>
                                           <td className="p-3">
-                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border">
+                                            <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-border shadow-md">
                                               {ingreso.foto ? (
                                                 <img
                                                   src={ingreso.foto || "/placeholder.svg"}
@@ -487,7 +487,7 @@ export default function Admin() {
                                                   className="w-full h-full object-cover"
                                                 />
                                               ) : (
-                                                <span className="text-xs text-muted-foreground">
+                                                <span className="text-lg font-medium text-muted-foreground">
                                                   {ingreso.nombreApellido?.charAt(0).toUpperCase() || "?"}
                                                 </span>
                                               )}
