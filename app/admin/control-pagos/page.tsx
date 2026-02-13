@@ -490,7 +490,21 @@ export default function ControlPagos() {
             {cajaAbierta && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Ventas del día</h2>
-                <VentasDelDia pagos={pagosDiarios} ventasBebidas={ventasBebidas} onCerrarCaja={cerrarCaja} />
+                <VentasDelDia
+                  pagos={pagosDiarios}
+                  ventasBebidas={ventasBebidas}
+                  onCerrarCaja={cerrarCaja}
+                  onPagoEditado={(pagoActualizado) => {
+                    setPagosDiarios((prev) =>
+                      prev.map((p) => (p.id === pagoActualizado.id ? { ...p, ...pagoActualizado } : p))
+                    )
+                  }}
+                  onVentaEditada={(ventaActualizada) => {
+                    setVentasBebidas((prev) =>
+                      prev.map((v) => (v.id === ventaActualizada.id ? { ...v, ...ventaActualizada } : v))
+                    )
+                  }}
+                />
               </div>
             )}
 
