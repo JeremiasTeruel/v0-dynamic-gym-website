@@ -12,8 +12,11 @@ export interface RegistroPago {
   fecha: string
   metodoPago: string
   tipoPago?: "Nuevo" | "Pago de cuota"
-  cajaId?: string // Agregado cajaId para vincular pago a caja específica
-}
+  cajaId?: string
+  montoEfectivo?: number
+  montoMercadoPago?: number
+  editado?: boolean
+  }
 
 interface GymContextType {
   usuarios: Usuario[]
@@ -190,6 +193,8 @@ export function GymProvider({ children }) {
     usuario: Omit<Usuario, "id">,
     montoPago: number,
     cajaId: string,
+    montoEfectivo?: number,
+    montoMercadoPago?: number,
   ): Promise<void> => {
     try {
       setError(null)
@@ -217,7 +222,7 @@ export function GymProvider({ children }) {
       setUsuarios(nuevosUsuarios)
 
       const fechaActual = new Date().toISOString().split("T")[0]
-      await registrarPago({
+      const pagoData: any = {
         userNombre: data.nombreApellido,
         userDni: data.dni,
         monto: montoPago,
@@ -225,7 +230,14 @@ export function GymProvider({ children }) {
         metodoPago: usuario.metodoPago,
         tipoPago: "Nuevo",
         cajaId: cajaId,
-      })
+      }
+
+      if (usuario.metodoPago === "Mixto" && montoEfectivo !== undefined && montoMercadoPago !== undefined) {
+        pagoData.montoEfectivo = montoEfectivo
+        pagoData.montoMercadoPago = montoMercadoPago
+      }
+
+      await registrarPago(pagoData)
     } catch (err) {
       console.error("Error al agregar usuario:", err)
       setError(err.message || "Error al agregar usuario. Por favor, intenta de nuevo.")
@@ -240,6 +252,8 @@ export function GymProvider({ children }) {
     metodoPago: string,
     montoPago: number,
     cajaId: string,
+    montoEfectivo?: number,
+    montoMercadoPago?: number,
   ): Promise<void> => {
     try {
       setError(null)
@@ -266,7 +280,7 @@ export function GymProvider({ children }) {
       const usuarioActualizado = nuevosUsuarios.find((u) => u.dni === dni)
 
       if (usuarioActualizado) {
-        await registrarPago({
+        const pagoData: any = {
           userNombre: usuarioActualizado.nombreApellido,
           userDni: usuarioActualizado.dni,
           monto: montoPago,
@@ -274,7 +288,14 @@ export function GymProvider({ children }) {
           metodoPago: metodoPago,
           tipoPago: "Pago de cuota",
           cajaId: cajaId,
-        })
+        }
+
+        if (metodoPago === "Mixto" && montoEfectivo !== undefined && montoMercadoPago !== undefined) {
+          pagoData.montoEfectivo = montoEfectivo
+          pagoData.montoMercadoPago = montoMercadoPago
+        }
+
+        await registrarPago(pagoData)
       }
     } catch (err) {
       console.error("Error al actualizar pago:", err)

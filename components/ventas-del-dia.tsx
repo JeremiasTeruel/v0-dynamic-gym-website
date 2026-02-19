@@ -356,7 +356,14 @@ export default function VentasDelDia({
                               <option value="Mixto">Mixto</option>
                             </select>
                           ) : (
-                            pago.metodoPago
+                            <div>
+                              <span>{pago.metodoPago}</span>
+                              {pago.metodoPago === "Mixto" && (pago as any).montoEfectivo !== undefined && (
+                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                  Ef: {formatMonto((pago as any).montoEfectivo)} / MP: {formatMonto((pago as any).montoMercadoPago)}
+                                </div>
+                              )}
+                            </div>
                           )}
                         </td>
 
@@ -492,7 +499,14 @@ export default function VentasDelDia({
                               <option value="Mixto">Mixto</option>
                             </select>
                           ) : (
-                            venta.metodoPago
+                            <div>
+                              <span>{venta.metodoPago}</span>
+                              {venta.metodoPago === "Mixto" && (venta as any).montoEfectivo !== undefined && (
+                                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                  Ef: {formatMonto((venta as any).montoEfectivo)} / MP: {formatMonto((venta as any).montoMercadoPago)}
+                                </div>
+                              )}
+                            </div>
                           )}
                         </td>
 

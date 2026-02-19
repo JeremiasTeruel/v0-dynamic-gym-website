@@ -81,14 +81,20 @@ export async function POST(request: Request) {
       )
     }
 
-    const pagoParaInsertar = {
+    const pagoParaInsertar: any = {
       userNombre: pago.userNombre,
       userDni: pago.userDni,
       monto: montoNumerico,
       fecha: fechaPago,
       metodoPago: pago.metodoPago,
       tipoPago: pago.tipoPago || "Pago de cuota",
-      cajaId: pago.cajaId, // ID de la caja actual
+      cajaId: pago.cajaId,
+    }
+
+    // Guardar montos individuales para pagos mixtos
+    if (pago.metodoPago === "Mixto" && pago.montoEfectivo !== undefined && pago.montoMercadoPago !== undefined) {
+      pagoParaInsertar.montoEfectivo = Number.parseFloat(pago.montoEfectivo) || 0
+      pagoParaInsertar.montoMercadoPago = Number.parseFloat(pago.montoMercadoPago) || 0
     }
 
     const resultado = await collection.insertOne(pagoParaInsertar)

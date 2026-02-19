@@ -200,18 +200,25 @@ export default function VentaBebidasModal({ isOpen, onClose }: VentaBebidasModal
 
       const cajaId = cajaData.caja.id
 
+      const ventaData: any = {
+        bebidaId: bebidaSeleccionada,
+        cantidad: cantidad,
+        precioTotal: precioTotal,
+        metodoPago: metodoPago,
+        cajaId: cajaId,
+      }
+
+      if (metodoPago === "Mixto") {
+        ventaData.montoEfectivo = Number.parseFloat(montoEfectivo) || 0
+        ventaData.montoMercadoPago = Number.parseFloat(montoMercadoPago) || 0
+      }
+
       const response = await fetch("/api/bebidas", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          bebidaId: bebidaSeleccionada,
-          cantidad: cantidad,
-          precioTotal: precioTotal,
-          metodoPago: metodoPago,
-          cajaId: cajaId, // Incluir cajaId en la venta
-        }),
+        body: JSON.stringify(ventaData),
       })
 
       const data = await response.json()

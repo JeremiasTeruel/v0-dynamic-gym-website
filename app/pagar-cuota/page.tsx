@@ -215,12 +215,19 @@ export default function PagarCuota() {
 
     // Guardar los datos del pago y mostrar modal de PIN
     const newDueDate = calculateNewDueDate(formData.fechaPago)
-    setPendingPaymentData({
+    const paymentData: any = {
       dni: formData.dni,
       newDueDate,
       metodoPago: formData.metodoPago,
       monto,
-    })
+    }
+
+    if (formData.metodoPago === "Mixto") {
+      paymentData.montoEfectivo = Number.parseFloat(formData.montoEfectivo) || 0
+      paymentData.montoMercadoPago = Number.parseFloat(formData.montoMercadoPago) || 0
+    }
+
+    setPendingPaymentData(paymentData)
     setShowPinModal(true)
   }
 
@@ -245,7 +252,9 @@ export default function PagarCuota() {
         pendingPaymentData.newDueDate,
         pendingPaymentData.metodoPago,
         pendingPaymentData.monto,
-        cajaId, // Pasar cajaId
+        cajaId,
+        pendingPaymentData.montoEfectivo,
+        pendingPaymentData.montoMercadoPago,
       )
 
       // Reproducir sonido de éxito si está habilitado

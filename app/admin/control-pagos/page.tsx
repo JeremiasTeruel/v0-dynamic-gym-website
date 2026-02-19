@@ -85,21 +85,29 @@ export default function ControlPagos() {
 
       console.log("[v0] Cerrando caja. Tipo:", tipoCierre)
 
-      const totalEfectivoCuotas = pagosDiarios
-        .filter((pago) => pago.metodoPago === "Efectivo")
-        .reduce((sum, pago) => sum + pago.monto, 0)
+      const totalEfectivoCuotas = pagosDiarios.reduce((sum, pago) => {
+        if (pago.metodoPago === "Efectivo") return sum + pago.monto
+        if (pago.metodoPago === "Mixto" && pago.montoEfectivo) return sum + pago.montoEfectivo
+        return sum
+      }, 0)
 
-      const totalMercadoPagoCuotas = pagosDiarios
-        .filter((pago) => pago.metodoPago === "Mercado Pago")
-        .reduce((sum, pago) => sum + pago.monto, 0)
+      const totalMercadoPagoCuotas = pagosDiarios.reduce((sum, pago) => {
+        if (pago.metodoPago === "Mercado Pago") return sum + pago.monto
+        if (pago.metodoPago === "Mixto" && pago.montoMercadoPago) return sum + pago.montoMercadoPago
+        return sum
+      }, 0)
 
-      const totalEfectivoProductos = ventasBebidas
-        .filter((venta) => venta.metodoPago === "Efectivo")
-        .reduce((sum, venta) => sum + venta.precioTotal, 0)
+      const totalEfectivoProductos = ventasBebidas.reduce((sum, venta) => {
+        if (venta.metodoPago === "Efectivo") return sum + venta.precioTotal
+        if (venta.metodoPago === "Mixto" && venta.montoEfectivo) return sum + venta.montoEfectivo
+        return sum
+      }, 0)
 
-      const totalMercadoPagoProductos = ventasBebidas
-        .filter((venta) => venta.metodoPago === "Mercado Pago")
-        .reduce((sum, venta) => sum + venta.precioTotal, 0)
+      const totalMercadoPagoProductos = ventasBebidas.reduce((sum, venta) => {
+        if (venta.metodoPago === "Mercado Pago") return sum + venta.precioTotal
+        if (venta.metodoPago === "Mixto" && venta.montoMercadoPago) return sum + venta.montoMercadoPago
+        return sum
+      }, 0)
 
       const totalEfectivoFinal = totalEfectivoCuotas + totalEfectivoProductos
       const totalMercadoPagoFinal = totalMercadoPagoCuotas + totalMercadoPagoProductos
@@ -355,13 +363,17 @@ export default function ControlPagos() {
 
           const pagosMes = await obtenerPagosPorRango(inicioPeriodo, finPeriodo)
 
-          const efectivoCuotas = pagosMes
-            .filter((pago) => pago.metodoPago === "Efectivo")
-            .reduce((sum, pago) => sum + pago.monto, 0)
+          const efectivoCuotas = pagosMes.reduce((sum, pago) => {
+            if (pago.metodoPago === "Efectivo") return sum + pago.monto
+            if (pago.metodoPago === "Mixto" && pago.montoEfectivo) return sum + pago.montoEfectivo
+            return sum
+          }, 0)
 
-          const mercadoPagoCuotas = pagosMes
-            .filter((pago) => pago.metodoPago === "Mercado Pago")
-            .reduce((sum, pago) => sum + pago.monto, 0)
+          const mercadoPagoCuotas = pagosMes.reduce((sum, pago) => {
+            if (pago.metodoPago === "Mercado Pago") return sum + pago.monto
+            if (pago.metodoPago === "Mixto" && pago.montoMercadoPago) return sum + pago.montoMercadoPago
+            return sum
+          }, 0)
 
           const ventasResponse = await fetch(`/api/ventas-bebidas/rango?inicio=${inicioPeriodo}&fin=${finPeriodo}`)
 
@@ -370,13 +382,17 @@ export default function ControlPagos() {
 
           if (ventasResponse.ok) {
             const ventasData = await ventasResponse.json()
-            efectivoProductos = ventasData
-              .filter((venta: any) => venta.metodoPago === "Efectivo")
-              .reduce((sum: number, venta: any) => sum + venta.precioTotal, 0)
+            efectivoProductos = ventasData.reduce((sum: number, venta: any) => {
+              if (venta.metodoPago === "Efectivo") return sum + venta.precioTotal
+              if (venta.metodoPago === "Mixto" && venta.montoEfectivo) return sum + venta.montoEfectivo
+              return sum
+            }, 0)
 
-            mercadoPagoProductos = ventasData
-              .filter((venta: any) => venta.metodoPago === "Mercado Pago")
-              .reduce((sum: number, venta: any) => sum + venta.precioTotal, 0)
+            mercadoPagoProductos = ventasData.reduce((sum: number, venta: any) => {
+              if (venta.metodoPago === "Mercado Pago") return sum + venta.precioTotal
+              if (venta.metodoPago === "Mixto" && venta.montoMercadoPago) return sum + venta.montoMercadoPago
+              return sum
+            }, 0)
           }
 
           const totalEfectivo = efectivoCuotas + efectivoProductos
