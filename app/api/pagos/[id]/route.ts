@@ -2,6 +2,38 @@ import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const { id } = params
+
+    if (!id) {
+      return NextResponse.json({ error: "ID es requerido" }, { status: 400 })
+    }
+
+    const db = await getMongoDb()
+    const collection = db.collection("pagos")
+
+    const pago = await collection.findOne({ _id: new ObjectId(id) })
+    if (!pago) {
+      return NextResponse.json({ error: "Pago no encontrado" }, { status: 404 })
+    }
+
+    await collection.deleteOne({ _id: new ObjectId(id) })
+
+    return NextResponse.json({
+      message: "Pago eliminado correctamente",
+      pagoEliminado: {
+        ...pago,
+        id: pago._id.toString(),
+        _id: undefined,
+      },
+    })
+  } catch (error: any) {
+    console.error("API ERROR: Error al eliminar pago:", error)
+    return NextResponse.json({ error: "Error al eliminar pago", details: error.message }, { status: 500 })
+  }
+}
+
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params

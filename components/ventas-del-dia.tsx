@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { DollarSign, ShoppingCart, Pencil, Check, X } from "lucide-react"
+import { DollarSign, ShoppingCart, Pencil, Check, X, Trash2 } from "lucide-react"
 import CerrarCajaModal from "@/components/cerrar-caja-modal"
 import PinModal from "@/components/pin-modal"
 import Alert from "@/components/alert"
@@ -24,6 +24,8 @@ interface VentasDelDiaProps {
   onCerrarCaja?: (tipoCierre: "parcial" | "completo") => Promise<void>
   onPagoEditado?: (pagoActualizado: RegistroPago) => void
   onVentaEditada?: (ventaActualizada: VentaBebida) => void
+  onPagoEliminado?: (pagoId: string) => void
+  onVentaEliminada?: (ventaId: string) => void
 }
 
 export default function VentasDelDia({
@@ -32,6 +34,8 @@ export default function VentasDelDia({
   onCerrarCaja,
   onPagoEditado,
   onVentaEditada,
+  onPagoEliminado,
+  onVentaEliminada,
 }: VentasDelDiaProps) {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
@@ -165,6 +169,60 @@ export default function VentasDelDia({
         cancelarEdicionVenta()
       } catch (error: any) {
         setAlertaInfo({ mensaje: error.message || "Error al actualizar", visible: true, tipo: "error" })
+      }
+    }
+
+    setPendingAction(() => action)
+    setPinModalOpen(true)
+  }
+
+  // --- Eliminacion de Pagos ---
+  const eliminarPago = (pagoId: string) => {
+    const action = async () => {
+      try {
+        const response = await fetch(`/api/pagos/${pagoId}`, {
+          method: "DELETE",
+        })
+
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.error || "Error al eliminar pago")
+        }
+
+        if (onPagoEliminado) {
+          onPagoEliminado(pagoId)
+        }
+
+        setAlertaInfo({ mensaje: "Pago eliminado correctamente", visible: true, tipo: "success" })
+      } catch (error: any) {
+        setAlertaInfo({ mensaje: error.message || "Error al eliminar", visible: true, tipo: "error" })
+      }
+    }
+
+    setPendingAction(() => action)
+    setPinModalOpen(true)
+  }
+
+  // --- Eliminacion de Ventas ---
+  const eliminarVenta = (ventaId: string) => {
+    const action = async () => {
+      try {
+        const response = await fetch(`/api/ventas-bebidas/${ventaId}`, {
+          method: "DELETE",
+        })
+
+        if (!response.ok) {
+          const err = await response.json()
+          throw new Error(err.error || "Error al eliminar venta")
+        }
+
+        if (onVentaEliminada) {
+          onVentaEliminada(ventaId)
+        }
+
+        setAlertaInfo({ mensaje: "Venta eliminada correctamente", visible: true, tipo: "success" })
+      } catch (error: any) {
+        setAlertaInfo({ mensaje: error.message || "Error al eliminar", visible: true, tipo: "error" })
       }
     }
 
@@ -387,14 +445,24 @@ export default function VentasDelDia({
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => iniciarEdicionPago(pago)}
-                              disabled={editandoPagoId !== null || editandoVentaId !== null}
-                              className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => iniciarEdicionPago(pago)}
+                                disabled={editandoPagoId !== null || editandoVentaId !== null}
+                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Editar"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => pago.id && eliminarPago(pago.id)}
+                                disabled={editandoPagoId !== null || editandoVentaId !== null}
+                                className="p-1.5 rounded-md text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -530,14 +598,24 @@ export default function VentasDelDia({
                               </button>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => iniciarEdicionVenta(venta)}
-                              disabled={editandoPagoId !== null || editandoVentaId !== null}
-                              className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => iniciarEdicionVenta(venta)}
+                                disabled={editandoPagoId !== null || editandoVentaId !== null}
+                                className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Editar"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => eliminarVenta(venta.id)}
+                                disabled={editandoPagoId !== null || editandoVentaId !== null}
+                                className="p-1.5 rounded-md text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -581,8 +659,8 @@ export default function VentasDelDia({
           setPendingAction(null)
         }}
         onSuccess={handlePinSuccess}
-        title="Editar transaccion"
-        description="Ingrese el PIN de seguridad para confirmar la edicion de esta transaccion."
+        title="Confirmar operacion"
+        description="Ingrese el PIN de seguridad para confirmar esta operacion."
       />
 
       {/* Alerta */}

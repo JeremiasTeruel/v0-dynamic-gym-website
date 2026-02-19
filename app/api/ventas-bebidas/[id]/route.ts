@@ -2,6 +2,39 @@ import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const { id } = params
+
+    if (!id) {
+      return NextResponse.json({ error: "ID es requerido" }, { status: 400 })
+    }
+
+    const db = await getMongoDb()
+    const collection = db.collection("ventas_bebidas")
+
+    const venta = await collection.findOne({ _id: new ObjectId(id) })
+    if (!venta) {
+      return NextResponse.json({ error: "Venta no encontrada" }, { status: 404 })
+    }
+
+    await collection.deleteOne({ _id: new ObjectId(id) })
+
+    return NextResponse.json({
+      message: "Venta eliminada correctamente",
+      ventaEliminada: {
+        ...venta,
+        id: venta._id.toString(),
+        _id: undefined,
+        fecha: venta.fecha?.toISOString?.() || venta.fecha,
+      },
+    })
+  } catch (error: any) {
+    console.error("API ERROR: Error al eliminar venta:", error)
+    return NextResponse.json({ error: "Error al eliminar venta", details: error.message }, { status: 500 })
+  }
+}
+
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params
