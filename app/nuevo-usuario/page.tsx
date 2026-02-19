@@ -209,7 +209,7 @@ export default function NuevoUsuario() {
       if (pendingFormData.formData.actividad === "Dia") {
         console.log("Registrando pago de día sin crear usuario")
 
-        await registrarPago({
+        const pagoDataDia: any = {
           userNombre: pendingFormData.formData.nombreApellido,
           userDni: pendingFormData.formData.dni,
           monto: pendingFormData.monto,
@@ -217,7 +217,14 @@ export default function NuevoUsuario() {
           metodoPago: pendingFormData.formData.metodoPago,
           tipoPago: "Nuevo",
           cajaId: cajaId,
-        })
+        }
+
+        if (pendingFormData.formData.metodoPago === "Mixto") {
+          pagoDataDia.montoEfectivo = Number.parseFloat(pendingFormData.formData.montoEfectivo) || 0
+          pagoDataDia.montoMercadoPago = Number.parseFloat(pendingFormData.formData.montoMercadoPago) || 0
+        }
+
+        await registrarPago(pagoDataDia)
 
         if (getSoundEnabled()) {
           await soundGenerator.playOperationCompleteSound()
@@ -241,7 +248,14 @@ export default function NuevoUsuario() {
 
         console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
 
-        await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto, cajaId)
+        const mixtoEfectivoNuevo = pendingFormData.formData.metodoPago === "Mixto"
+          ? Number.parseFloat(pendingFormData.formData.montoEfectivo) || 0
+          : undefined
+        const mixtoMercadoPagoNuevo = pendingFormData.formData.metodoPago === "Mixto"
+          ? Number.parseFloat(pendingFormData.formData.montoMercadoPago) || 0
+          : undefined
+
+        await agregarNuevoUsuario(nuevoUsuario, pendingFormData.monto, cajaId, mixtoEfectivoNuevo, mixtoMercadoPagoNuevo)
 
         if (getSoundEnabled()) {
           await soundGenerator.playOperationCompleteSound()

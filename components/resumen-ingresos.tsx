@@ -28,18 +28,28 @@ export default function ResumenIngresos({
 
   const totalGeneral = totalIngresos - totalEgresos
 
-  // Calcular por método de pago
-  const efectivoCuotas = pagosCuotas.filter((p) => p.metodoPago === "Efectivo").reduce((sum, p) => sum + p.monto, 0)
-  const mercadoPagoCuotas = pagosCuotas
-    .filter((p) => p.metodoPago === "Mercado Pago")
-    .reduce((sum, p) => sum + p.monto, 0)
+  // Calcular por método de pago (incluyendo desglose de pagos mixtos)
+  const efectivoCuotas = pagosCuotas.reduce((sum, p) => {
+    if (p.metodoPago === "Efectivo") return sum + p.monto
+    if (p.metodoPago === "Mixto" && p.montoEfectivo) return sum + p.montoEfectivo
+    return sum
+  }, 0)
+  const mercadoPagoCuotas = pagosCuotas.reduce((sum, p) => {
+    if (p.metodoPago === "Mercado Pago") return sum + p.monto
+    if (p.metodoPago === "Mixto" && p.montoMercadoPago) return sum + p.montoMercadoPago
+    return sum
+  }, 0)
 
-  const efectivoBebidas = ventasBebidas
-    .filter((v) => v.metodoPago === "Efectivo")
-    .reduce((sum, v) => sum + v.precioTotal, 0)
-  const mercadoPagoBebidas = ventasBebidas
-    .filter((v) => v.metodoPago === "Mercado Pago")
-    .reduce((sum, v) => sum + v.precioTotal, 0)
+  const efectivoBebidas = ventasBebidas.reduce((sum, v) => {
+    if (v.metodoPago === "Efectivo") return sum + v.precioTotal
+    if (v.metodoPago === "Mixto" && v.montoEfectivo) return sum + v.montoEfectivo
+    return sum
+  }, 0)
+  const mercadoPagoBebidas = ventasBebidas.reduce((sum, v) => {
+    if (v.metodoPago === "Mercado Pago") return sum + v.precioTotal
+    if (v.metodoPago === "Mixto" && v.montoMercadoPago) return sum + v.montoMercadoPago
+    return sum
+  }, 0)
 
   const efectivoEgresos = egresos.filter((e) => e.metodoPago === "Efectivo").reduce((sum, e) => sum + e.monto, 0)
   const mercadoPagoEgresos = egresos.filter((e) => e.metodoPago === "Mercado Pago").reduce((sum, e) => sum + e.monto, 0)

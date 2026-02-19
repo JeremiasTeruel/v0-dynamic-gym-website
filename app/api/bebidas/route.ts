@@ -112,7 +112,8 @@ export async function GET() {
 // POST para registrar una venta y actualizar stock
 export async function POST(request: Request) {
   try {
-    const { bebidaId, cantidad, precioTotal, metodoPago, cajaId } = await request.json()
+    const requestBody = await request.json()
+    const { bebidaId, cantidad, precioTotal, metodoPago, cajaId, montoEfectivo: mixtoEfectivo, montoMercadoPago: mixtoMercadoPago } = requestBody
     console.log("API: Datos recibidos para venta de bebida:", { bebidaId, cantidad, precioTotal, metodoPago, cajaId })
 
     if (!bebidaId || !cantidad || !precioTotal || !metodoPago || !cajaId) {
@@ -146,7 +147,7 @@ export async function POST(request: Request) {
     }
 
     const ventasCollection = db.collection("ventas_bebidas")
-    const venta = {
+    const venta: any = {
       bebidaId: bebidaId,
       nombreBebida: bebida.nombre,
       cantidad: cantidad,
@@ -156,7 +157,13 @@ export async function POST(request: Request) {
       fecha: new Date(),
       stockAnterior: bebida.stock,
       stockNuevo: nuevoStock,
-      cajaId: cajaId, // ID de la caja actual
+      cajaId: cajaId,
+    }
+
+    // Guardar montos individuales para pagos mixtos
+    if (metodoPago === "Mixto" && mixtoEfectivo !== undefined && mixtoMercadoPago !== undefined) {
+      venta.montoEfectivo = Number.parseFloat(mixtoEfectivo) || 0
+      venta.montoMercadoPago = Number.parseFloat(mixtoMercadoPago) || 0
     }
 
     await ventasCollection.insertOne(venta)
