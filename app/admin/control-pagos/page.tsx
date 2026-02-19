@@ -520,6 +520,12 @@ export default function ControlPagos() {
                       prev.map((v) => (v.id === ventaActualizada.id ? { ...v, ...ventaActualizada } : v))
                     )
                   }}
+                  onPagoEliminado={(pagoId) => {
+                    setPagosDiarios((prev) => prev.filter((p) => p.id !== pagoId))
+                  }}
+                  onVentaEliminada={(ventaId) => {
+                    setVentasBebidas((prev) => prev.filter((v) => v.id !== ventaId))
+                  }}
                 />
               </div>
             )}
