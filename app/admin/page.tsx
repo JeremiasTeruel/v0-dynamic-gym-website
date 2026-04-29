@@ -18,6 +18,9 @@ import {
   CreditCard,
   ShoppingCart,
   Users,
+  Filter,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
@@ -50,6 +53,12 @@ export default function Admin() {
   const [busqueda, setBusqueda] = useState("")
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<Usuario[]>([])
   const [usuariosOrdenados, setUsuariosOrdenados] = useState<Usuario[]>([])
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
+  const [filtroEstadoCuota, setFiltroEstadoCuota] = useState<"todos" | "al_dia" | "vencida">("todos")
+  const [filtroMesVencimiento, setFiltroMesVencimiento] = useState<string | null>(null)
+  const [filtroActividad, setFiltroActividad] = useState<string | null>(null)
+  const [subMenuEstadoAbierto, setSubMenuEstadoAbierto] = useState(false)
+  const [subMenuActividadAbierto, setSubMenuActividadAbierto] = useState(false)
   const [reporteModalAbierto, setReporteModalAbierto] = useState(false)
   const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const [listaUsuariosModalAbierto, setListaUsuariosModalAbierto] = useState(false)
@@ -59,6 +68,27 @@ export default function Admin() {
 
   const [ingresosDia, setIngresosDia] = useState([])
   const [cargandoIngresos, setCargandoIngresos] = useState(true)
+
+  // Lista de actividades disponibles
+  const actividadesDisponibles = ["Musculacion", "Kickboxing", "Funcional", "Referees"]
+
+  // Generar lista de meses pasados (desde el mes actual hacia atras)
+  const generarMesesPasados = () => {
+    const meses = []
+    const hoy = new Date()
+    for (let i = 0; i < 12; i++) {
+      const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)
+      const nombreMes = fecha.toLocaleDateString("es-ES", { month: "long", year: "numeric" })
+      meses.push({
+        label: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1),
+        mes: fecha.getMonth(),
+        anio: fecha.getFullYear(),
+      })
+    }
+    return meses
+  }
+
+  const mesesPasados = generarMesesPasados()
 
   const ordenarUsuarios = (listaUsuarios: Usuario[]): Usuario[] => {
     return [...listaUsuarios].sort((a, b) => {
@@ -80,26 +110,47 @@ export default function Admin() {
   }, [usuarios])
 
   useEffect(() => {
-    if (!busqueda.trim()) {
-      setUsuariosFiltrados(usuariosOrdenados)
-      return
-    }
+    let filtrados = [...usuariosOrdenados]
 
-    const termino = busqueda
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-
-    const filtrados = usuariosOrdenados.filter((usuario) => {
-      const nombre = usuario.nombreApellido
+    // Filtrar por busqueda de nombre
+    if (busqueda.trim()) {
+      const termino = busqueda
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-      return nombre.includes(termino)
-    })
+
+      filtrados = filtrados.filter((usuario) => {
+        const nombre = usuario.nombreApellido
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+        return nombre.includes(termino)
+      })
+    }
+
+    // Filtrar por estado de cuota
+    if (filtroEstadoCuota === "al_dia") {
+      filtrados = filtrados.filter((usuario) => !isPaymentDue(usuario.fechaVencimiento))
+    } else if (filtroEstadoCuota === "vencida") {
+      filtrados = filtrados.filter((usuario) => isPaymentDue(usuario.fechaVencimiento))
+      
+      // Si hay un mes especifico seleccionado, filtrar por ese mes
+      if (filtroMesVencimiento) {
+        const [mes, anio] = filtroMesVencimiento.split("-").map(Number)
+        filtrados = filtrados.filter((usuario) => {
+          const fechaVenc = new Date(usuario.fechaVencimiento)
+          return fechaVenc.getMonth() === mes && fechaVenc.getFullYear() === anio
+        })
+      }
+    }
+
+    // Filtrar por actividad
+    if (filtroActividad) {
+      filtrados = filtrados.filter((usuario) => usuario.actividad === filtroActividad)
+    }
 
     setUsuariosFiltrados(filtrados)
-  }, [busqueda, usuariosOrdenados])
+  }, [busqueda, usuariosOrdenados, filtroEstadoCuota, filtroMesVencimiento, filtroActividad])
 
   const isPaymentDue = (dueDate) => {
     const today = new Date()
@@ -241,6 +292,34 @@ export default function Admin() {
   const limpiarBusqueda = () => {
     setBusqueda("")
   }
+
+  const limpiarFiltros = () => {
+    setFiltroEstadoCuota("todos")
+    setFiltroMesVencimiento(null)
+    setFiltroActividad(null)
+    setSubMenuEstadoAbierto(false)
+    setSubMenuActividadAbierto(false)
+  }
+
+  const hayFiltrosActivos = filtroEstadoCuota !== "todos" || filtroActividad !== null
+
+  // Cerrar dropdown de filtros al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest("[data-filtros-dropdown]")) {
+        setFiltrosAbiertos(false)
+      }
+    }
+
+    if (filtrosAbiertos) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [filtrosAbiertos])
 
   const cargarIngresosDia = async () => {
     try {
@@ -553,27 +632,240 @@ export default function Admin() {
               </div>
 
               <div className="p-4 md:p-6 border-b border-gray-200 dark:border-gray-700">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+                <div className="flex gap-3 items-start">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Buscar por nombre..."
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      style={{ fontSize: "16px" }}
+                    />
+                    {busqueda && (
+                      <button
+                        onClick={limpiarBusqueda}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Buscar por nombre..."
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    className="w-full p-3 pl-10 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    style={{ fontSize: "16px" }}
-                  />
-                  {busqueda && (
+
+                  {/* Boton de Filtros */}
+                  <div className="relative" data-filtros-dropdown>
                     <button
-                      onClick={limpiarBusqueda}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
+                      className={`flex items-center gap-2 px-4 py-3 border rounded-md transition-colors ${
+                        hayFiltrosActivos
+                          ? "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
+                          : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                      }`}
                     >
-                      <X className="h-5 w-5" />
+                      <Filter className="h-5 w-5" />
+                      <span className="hidden sm:inline">Filtros</span>
+                      {hayFiltrosActivos && (
+                        <span className="w-2 h-2 bg-indigo-500 rounded-full" />
+                      )}
+                      <ChevronDown className={`h-4 w-4 transition-transform ${filtrosAbiertos ? "rotate-180" : ""}`} />
                     </button>
-                  )}
+
+                    {/* Dropdown de Filtros */}
+                    {filtrosAbiertos && (
+                      <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                        <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                          <span className="font-semibold text-gray-900 dark:text-gray-100">Filtros</span>
+                          {hayFiltrosActivos && (
+                            <button
+                              onClick={limpiarFiltros}
+                              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                            >
+                              Limpiar todos
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Filtro Estado de Cuota */}
+                        <div className="border-b border-gray-200 dark:border-gray-700">
+                          <button
+                            onClick={() => {
+                              setSubMenuEstadoAbierto(!subMenuEstadoAbierto)
+                              setSubMenuActividadAbierto(false)
+                            }}
+                            className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          >
+                            <span className="text-gray-700 dark:text-gray-300">Estado de cuota</span>
+                            <div className="flex items-center gap-2">
+                              {filtroEstadoCuota !== "todos" && (
+                                <span className="text-xs px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded">
+                                  {filtroEstadoCuota === "al_dia" ? "Al dia" : "Vencida"}
+                                </span>
+                              )}
+                              <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${subMenuEstadoAbierto ? "rotate-90" : ""}`} />
+                            </div>
+                          </button>
+
+                          {subMenuEstadoAbierto && (
+                            <div className="px-4 pb-3 space-y-1">
+                              <button
+                                onClick={() => {
+                                  setFiltroEstadoCuota("al_dia")
+                                  setFiltroMesVencimiento(null)
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                                  filtroEstadoCuota === "al_dia"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                    : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                }`}
+                              >
+                                Al dia
+                              </button>
+                              <div>
+                                <button
+                                  onClick={() => {
+                                    setFiltroEstadoCuota("vencida")
+                                    setFiltroMesVencimiento(null)
+                                  }}
+                                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                                    filtroEstadoCuota === "vencida"
+                                      ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                      : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                  }`}
+                                >
+                                  Vencida
+                                </button>
+                                {filtroEstadoCuota === "vencida" && (
+                                  <div className="mt-2 ml-3 space-y-1 max-h-40 overflow-y-auto">
+                                    <button
+                                      onClick={() => setFiltroMesVencimiento(null)}
+                                      className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${
+                                        filtroMesVencimiento === null
+                                          ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
+                                          : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                      }`}
+                                    >
+                                      Todos los vencidos
+                                    </button>
+                                    {mesesPasados.map((m) => (
+                                      <button
+                                        key={`${m.mes}-${m.anio}`}
+                                        onClick={() => setFiltroMesVencimiento(`${m.mes}-${m.anio}`)}
+                                        className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${
+                                          filtroMesVencimiento === `${m.mes}-${m.anio}`
+                                            ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
+                                            : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                        }`}
+                                      >
+                                        {m.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              {filtroEstadoCuota !== "todos" && (
+                                <button
+                                  onClick={() => {
+                                    setFiltroEstadoCuota("todos")
+                                    setFiltroMesVencimiento(null)
+                                  }}
+                                  className="w-full text-left px-3 py-2 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                  Quitar filtro de estado
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Filtro Actividad */}
+                        <div>
+                          <button
+                            onClick={() => {
+                              setSubMenuActividadAbierto(!subMenuActividadAbierto)
+                              setSubMenuEstadoAbierto(false)
+                            }}
+                            className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          >
+                            <span className="text-gray-700 dark:text-gray-300">Actividad</span>
+                            <div className="flex items-center gap-2">
+                              {filtroActividad && (
+                                <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                                  {filtroActividad}
+                                </span>
+                              )}
+                              <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${subMenuActividadAbierto ? "rotate-90" : ""}`} />
+                            </div>
+                          </button>
+
+                          {subMenuActividadAbierto && (
+                            <div className="px-4 pb-3 space-y-1">
+                              {actividadesDisponibles.map((actividad) => (
+                                <button
+                                  key={actividad}
+                                  onClick={() => setFiltroActividad(actividad)}
+                                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                                    filtroActividad === actividad
+                                      ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                      : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                                  }`}
+                                >
+                                  {actividad}
+                                </button>
+                              ))}
+                              {filtroActividad && (
+                                <button
+                                  onClick={() => setFiltroActividad(null)}
+                                  className="w-full text-left px-3 py-2 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                >
+                                  Quitar filtro de actividad
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Mostrar filtros activos */}
+                {hayFiltrosActivos && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {filtroEstadoCuota !== "todos" && (
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
+                        filtroEstadoCuota === "al_dia"
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                          : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                      }`}>
+                        Estado: {filtroEstadoCuota === "al_dia" ? "Al dia" : "Vencida"}
+                        {filtroMesVencimiento && ` (${mesesPasados.find(m => `${m.mes}-${m.anio}` === filtroMesVencimiento)?.label})`}
+                        <button
+                          onClick={() => {
+                            setFiltroEstadoCuota("todos")
+                            setFiltroMesVencimiento(null)
+                          }}
+                          className="ml-1 hover:opacity-70"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                    {filtroActividad && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                        Actividad: {filtroActividad}
+                        <button
+                          onClick={() => setFiltroActividad(null)}
+                          className="ml-1 hover:opacity-70"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 md:p-6">
