@@ -31,6 +31,7 @@ import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import EgresosModal from "@/components/egresos-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
+import { ACTIVIDADES_OPCIONES } from "@/data/usuarios"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
@@ -69,8 +70,8 @@ export default function Admin() {
   const [ingresosDia, setIngresosDia] = useState([])
   const [cargandoIngresos, setCargandoIngresos] = useState(true)
 
-  // Lista de actividades disponibles
-  const actividadesDisponibles = ["Musculacion", "Kickboxing", "Funcional", "Referees"]
+  // Lista de actividades disponibles (importada de data/usuarios)
+  const actividadesDisponibles = ACTIVIDADES_OPCIONES
 
   // Generar lista de meses pasados (desde el mes actual hacia atras)
   const generarMesesPasados = () => {
