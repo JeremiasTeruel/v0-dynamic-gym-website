@@ -1021,7 +1021,7 @@ export default function Admin() {
 
               <div className="p-4 md:p-6 border-t border-gray-200 dark:border-gray-700">
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                  {busqueda
+                  {busqueda || hayFiltrosActivos
                     ? `Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios (ordenados alfabéticamente)`
                     : `Total de usuarios registrados: ${usuarios.length} (ordenados alfabéticamente)`}
                 </p>
