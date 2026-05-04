@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getMongoDb } from "@/lib/mongodb"
+import { getMongoDb, getMongoDbUsuarios } from "@/lib/mongodb"
 
 const COLLECTION_CIERRES = "cierres_cajas_maipu"
 const COLLECTION_CAJAS = "cajas_maipu"
@@ -41,11 +41,12 @@ export async function POST(request: Request) {
     }
 
     const db = await getMongoDb()
+    const dbUsuarios = await getMongoDbUsuarios()
     const collectionCierres = db.collection(COLLECTION_CIERRES)
     const collectionCajas = db.collection(COLLECTION_CAJAS)
     const collectionPagos = db.collection(COLLECTION_PAGOS)
     const collectionVentas = db.collection(COLLECTION_VENTAS)
-    const collectionUsuarios = db.collection(COLLECTION_USUARIOS)
+    const collectionUsuarios = dbUsuarios.collection(COLLECTION_USUARIOS)
     const collectionEgresos = db.collection(COLLECTION_EGRESOS)
 
     const cajaAbierta = await collectionCajas.findOne({

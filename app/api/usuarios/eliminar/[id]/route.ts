@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getMongoDb } from "@/lib/mongodb"
+import { getMongoDbUsuarios } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
 // Nombre de la colección en MongoDB
@@ -9,7 +9,7 @@ const COLLECTION = "usuarios"
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const id = params.id
-    const db = await getMongoDb()
+    const db = await getMongoDbUsuarios()
     const collection = db.collection(COLLECTION)
 
     const resultado = await collection.deleteOne({ _id: new ObjectId(id) })

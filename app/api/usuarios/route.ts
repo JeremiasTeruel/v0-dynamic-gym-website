@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getMongoDb } from "@/lib/mongodb"
+import { getMongoDbUsuarios } from "@/lib/mongodb"
 import { usuariosIniciales } from "@/data/usuarios"
 
 // Nombre de la colección en MongoDB
@@ -9,7 +9,7 @@ const COLLECTION = "usuarios"
 async function inicializarBaseDeDatos() {
   try {
     console.log("Intentando inicializar la base de datos...")
-    const db = await getMongoDb()
+    const db = await getMongoDbUsuarios()
     const collection = db.collection(COLLECTION)
 
     // Verificar si la colección está vacía
@@ -41,7 +41,7 @@ export async function GET() {
     console.log("API: Intentando obtener usuarios...")
 
     // Intentar obtener la conexión a la base de datos
-    const db = await getMongoDb()
+    const db = await getMongoDbUsuarios()
     console.log("API: Conexión a la base de datos establecida")
 
     const collection = db.collection(COLLECTION)
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Faltan campos requeridos" }, { status: 400 })
     }
 
-    const db = await getMongoDb()
+    const db = await getMongoDbUsuarios()
     const collection = db.collection(COLLECTION)
 
     // Verificar si ya existe un usuario con ese DNI

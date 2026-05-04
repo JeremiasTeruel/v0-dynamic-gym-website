@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getMongoDb } from "@/lib/mongodb"
+import { getMongoDbUsuarios } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
 // Nombre de la colección en MongoDB
@@ -13,7 +13,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     console.log(`Actualizando usuario con ID: ${id}`, datosActualizados)
 
-    const db = await getMongoDb()
+    const db = await getMongoDbUsuarios()
     const collection = db.collection(COLLECTION)
 
     // Eliminar el campo id si existe para evitar conflictos con _id de MongoDB

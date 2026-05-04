@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Si hay userId, actualizar el usuario en la base de datos
     if (userId) {
       const client = await clientPromise
-      const db = client.db('gimnasio')
+      const db = client.db('highPerformanceGym')
       await db.collection('usuarios').updateOne(
         { _id: new ObjectId(userId) },
         { $set: { foto: blob.url } }

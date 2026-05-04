@@ -62,6 +62,27 @@ export async function getMongoDb() {
   }
 }
 
+// Función para obtener la base de datos original (highPerformanceGym) para usuarios compartidos
+export async function getMongoDbUsuarios() {
+  try {
+    console.log("Intentando obtener conexión a MongoDB para usuarios...")
+    const client = await clientPromise
+    // Usar la base de datos original para usuarios (compartida entre sedes)
+    const dbUsuarios = client.db("highPerformanceGym")
+    console.log("Conexión a MongoDB (usuarios) establecida correctamente")
+    return dbUsuarios
+  } catch (error) {
+    console.error("Error al conectar con MongoDB (usuarios):", error)
+    const errorMessage = error.message || "Error desconocido"
+    const errorCode = error.code || "Sin código"
+    const errorName = error.name || "Sin nombre"
+
+    throw new Error(
+      `No se pudo conectar a la base de datos de usuarios. Error: ${errorMessage}. Código: ${errorCode}. Nombre: ${errorName}`,
+    )
+  }
+}
+
 // Export a module-scoped MongoClient promise. By doing this in a
 // separate module, the client can be shared across functions.
 export default clientPromise

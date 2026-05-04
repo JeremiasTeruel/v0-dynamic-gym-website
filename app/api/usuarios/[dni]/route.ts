@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getMongoDb } from "@/lib/mongodb"
+import { getMongoDbUsuarios } from "@/lib/mongodb"
 
 // Nombre de la colección en MongoDB
 const COLLECTION = "usuarios"
@@ -8,7 +8,7 @@ const COLLECTION = "usuarios"
 export async function GET(request: Request, { params }: { params: { dni: string } }) {
   try {
     const dni = params.dni
-    const db = await getMongoDb()
+    const db = await getMongoDbUsuarios()
     const collection = db.collection(COLLECTION)
     const usuario = await collection.findOne({ dni })
 
@@ -34,7 +34,7 @@ export async function PUT(request: Request, { params }: { params: { dni: string 
     const dni = params.dni
     const { fechaVencimiento, metodoPago } = await request.json()
 
-    const db = await getMongoDb()
+    const db = await getMongoDbUsuarios()
     const collection = db.collection(COLLECTION)
 
     // Actualizar el usuario
