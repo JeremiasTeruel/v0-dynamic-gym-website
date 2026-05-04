@@ -366,7 +366,7 @@ export default function Admin() {
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="w-full max-w-6xl flex justify-between items-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-yellow-600 dark:text-yellow-400">
+        <h1 className="text-3xl md:text-4xl font-bold text-red-600 dark:text-red-400">
           Administración - High Performance Gym
         </h1>
         <ThemeToggle />
@@ -376,7 +376,7 @@ export default function Admin() {
         <div className="mb-8 hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             href="/nuevo-usuario"
-            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
           >
             <UserPlus className="h-5 w-5" />
             Nuevo Usuario
@@ -384,7 +384,7 @@ export default function Admin() {
 
           <Link
             href="/pagar-cuota"
-            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
           >
             <CreditCard className="h-5 w-5" />
             Pagar Cuota
@@ -392,7 +392,7 @@ export default function Admin() {
 
           <button
             onClick={() => setShowVentaBebidasModal(true)}
-            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-yellow-600 dark:text-yellow-400 font-medium hover:bg-yellow-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 px-4 py-4 rounded-lg shadow-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-700"
           >
             <ShoppingCart className="h-5 w-5" />
             Venta de Productos
@@ -410,7 +410,7 @@ export default function Admin() {
 
           <Link
             href="/admin/control-pagos"
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-green-600 font-medium hover:bg-green-50 transition-colors"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-gray-700 transition-colors"
           >
             <BarChart className="h-5 w-5" />
             Control de Pagos
@@ -464,7 +464,7 @@ export default function Admin() {
 
             {cargandoIngresos ? (
               <div className="flex justify-center py-8">
-                <LoadingDumbbell size={32} className="text-yellow-500" />
+                <LoadingDumbbell size={32} className="text-red-500 dark:text-red-400" />
               </div>
             ) : ingresosDia.length === 0 ? (
               <div className="text-center py-12">

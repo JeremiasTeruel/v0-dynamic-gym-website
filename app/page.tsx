@@ -259,13 +259,13 @@ export default function Home() {
         <div className="text-sm md:text-base font-mono font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-md">
           {currentDate}
         </div>
-        <div className="text-2xl md:text-6xl font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-4 py-2 md:px-10 md:py-5 rounded-lg shadow-md border-2 border-yellow-500 dark:border-yellow-400">
+        <div className="text-2xl md:text-6xl font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-4 py-2 md:px-10 md:py-5 rounded-lg shadow-md border-2 border-red-500 dark:border-red-400">
           {currentTime}
         </div>
       </div>
 
       <div className="w-full max-w-4xl flex flex-col items-center space-y-6 mb-8">
-        <h1 className="text-3xl md:text-5xl font-bold text-yellow-600 dark:text-yellow-400 text-center whitespace-nowrap">
+        <h1 className="text-3xl md:text-5xl font-bold text-red-600 dark:text-red-400 text-center whitespace-nowrap">
           High Performance Gym
         </h1>
 
@@ -290,7 +290,7 @@ export default function Home() {
 
       {cargando ? (
         <div className="w-full max-w-4xl flex justify-center py-8">
-          <LoadingDumbbell size={32} className="text-yellow-500 dark:text-yellow-400" />
+          <LoadingDumbbell size={32} className="text-red-500 dark:text-red-400" />
         </div>
       ) : (
         <div className="w-full max-w-4xl">
@@ -303,16 +303,16 @@ export default function Home() {
                 value={searchDni}
                 onChange={handleDniChange}
                 onKeyPress={handleKeyPress}
-                className="flex-1 p-5 text-lg border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                className="flex-1 p-5 text-lg border border-gray-300 dark:border-gray-600 rounded-l-md focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={isSearching}
                 autoFocus
               />
               <button
                 onClick={handleSearch}
-                className={`bg-yellow-600 dark:bg-yellow-700 text-white px-6 py-5 text-lg rounded-r-md transition-all ${
+                className={`bg-red-600 dark:bg-red-700 text-white px-6 py-5 text-lg rounded-r-md transition-all ${
                   isSearching
                     ? "opacity-70 cursor-not-allowed"
-                    : "active:scale-95 hover:bg-yellow-700 dark:hover:bg-yellow-600"
+                    : "active:scale-95 hover:bg-red-700 dark:hover:bg-red-600"
                 }`}
                 disabled={isSearching}
               >

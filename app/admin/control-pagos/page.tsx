@@ -482,7 +482,7 @@ export default function ControlPagos() {
         <Link href="/admin" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           <ArrowLeft className="h-6 w-6" />
         </Link>
-        <h1 className="text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400 flex-1">Control de Pagos</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400 flex-1">Control de Pagos</h1>
         <ThemeToggle />
       </div>
 
@@ -499,7 +499,7 @@ export default function ControlPagos() {
 
       {cargando || cargandoDatos || cargandoCaja ? (
         <div className="flex justify-center py-8">
-          <LoadingDumbbell size={32} className="text-yellow-500" />
+          <LoadingDumbbell size={32} className="text-red-500 dark:text-red-400" />
         </div>
       ) : (
         <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-6`}>
