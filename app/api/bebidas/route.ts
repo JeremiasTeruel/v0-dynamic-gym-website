@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
 // Nombre de la colección en MongoDB
-const COLLECTION = "bebidas"
+const COLLECTION = "bebidas_maipu"
 
 // Datos iniciales de bebidas
 const bebidasIniciales = [
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Error al actualizar stock" }, { status: 500 })
     }
 
-    const ventasCollection = db.collection("ventas_bebidas")
+    const ventasCollection = db.collection("ventas_bebidas_maipu")
     const venta: any = {
       bebidaId: bebidaId,
       nombreBebida: bebida.nombre,

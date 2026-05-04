@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
 // Nombre de la colección en MongoDB
-const COLLECTION = "ventas_bebidas"
+const COLLECTION = "ventas_bebidas_maipu"
 
 // GET para obtener ventas de bebidas por rango de fechas
 export async function GET(request: Request) {

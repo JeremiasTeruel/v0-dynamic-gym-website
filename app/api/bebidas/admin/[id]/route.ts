@@ -3,7 +3,7 @@ import { getMongoDb } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
 // Nombre de la colección en MongoDB
-const COLLECTION = "bebidas"
+const COLLECTION = "bebidas_maipu"
 
 // PUT para actualizar una bebida
 export async function PUT(request: Request, { params }: { params: { id: string } }) {

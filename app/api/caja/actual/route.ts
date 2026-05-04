@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
-const COLLECTION = "cajas"
+const COLLECTION = "cajas_maipu"
 
 // GET para obtener la caja actual
 // IMPORTANTE: El sistema NO se rige por fecha. Busca cualquier caja con estado "abierta"

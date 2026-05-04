@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     }
 
     const db = await getMongoDb()
-    const ingresosCollection = db.collection("ingresos")
+    const ingresosCollection = db.collection("ingresos_maipu")
 
     // Obtener fecha actual
     const hoy = new Date()
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
     const fecha = searchParams.get("fecha")
 
     const db = await getMongoDb()
-    const ingresosCollection = db.collection("ingresos")
+    const ingresosCollection = db.collection("ingresos_maipu")
 
     // Si no se especifica fecha, usar la fecha actual
     const fechaBusqueda = fecha || new Date().toISOString().split("T")[0]
@@ -104,7 +104,7 @@ export async function DELETE(request: Request) {
     }
 
     const db = await getMongoDb()
-    const ingresosCollection = db.collection("ingresos")
+    const ingresosCollection = db.collection("ingresos_maipu")
 
     // Eliminar ingresos del día
     const result = await ingresosCollection.deleteMany({ fecha })

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
-const COLLECTION_EGRESOS = "egresos"
+const COLLECTION_EGRESOS = "egresos_maipu"
 
 export async function GET(request: Request) {
   try {

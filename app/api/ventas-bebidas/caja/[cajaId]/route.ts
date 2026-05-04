@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
-const COLLECTION = "ventas_bebidas"
+const COLLECTION = "ventas_bebidas_maipu"
 
 export async function GET(request: Request, { params }: { params: { cajaId: string } }) {
   try {

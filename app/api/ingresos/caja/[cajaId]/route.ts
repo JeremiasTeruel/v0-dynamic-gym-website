@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: { cajaId: stri
     }
 
     const db = await getMongoDb()
-    const ingresosCollection = db.collection("ingresos")
+    const ingresosCollection = db.collection("ingresos_maipu")
     const usuariosCollection = db.collection("usuarios")
 
     // Buscar ingresos de la caja específica

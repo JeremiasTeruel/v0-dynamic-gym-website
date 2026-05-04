@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
-const COLLECTION = "cajas"
+const COLLECTION = "cajas_maipu"
 
 // POST para abrir una nueva caja
 // IMPORTANTE: El sistema NO se rige por fecha. Las cajas permanecen abiertas

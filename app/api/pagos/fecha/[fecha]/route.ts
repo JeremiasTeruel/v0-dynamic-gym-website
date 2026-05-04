@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
 // Nombre de la colección en MongoDB
-const COLLECTION = "pagos"
+const COLLECTION = "pagos_maipu"
 
 // GET para obtener pagos por fecha
 export async function GET(request: Request, { params }: { params: { fecha: string } }) {

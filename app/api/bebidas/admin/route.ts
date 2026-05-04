@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
 // Nombre de la colección en MongoDB
-const COLLECTION = "bebidas"
+const COLLECTION = "bebidas_maipu"
 
 // GET para obtener todas las bebidas (incluyendo inactivas y sin stock)
 export async function GET() {

@@ -3,7 +3,7 @@ import { getMongoDb } from "@/lib/mongodb"
 import { ObjectId } from "mongodb"
 
 // Nombre de la colección en MongoDB
-const COLLECTION = "bebidas"
+const COLLECTION = "bebidas_maipu"
 
 // GET para obtener el stock de una bebida específica
 export async function GET(request: Request) {

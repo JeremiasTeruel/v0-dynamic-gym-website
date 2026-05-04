@@ -11,7 +11,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     const db = await getMongoDb()
-    const collection = db.collection("ventas_bebidas")
+    const collection = db.collection("ventas_bebidas_maipu")
 
     const venta = await collection.findOne({ _id: new ObjectId(id) })
     if (!venta) {
@@ -46,7 +46,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const db = await getMongoDb()
-    const collection = db.collection("ventas_bebidas")
+    const collection = db.collection("ventas_bebidas_maipu")
 
     const updateFields: Record<string, unknown> = {}
 

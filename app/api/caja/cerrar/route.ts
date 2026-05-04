@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
 import { getMongoDb } from "@/lib/mongodb"
 
-const COLLECTION_CIERRES = "cierres_caja"
-const COLLECTION_CAJAS = "cajas"
-const COLLECTION_PAGOS = "pagos"
-const COLLECTION_VENTAS = "ventas_bebidas"
+const COLLECTION_CIERRES = "cierres_cajas_maipu"
+const COLLECTION_CAJAS = "cajas_maipu"
+const COLLECTION_PAGOS = "pagos_maipu"
+const COLLECTION_VENTAS = "ventas_bebidas_maipu"
 const COLLECTION_USUARIOS = "usuarios"
-const COLLECTION_EGRESOS = "egresos"
+const COLLECTION_EGRESOS = "egresos_maipu"
 
 // POST para registrar un cierre de caja
 // IMPORTANTE: El sistema NO se rige por fecha. Las cajas solo se cierran manualmente
