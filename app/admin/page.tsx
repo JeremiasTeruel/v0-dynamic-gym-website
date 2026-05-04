@@ -410,7 +410,7 @@ export default function Admin() {
 
           <Link
             href="/admin/control-pagos"
-            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-green-600 dark:text-green-400 font-medium hover:bg-green-50 dark:hover:bg-gray-700 transition-colors"
           >
             <BarChart className="h-5 w-5" />
             Control de Pagos
