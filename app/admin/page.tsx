@@ -21,6 +21,7 @@ import {
   Filter,
   ChevronDown,
   ChevronRight,
+  Calendar,
 } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
@@ -64,6 +65,12 @@ export default function Admin() {
   const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const [listaUsuariosModalAbierto, setListaUsuariosModalAbierto] = useState(false)
   const [egresosModalAbierto, setEgresosModalAbierto] = useState(false)
+  const [asistenciasModalAbierto, setAsistenciasModalAbierto] = useState(false)
+  const [fechasAsistencias, setFechasAsistencias] = useState<any[]>([])
+  const [cargandoFechasAsistencias, setCargandoFechasAsistencias] = useState(false)
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(null)
+  const [asistenciasDia, setAsistenciasDia] = useState<any[]>([])
+  const [cargandoAsistenciasDia, setCargandoAsistenciasDia] = useState(false)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
@@ -322,6 +329,51 @@ export default function Admin() {
     }
   }, [filtrosAbiertos])
 
+  // Cargar fechas de asistencias anteriores
+  const cargarFechasAsistencias = async () => {
+    try {
+      setCargandoFechasAsistencias(true)
+      const response = await fetch("/api/asistencias")
+      if (response.ok) {
+        const data = await response.json()
+        setFechasAsistencias(data)
+      }
+    } catch (error) {
+      console.error("[v0] Error al cargar fechas de asistencias:", error)
+    } finally {
+      setCargandoFechasAsistencias(false)
+    }
+  }
+
+  // Cargar asistencias de un día específico
+  const cargarAsistenciasDia = async (fecha: string) => {
+    try {
+      setCargandoAsistenciasDia(true)
+      setFechaSeleccionada(fecha)
+      const response = await fetch(`/api/asistencias/${fecha}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAsistenciasDia(data.asistencias || [])
+      }
+    } catch (error) {
+      console.error("[v0] Error al cargar asistencias del día:", error)
+      setAsistenciasDia([])
+    } finally {
+      setCargandoAsistenciasDia(false)
+    }
+  }
+
+  // Formatear fecha para mostrar (Lunes, 23/03/2026)
+  const formatearFechaCompleta = (fechaStr: string) => {
+    const fecha = new Date(fechaStr + "T12:00:00")
+    const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
+    const diaSemana = diasSemana[fecha.getDay()]
+    const dia = fecha.getDate().toString().padStart(2, "0")
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, "0")
+    const anio = fecha.getFullYear()
+    return `${diaSemana}, ${dia}/${mes}/${anio}`
+  }
+
   const cargarIngresosDia = async () => {
     try {
       setCargandoIngresos(true)
@@ -406,6 +458,17 @@ export default function Admin() {
           >
             <Users className="h-5 w-5" />
             Lista de Usuarios
+          </button>
+
+          <button
+            onClick={() => {
+              setAsistenciasModalAbierto(true)
+              cargarFechasAsistencias()
+            }}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-orange-600 dark:text-orange-400 font-medium hover:bg-orange-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <Calendar className="h-5 w-5" />
+            Asistencias Anteriores
           </button>
 
           <Link
