@@ -123,14 +123,13 @@ export async function POST(request: Request) {
 
     const totalEgresos = egresos.reduce((sum, egreso) => sum + egreso.monto, 0)
 
-    // Obtener asistencias/ingresos de la caja
-    const asistencias = await collectionIngresos.find({ cajaId }).toArray()
+    // Obtener asistencias de la caja
+    const asistencias = await collectionIngresos.find({ cajaId }).sort({ timestamp: 1 }).toArray()
     const detalleAsistencias = asistencias.map((asistencia) => ({
       dni: asistencia.dni,
       nombreApellido: asistencia.nombreApellido,
       actividad: asistencia.actividad,
       fechaVencimiento: asistencia.fechaVencimiento,
-      foto: asistencia.foto,
       hora: asistencia.hora,
       fecha: asistencia.fecha,
     }))
