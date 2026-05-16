@@ -21,7 +21,6 @@ import {
   Filter,
   ChevronDown,
   ChevronRight,
-  Calendar,
 } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
@@ -65,12 +64,6 @@ export default function Admin() {
   const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const [listaUsuariosModalAbierto, setListaUsuariosModalAbierto] = useState(false)
   const [egresosModalAbierto, setEgresosModalAbierto] = useState(false)
-  const [asistenciasModalAbierto, setAsistenciasModalAbierto] = useState(false)
-  const [fechasAsistencias, setFechasAsistencias] = useState<{ fecha: string; cantidadAsistencias: number }[]>([])
-  const [cargandoFechas, setCargandoFechas] = useState(false)
-  const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(null)
-  const [asistenciasFecha, setAsistenciasFecha] = useState<any[]>([])
-  const [cargandoAsistencias, setCargandoAsistencias] = useState(false)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
@@ -328,67 +321,6 @@ export default function Admin() {
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [filtrosAbiertos])
-
-  const cargarFechasAsistencias = async () => {
-    try {
-      setCargandoFechas(true)
-      const response = await fetch("/api/asistencias/fechas")
-      if (response.ok) {
-        const data = await response.json()
-        setFechasAsistencias(data)
-      }
-    } catch (error) {
-      console.error("[v0] Error al cargar fechas de asistencias:", error)
-    } finally {
-      setCargandoFechas(false)
-    }
-  }
-
-  const cargarAsistenciasPorFecha = async (fecha: string) => {
-    try {
-      setCargandoAsistencias(true)
-      const response = await fetch(`/api/asistencias/fecha/${fecha}`)
-      if (response.ok) {
-        const data = await response.json()
-        setAsistenciasFecha(data)
-      }
-    } catch (error) {
-      console.error("[v0] Error al cargar asistencias por fecha:", error)
-    } finally {
-      setCargandoAsistencias(false)
-    }
-  }
-
-  const handleSeleccionarFecha = (fecha: string) => {
-    if (fechaSeleccionada === fecha) {
-      setFechaSeleccionada(null)
-      setAsistenciasFecha([])
-    } else {
-      setFechaSeleccionada(fecha)
-      cargarAsistenciasPorFecha(fecha)
-    }
-  }
-
-  const formatearFechaCompleta = (fechaStr: string) => {
-    const fecha = new Date(fechaStr + "T12:00:00")
-    const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
-    const diaSemana = diasSemana[fecha.getDay()]
-    const dia = fecha.getDate().toString().padStart(2, "0")
-    const mes = (fecha.getMonth() + 1).toString().padStart(2, "0")
-    const anio = fecha.getFullYear()
-    return `${diaSemana}, ${dia}/${mes}/${anio}`
-  }
-
-  const abrirModalAsistencias = () => {
-    setAsistenciasModalAbierto(true)
-    cargarFechasAsistencias()
-  }
-
-  const cerrarModalAsistencias = () => {
-    setAsistenciasModalAbierto(false)
-    setFechaSeleccionada(null)
-    setAsistenciasFecha([])
-  }
 
   const cargarIngresosDia = async () => {
     try {

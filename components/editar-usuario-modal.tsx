@@ -141,6 +141,19 @@ export default function EditarUsuarioModal({ usuario, isOpen, onClose, onSave }:
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">WhatsApp</label>
+              <input
+                type="tel"
+                name="whatsapp"
+                value={formData.whatsapp || ""}
+                onChange={handleChange}
+                placeholder="Ej: 1122334455"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Imagen</label>
               <FotoUsuario
                 foto={formData.foto}

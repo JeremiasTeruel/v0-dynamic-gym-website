@@ -7,7 +7,6 @@ const COLLECTION_PAGOS = "pagos"
 const COLLECTION_VENTAS = "ventas_bebidas"
 const COLLECTION_USUARIOS = "usuarios"
 const COLLECTION_EGRESOS = "egresos"
-const COLLECTION_INGRESOS = "ingresos"
 
 // POST para registrar un cierre de caja
 // IMPORTANTE: El sistema NO se rige por fecha. Las cajas solo se cierran manualmente
@@ -48,7 +47,6 @@ export async function POST(request: Request) {
     const collectionVentas = db.collection(COLLECTION_VENTAS)
     const collectionUsuarios = db.collection(COLLECTION_USUARIOS)
     const collectionEgresos = db.collection(COLLECTION_EGRESOS)
-    const collectionIngresos = db.collection(COLLECTION_INGRESOS)
 
     const cajaAbierta = await collectionCajas.findOne({
       estado: "abierta",
@@ -123,24 +121,12 @@ export async function POST(request: Request) {
 
     const totalEgresos = egresos.reduce((sum, egreso) => sum + egreso.monto, 0)
 
-    // Obtener asistencias de la caja
-    const asistencias = await collectionIngresos.find({ cajaId }).sort({ timestamp: 1 }).toArray()
-    const detalleAsistencias = asistencias.map((asistencia) => ({
-      dni: asistencia.dni,
-      nombreApellido: asistencia.nombreApellido,
-      actividad: asistencia.actividad,
-      fechaVencimiento: asistencia.fechaVencimiento,
-      hora: asistencia.hora,
-      fecha: asistencia.fecha,
-    }))
-
     console.log("[v0] Detalles recopilados:", {
       pagos: detallePagosCuotas.length,
       ventas: detalleVentasBebidasCompleto.length,
       nuevosUsuarios: detalleNuevosUsuarios.length,
       egresos: detalleEgresos.length,
       totalEgresos,
-      asistencias: detalleAsistencias.length,
     })
 
     if (tipoCierre === "completo") {
@@ -182,8 +168,6 @@ export async function POST(request: Request) {
       detalleEgresos: detalleEgresos,
       totalEgresos: totalEgresos,
       cantidadEgresos: egresos.length,
-      detalleAsistencias: detalleAsistencias,
-      cantidadAsistencias: asistencias.length,
       fechaCierre: fechaCierreActual,
     }
 
