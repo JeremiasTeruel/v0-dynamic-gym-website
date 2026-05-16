@@ -1,5 +1,5 @@
 "use client"
-import { CheckCircle, XCircle, Trash2, Edit, Phone } from "lucide-react"
+import { CheckCircle, XCircle, Trash2, Edit, Phone, Mail } from "lucide-react"
 import type { Usuario } from "@/data/usuarios"
 
 interface UserCardProps {
@@ -54,6 +54,18 @@ export default function UserCard({ usuario, onEdit, onDelete, isDeleting, format
               >
                 <Phone className="h-3 w-3 mr-1" />
                 {usuario.whatsapp}
+              </a>
+            </div>
+          )}
+          {usuario.email && (
+            <div className="col-span-2">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
+              <a
+                href={`mailto:${usuario.email}`}
+                className="inline-flex items-center ml-1 text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <Mail className="h-3 w-3 mr-1" />
+                {usuario.email}
               </a>
             </div>
           )}
