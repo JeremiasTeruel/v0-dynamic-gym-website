@@ -49,6 +49,8 @@ export default function NuevoUsuario() {
   const [formData, setFormData] = useState({
     nombreApellido: "",
     dni: "",
+    whatsapp: "",
+    email: "",
     fechaInicio: "",
     metodoPago: "Efectivo",
     actividad: "Normal",
@@ -116,7 +118,7 @@ export default function NuevoUsuario() {
   const handleChange = (e) => {
     const { name, value } = e.target
 
-    if (name === "dni") {
+    if (name === "dni" || name === "whatsapp") {
       const numericValue = value.replace(/[^0-9]/g, "")
       setFormData((prev) => ({
         ...prev,
@@ -161,8 +163,14 @@ export default function NuevoUsuario() {
       return
     }
 
-    if (!formData.nombreApellido || !formData.dni || !formData.fechaInicio || !formData.montoPago) {
+    if (!formData.nombreApellido || !formData.dni || !formData.whatsapp || !formData.email || !formData.fechaInicio || !formData.montoPago) {
       setError("Por favor complete todos los campos")
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setError("Por favor ingrese un email valido")
       return
     }
 
@@ -244,6 +252,8 @@ export default function NuevoUsuario() {
           ...datosUsuario,
           fechaVencimiento: calculateDueDate(pendingFormData.formData.fechaInicio),
           foto: fotoUrl || undefined,
+          whatsapp: pendingFormData.formData.whatsapp || undefined,
+          email: pendingFormData.formData.email || undefined,
         }
 
         console.log("Enviando datos de nuevo usuario:", nuevoUsuario)
@@ -322,6 +332,36 @@ export default function NuevoUsuario() {
             name="dni"
             value={formData.dni}
             onChange={handleChange}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            required
+            disabled={isSubmitting}
+            style={{ fontSize: "16px" }}
+          />
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">WhatsApp</label>
+          <input
+            type="tel"
+            name="whatsapp"
+            value={formData.whatsapp}
+            onChange={handleChange}
+            placeholder="Ej: 1122334455"
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            required
+            disabled={isSubmitting}
+            style={{ fontSize: "16px" }}
+          />
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Ej: usuario@email.com"
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             required
             disabled={isSubmitting}

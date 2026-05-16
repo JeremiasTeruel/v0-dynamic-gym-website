@@ -1,5 +1,5 @@
 "use client"
-import { CheckCircle, XCircle, Trash2, Edit } from "lucide-react"
+import { CheckCircle, XCircle, Trash2, Edit, Phone, Mail } from "lucide-react"
 import type { Usuario } from "@/data/usuarios"
 
 interface UserCardProps {
@@ -43,6 +43,32 @@ export default function UserCard({ usuario, onEdit, onDelete, isDeleting, format
               {usuario.actividad || "Normal"}
             </span>
           </div>
+          {usuario.whatsapp && (
+            <div className="col-span-2">
+              <span className="font-medium text-gray-700 dark:text-gray-300">WhatsApp:</span>
+              <a
+                href={`https://wa.me/549${usuario.whatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center ml-1 text-green-600 dark:text-green-400 hover:underline"
+              >
+                <Phone className="h-3 w-3 mr-1" />
+                {usuario.whatsapp}
+              </a>
+            </div>
+          )}
+          {usuario.email && (
+            <div className="col-span-2">
+              <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
+              <a
+                href={`mailto:${usuario.email}`}
+                className="inline-flex items-center ml-1 text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <Mail className="h-3 w-3 mr-1" />
+                {usuario.email}
+              </a>
+            </div>
+          )}
           <div>
             <span className="font-medium text-gray-700 dark:text-gray-300">Inicio:</span>
             <span className="text-gray-900 dark:text-gray-100 ml-1">{formatDate(usuario.fechaInicio)}</span>

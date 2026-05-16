@@ -4,6 +4,8 @@ export interface Usuario {
   _id?: string
   nombreApellido: string
   dni: string
+  whatsapp?: string // Numero de WhatsApp del usuario
+  email?: string // Email del usuario
   fechaInicio: string
   fechaVencimiento: string
   metodoPago: string
