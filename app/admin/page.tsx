@@ -21,6 +21,8 @@ import {
   Filter,
   ChevronDown,
   ChevronRight,
+  Calendar,
+  Download,
 } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
@@ -56,7 +58,10 @@ export default function Admin() {
   const [usuariosOrdenados, setUsuariosOrdenados] = useState<Usuario[]>([])
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
   const [filtroEstadoCuota, setFiltroEstadoCuota] = useState<"todos" | "al_dia" | "vencida">("todos")
-  const [filtroMesVencimiento, setFiltroMesVencimiento] = useState<string | null>(null)
+  const [filtroRangoFechas, setFiltroRangoFechas] = useState<{ desde: string; hasta: string } | null>(null)
+  const [rangoPersonalizadoAbierto, setRangoPersonalizadoAbierto] = useState(false)
+  const [tempFechaDesde, setTempFechaDesde] = useState("")
+  const [tempFechaHasta, setTempFechaHasta] = useState("")
   const [filtroActividad, setFiltroActividad] = useState<string | null>(null)
   const [subMenuEstadoAbierto, setSubMenuEstadoAbierto] = useState(false)
   const [subMenuActividadAbierto, setSubMenuActividadAbierto] = useState(false)
@@ -72,24 +77,6 @@ export default function Admin() {
 
   // Lista de actividades disponibles (importada de data/usuarios)
   const actividadesDisponibles = ACTIVIDADES_OPCIONES
-
-  // Generar lista de meses pasados (desde el mes actual hacia atras)
-  const generarMesesPasados = () => {
-    const meses = []
-    const hoy = new Date()
-    for (let i = 0; i < 12; i++) {
-      const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)
-      const nombreMes = fecha.toLocaleDateString("es-ES", { month: "long", year: "numeric" })
-      meses.push({
-        label: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1),
-        mes: fecha.getMonth(),
-        anio: fecha.getFullYear(),
-      })
-    }
-    return meses
-  }
-
-  const mesesPasados = generarMesesPasados()
 
   const ordenarUsuarios = (listaUsuarios: Usuario[]): Usuario[] => {
     return [...listaUsuarios].sort((a, b) => {
@@ -135,13 +122,23 @@ export default function Admin() {
     } else if (filtroEstadoCuota === "vencida") {
       filtrados = filtrados.filter((usuario) => isPaymentDue(usuario.fechaVencimiento))
       
-      // Si hay un mes especifico seleccionado, filtrar por ese mes
-      if (filtroMesVencimiento) {
-        const [mes, anio] = filtroMesVencimiento.split("-").map(Number)
-        filtrados = filtrados.filter((usuario) => {
-          const fechaVenc = new Date(usuario.fechaVencimiento)
-          return fechaVenc.getMonth() === mes && fechaVenc.getFullYear() === anio
-        })
+      // Si hay un rango de fechas personalizado, filtrar por ese rango
+      if (filtroRangoFechas) {
+        const desde = new Date(filtroRangoFechas.desde + "T00:00:00")
+        if (filtroRangoFechas.hasta) {
+          // Rango de dos fechas: mostrar vencidos dentro del rango
+          const hasta = new Date(filtroRangoFechas.hasta + "T23:59:59")
+          filtrados = filtrados.filter((usuario) => {
+            const fechaVenc = new Date(usuario.fechaVencimiento)
+            return fechaVenc >= desde && fechaVenc <= hasta
+          })
+        } else {
+          // Una sola fecha: mostrar vencidos desde esa fecha hacia atras
+          filtrados = filtrados.filter((usuario) => {
+            const fechaVenc = new Date(usuario.fechaVencimiento)
+            return fechaVenc <= desde
+          })
+        }
       }
     }
 
@@ -151,7 +148,7 @@ export default function Admin() {
     }
 
     setUsuariosFiltrados(filtrados)
-  }, [busqueda, usuariosOrdenados, filtroEstadoCuota, filtroMesVencimiento, filtroActividad])
+  }, [busqueda, usuariosOrdenados, filtroEstadoCuota, filtroRangoFechas, filtroActividad])
 
   const isPaymentDue = (dueDate) => {
     const today = new Date()
@@ -296,13 +293,61 @@ export default function Admin() {
 
   const limpiarFiltros = () => {
     setFiltroEstadoCuota("todos")
-    setFiltroMesVencimiento(null)
+    setFiltroRangoFechas(null)
+    setRangoPersonalizadoAbierto(false)
+    setTempFechaDesde("")
+    setTempFechaHasta("")
     setFiltroActividad(null)
     setSubMenuEstadoAbierto(false)
     setSubMenuActividadAbierto(false)
   }
 
   const hayFiltrosActivos = filtroEstadoCuota !== "todos" || filtroActividad !== null
+
+  const handleAplicarRango = () => {
+    if (tempFechaDesde) {
+      setFiltroRangoFechas({
+        desde: tempFechaDesde,
+        hasta: tempFechaHasta || "",
+      })
+      setRangoPersonalizadoAbierto(false)
+    }
+  }
+
+  const handleCancelarRango = () => {
+    setRangoPersonalizadoAbierto(false)
+    setTempFechaDesde(filtroRangoFechas?.desde || "")
+    setTempFechaHasta(filtroRangoFechas?.hasta || "")
+  }
+
+  const formatDateLabel = (dateStr: string) => {
+    const date = new Date(dateStr + "T12:00:00")
+    return date.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })
+  }
+
+  const descargarXlsx = async () => {
+    const XLSX = await import("xlsx")
+    const datos = usuariosFiltrados.map((u, i) => ({
+      "#": i + 1,
+      "Nombre y Apellido": u.nombreApellido,
+      "DNI": u.dni,
+      "WhatsApp": u.whatsapp || "",
+      "Email": u.email || "",
+      "Actividad": u.actividad || "Normal",
+      "Fecha Inicio": formatDate(u.fechaInicio),
+      "Vencimiento": formatDate(u.fechaVencimiento),
+      "Estado": isPaymentDue(u.fechaVencimiento) ? "Vencida" : "Al dia",
+    }))
+    const ws = XLSX.utils.json_to_sheet(datos)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Usuarios")
+    const colWidths = [
+      { wch: 4 }, { wch: 30 }, { wch: 12 }, { wch: 15 }, { wch: 30 },
+      { wch: 15 }, { wch: 14 }, { wch: 14 }, { wch: 10 },
+    ]
+    ws["!cols"] = colWidths
+    XLSX.writeFile(wb, `usuarios_filtrados_${new Date().toISOString().split("T")[0]}.xlsx`)
+  }
 
   // Cerrar dropdown de filtros al hacer click afuera
   useEffect(() => {
@@ -714,7 +759,8 @@ export default function Admin() {
                               <button
                                 onClick={() => {
                                   setFiltroEstadoCuota("al_dia")
-                                  setFiltroMesVencimiento(null)
+                                  setFiltroRangoFechas(null)
+                                  setRangoPersonalizadoAbierto(false)
                                 }}
                                 className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                                   filtroEstadoCuota === "al_dia"
@@ -728,7 +774,8 @@ export default function Admin() {
                                 <button
                                   onClick={() => {
                                     setFiltroEstadoCuota("vencida")
-                                    setFiltroMesVencimiento(null)
+                                    setFiltroRangoFechas(null)
+                                    setRangoPersonalizadoAbierto(false)
                                   }}
                                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                                     filtroEstadoCuota === "vencida"
@@ -739,30 +786,69 @@ export default function Admin() {
                                   Vencida
                                 </button>
                                 {filtroEstadoCuota === "vencida" && (
-                                  <div className="mt-2 ml-3 space-y-1 max-h-40 overflow-y-auto">
+                                  <div className="mt-2 ml-3 space-y-1">
                                     <button
-                                      onClick={() => setFiltroMesVencimiento(null)}
+                                      onClick={() => {
+                                        setFiltroRangoFechas(null)
+                                        setRangoPersonalizadoAbierto(false)
+                                      }}
                                       className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${
-                                        filtroMesVencimiento === null
+                                        !filtroRangoFechas && !rangoPersonalizadoAbierto
                                           ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
                                           : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
                                       }`}
                                     >
                                       Todos los vencidos
                                     </button>
-                                    {mesesPasados.map((m) => (
-                                      <button
-                                        key={`${m.mes}-${m.anio}`}
-                                        onClick={() => setFiltroMesVencimiento(`${m.mes}-${m.anio}`)}
-                                        className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${
-                                          filtroMesVencimiento === `${m.mes}-${m.anio}`
-                                            ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
-                                            : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                        }`}
-                                      >
-                                        {m.label}
-                                      </button>
-                                    ))}
+                                    <button
+                                      onClick={() => setRangoPersonalizadoAbierto(!rangoPersonalizadoAbierto)}
+                                      className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors flex items-center gap-1 ${
+                                        filtroRangoFechas || rangoPersonalizadoAbierto
+                                          ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
+                                          : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+                                      }`}
+                                    >
+                                      <Calendar className="h-3 w-3" />
+                                      Personalizado
+                                    </button>
+                                    {rangoPersonalizadoAbierto && (
+                                      <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-2">
+                                        <div>
+                                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Desde</label>
+                                          <input
+                                            type="date"
+                                            value={tempFechaDesde}
+                                            onChange={(e) => setTempFechaDesde(e.target.value)}
+                                            className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                          />
+                                        </div>
+                                        <div>
+                                          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Hasta (opcional)</label>
+                                          <input
+                                            type="date"
+                                            value={tempFechaHasta}
+                                            onChange={(e) => setTempFechaHasta(e.target.value)}
+                                            min={tempFechaDesde}
+                                            className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                          />
+                                        </div>
+                                        <div className="flex gap-2 pt-1">
+                                          <button
+                                            onClick={handleCancelarRango}
+                                            className="flex-1 px-2 py-1.5 text-xs rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                          >
+                                            Cancelar
+                                          </button>
+                                          <button
+                                            onClick={handleAplicarRango}
+                                            disabled={!tempFechaDesde}
+                                            className="flex-1 px-2 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                          >
+                                            Aplicar
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -770,7 +856,10 @@ export default function Admin() {
                                 <button
                                   onClick={() => {
                                     setFiltroEstadoCuota("todos")
-                                    setFiltroMesVencimiento(null)
+                                    setFiltroRangoFechas(null)
+                                    setRangoPersonalizadoAbierto(false)
+                                    setTempFechaDesde("")
+                                    setTempFechaHasta("")
                                   }}
                                   className="w-full text-left px-3 py-2 rounded-md text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 >
@@ -842,11 +931,20 @@ export default function Admin() {
                           : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
                       }`}>
                         Estado: {filtroEstadoCuota === "al_dia" ? "Al dia" : "Vencida"}
-                        {filtroMesVencimiento && ` (${mesesPasados.find(m => `${m.mes}-${m.anio}` === filtroMesVencimiento)?.label})`}
+                        {filtroRangoFechas && (
+                          <>
+                            {filtroRangoFechas.hasta
+                              ? ` (${formatDateLabel(filtroRangoFechas.desde)} - ${formatDateLabel(filtroRangoFechas.hasta)})`
+                              : ` (hasta ${formatDateLabel(filtroRangoFechas.desde)})`}
+                          </>
+                        )}
                         <button
                           onClick={() => {
                             setFiltroEstadoCuota("todos")
-                            setFiltroMesVencimiento(null)
+                            setFiltroRangoFechas(null)
+                            setRangoPersonalizadoAbierto(false)
+                            setTempFechaDesde("")
+                            setTempFechaHasta("")
                           }}
                           className="ml-1 hover:opacity-70"
                         >
@@ -1033,6 +1131,17 @@ export default function Admin() {
                     ? `Mostrando ${usuariosFiltrados.length} de ${usuarios.length} usuarios (ordenados alfabéticamente)`
                     : `Total de usuarios registrados: ${usuarios.length} (ordenados alfabéticamente)`}
                 </p>
+                {hayFiltrosActivos && usuariosFiltrados.length > 0 && (
+                  <div className="flex justify-center mt-3">
+                    <button
+                      onClick={descargarXlsx}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                    >
+                      <Download className="h-4 w-4" />
+                      Descargar lista (.xlsx)
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
