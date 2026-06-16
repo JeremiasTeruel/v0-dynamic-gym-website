@@ -400,12 +400,8 @@ export default function Admin() {
   }
 
   useEffect(() => {
+    // Carga inicial. La actualización posterior es solo manual mediante el botón de recarga.
     cargarIngresosDia()
-
-    // Recargar ingresos cada 30 segundos
-    const interval = setInterval(cargarIngresosDia, 30000)
-
-    return () => clearInterval(interval)
   }, [])
 
   return (
