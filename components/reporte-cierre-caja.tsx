@@ -54,6 +54,14 @@ interface DetalleEgreso {
   fecha: string
 }
 
+interface DetalleAsistencia {
+  dni: string
+  nombreApellido: string
+  actividad: string
+  fecha: string
+  hora: string
+}
+
 interface CierreCaja {
   id: string
   fecha: string
@@ -75,6 +83,8 @@ interface CierreCaja {
   detalleEgresos?: DetalleEgreso[]
   totalEgresos?: number
   cantidadEgresos?: number
+  detalleAsistencias?: DetalleAsistencia[]
+  cantidadAsistencias?: number
   fechaCierre: string
 }
 
@@ -89,7 +99,7 @@ export default function ReporteCierreCaja({ isOpen, onClose }: ReporteCierreCaja
   const [error, setError] = useState<string | null>(null)
   const [fechaFiltro, setFechaFiltro] = useState("")
   const [seccionesExpandidas, setSeccionesExpandidas] = useState<{
-    [key: string]: { pagos: boolean; ventas: boolean; usuarios: boolean; egresos: boolean }
+    [key: string]: { pagos: boolean; ventas: boolean; usuarios: boolean; egresos: boolean; asistencias: boolean }
   }>({})
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",

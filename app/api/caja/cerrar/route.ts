@@ -121,11 +121,23 @@ export async function POST(request: Request) {
 
     const totalEgresos = egresos.reduce((sum, egreso) => sum + egreso.monto, 0)
 
+    const collectionIngresos = db.collection("ingresos")
+    const collectionAsistenciasHistorico = db.collection("asistencias_historico")
+    const ingresosAsistencia = await collectionIngresos.find({ cajaId }).sort({ timestamp: 1 }).toArray()
+    const detalleAsistencias = ingresosAsistencia.map((ingreso) => ({
+      dni: ingreso.dni || "",
+      nombreApellido: ingreso.nombreApellido || "Usuario",
+      actividad: ingreso.actividad || "Normal",
+      fecha: ingreso.fecha,
+      hora: ingreso.hora,
+    }))
+
     console.log("[v0] Detalles recopilados:", {
       pagos: detallePagosCuotas.length,
       ventas: detalleVentasBebidasCompleto.length,
       nuevosUsuarios: detalleNuevosUsuarios.length,
       egresos: detalleEgresos.length,
+      asistencias: detalleAsistencias.length,
       totalEgresos,
     })
 
@@ -145,6 +157,23 @@ export async function POST(request: Request) {
         },
       )
       console.log("[v0] Caja cerrada manualmente con ID:", cajaAbierta._id)
+
+      // En el cierre completo los ingresos del día se eliminan, por lo que guardamos
+      // una copia permanente de las asistencias en el histórico para no perderlas.
+      if (ingresosAsistencia.length > 0) {
+        const registrosHistorico = ingresosAsistencia.map((ingreso) => ({
+          dni: ingreso.dni || "",
+          nombreApellido: ingreso.nombreApellido || "Usuario",
+          actividad: ingreso.actividad || "Normal",
+          fecha: ingreso.fecha,
+          hora: ingreso.hora,
+          foto: ingreso.foto || null,
+          cajaId,
+          timestamp: ingreso.timestamp || Date.now(),
+        }))
+        await collectionAsistenciasHistorico.insertMany(registrosHistorico)
+        console.log("[v0] Asistencias guardadas en histórico:", registrosHistorico.length)
+      }
     }
 
     const cierreParaInsertar = {
@@ -168,6 +197,8 @@ export async function POST(request: Request) {
       detalleEgresos: detalleEgresos,
       totalEgresos: totalEgresos,
       cantidadEgresos: egresos.length,
+      detalleAsistencias: detalleAsistencias,
+      cantidadAsistencias: detalleAsistencias.length,
       fechaCierre: fechaCierreActual,
     }
 

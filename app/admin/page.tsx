@@ -31,6 +31,7 @@ import StockBebidasModal from "@/components/stock-bebidas-modal"
 import ReporteCierreCaja from "@/components/reporte-cierre-caja"
 import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import EgresosModal from "@/components/egresos-modal"
+import HistoricoAsistenciasModal from "@/components/historico-asistencias-modal"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import { ACTIVIDADES_OPCIONES } from "@/data/usuarios"
@@ -69,6 +70,7 @@ export default function Admin() {
   const [showVentaBebidasModal, setShowVentaBebidasModal] = useState(false)
   const [listaUsuariosModalAbierto, setListaUsuariosModalAbierto] = useState(false)
   const [egresosModalAbierto, setEgresosModalAbierto] = useState(false)
+  const [historicoAsistenciasAbierto, setHistoricoAsistenciasAbierto] = useState(false)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
@@ -493,14 +495,24 @@ export default function Admin() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Registro de Asistencia del Día</h2>
-              <button
-                onClick={cargarIngresosDia}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
-                disabled={cargandoIngresos}
-                title="Recargar ingresos"
-              >
-                <RefreshCw className={`h-5 w-5 ${cargandoIngresos ? "animate-spin" : ""}`} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setHistoricoAsistenciasAbierto(true)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors"
+                  title="Ver histórico de asistencias"
+                >
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden sm:inline">Histórico de asistencias</span>
+                </button>
+                <button
+                  onClick={cargarIngresosDia}
+                  className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                  disabled={cargandoIngresos}
+                  title="Recargar ingresos"
+                >
+                  <RefreshCw className={`h-5 w-5 ${cargandoIngresos ? "animate-spin" : ""}`} />
+                </button>
+              </div>
             </div>
 
             {cargandoIngresos ? (
@@ -1156,6 +1168,11 @@ export default function Admin() {
         <StockBebidasModal isOpen={stockModalAbierto} onClose={() => setStockModalAbierto(false)} />
 
         <ReporteCierreCaja isOpen={reporteModalAbierto} onClose={() => setReporteModalAbierto(false)} />
+
+      <HistoricoAsistenciasModal
+        isOpen={historicoAsistenciasAbierto}
+        onClose={() => setHistoricoAsistenciasAbierto(false)}
+      />
 
         <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
 
