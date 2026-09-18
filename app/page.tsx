@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useGymContext } from "@/context/gym-context"
-import { CheckCircle, XCircle, Settings, Volume2, VolumeX, AlertTriangle } from "lucide-react"
+import { CheckCircle, XCircle, Settings, Volume2, VolumeX, AlertTriangle, Briefcase, LogIn, LogOut } from "lucide-react"
 import Alert from "@/components/alert"
 import LoadingDumbbell from "@/components/loading-dumbbell"
 import ThemeToggle from "@/components/theme-toggle"
@@ -14,6 +14,14 @@ import CajaCerradaModal from "@/components/caja-cerrada-modal"
 export default function Home() {
   const [searchDni, setSearchDni] = useState("")
   const [foundUser, setFoundUser] = useState(null)
+  const [modoStaff, setModoStaff] = useState(false)
+  const [foundStaff, setFoundStaff] = useState<{
+    nombreApellido: string
+    dni: string
+    oficio: string
+    tipo: "ingreso" | "salida" | "ya_completado"
+  } | null>(null)
+  const [alertMessage, setAlertMessage] = useState("Usuario no encontrado.")
   const [showAlert, setShowAlert] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -203,8 +211,76 @@ export default function Home() {
     }
   }
 
+  const ejecutarBusquedaStaff = async (dni: string) => {
+    setIsSearching(true)
+
+    try {
+      if (soundEnabled) {
+        await soundGenerator.playSearchSound()
+      }
+
+      const response = await fetch("/api/staff/asistencia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dni }),
+      })
+
+      const data = await response.json()
+
+      if (response.status === 404) {
+        setFoundStaff(null)
+        setAlertMessage("Miembro de staff no encontrado.")
+        setShowAlert(true)
+
+        if (soundEnabled) {
+          await soundGenerator.playAlarmSound()
+        }
+
+        setTimeout(() => {
+          setShowAlert(false)
+          setSearchDni("")
+          dniInputRef.current?.focus()
+        }, 3000)
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al marcar asistencia de staff")
+      }
+
+      setFoundStaff({ ...data.staff, tipo: data.tipo })
+
+      if (soundEnabled) {
+        if (data.tipo === "ya_completado") {
+          await soundGenerator.playAlarmSound()
+        } else {
+          await soundGenerator.playSuccessSound()
+        }
+      }
+
+      setTimeout(() => {
+        setFoundStaff(null)
+        setSearchDni("")
+        dniInputRef.current?.focus()
+      }, 5000)
+    } catch (error) {
+      console.error("[v0] Error al marcar asistencia de staff:", error)
+
+      if (soundEnabled) {
+        await soundGenerator.playAlarmSound()
+      }
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
   const handleSearch = async () => {
     if (!searchDni.trim() || isSearching) return
+
+    if (modoStaff) {
+      await ejecutarBusquedaStaff(searchDni.trim())
+      return
+    }
 
     try {
       const cajaResponse = await fetch("/api/caja/actual")
@@ -250,8 +326,19 @@ export default function Home() {
   useEffect(() => {
     if (searchDni === "") {
       setFoundUser(null)
+      setFoundStaff(null)
     }
   }, [searchDni])
+
+  const toggleModoStaff = () => {
+    setModoStaff((prev) => !prev)
+    setSearchDni("")
+    setFoundUser(null)
+    setFoundStaff(null)
+    setTimeout(() => {
+      dniInputRef.current?.focus()
+    }, 100)
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-start pt-8 md:pt-24 p-4 md:p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200 relative">
@@ -299,7 +386,7 @@ export default function Home() {
               <input
                 ref={dniInputRef}
                 type="text"
-                placeholder="Ingresá tu DNI..."
+                placeholder={modoStaff ? "Ingresá tu DNI (Staff)..." : "Ingresá tu DNI..."}
                 value={searchDni}
                 onChange={handleDniChange}
                 onKeyPress={handleKeyPress}
@@ -332,6 +419,20 @@ export default function Home() {
                 🔊 Sonidos: {soundEnabled ? "Activados" : "Desactivados"}
                 {soundEnabled && " • ✅ Cuota al día • ⚠️ Cuota vencida"}
               </p>
+
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={toggleModoStaff}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-medium text-sm transition-colors border ${
+                    modoStaff
+                      ? "bg-green-600 text-white border-green-600 hover:bg-green-700"
+                      : "bg-white dark:bg-gray-800 text-green-700 dark:text-green-400 border-green-600 dark:border-green-500 hover:bg-green-50 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  <Briefcase className="h-4 w-4" />
+                  {modoStaff ? "Modo Staff activo" : "Staff"}
+                </button>
+              </div>
             </div>
 
             {showDniYaRegistradoAlert && (
@@ -347,6 +448,54 @@ export default function Home() {
                       hoy
                     </p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {foundStaff && (
+              <div
+                className={`border rounded-lg p-8 mb-6 shadow-lg transition-all duration-300 ${
+                  foundStaff.tipo === "ingreso"
+                    ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20"
+                    : foundStaff.tipo === "salida"
+                      ? "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30"
+                }`}
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center border-2 border-green-500 dark:border-green-600 flex-shrink-0">
+                    <Briefcase className="h-9 w-9 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
+                      {foundStaff.nombreApellido}
+                    </h2>
+                    <span className="inline-block mt-1 px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full">
+                      {foundStaff.oficio}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-lg mb-4">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">DNI:</span>
+                  <span className="text-gray-900 dark:text-gray-100 ml-2">{foundStaff.dni}</span>
+                </div>
+                <div className="flex items-center text-lg font-semibold">
+                  {foundStaff.tipo === "ingreso" ? (
+                    <div className="flex items-center text-green-600 dark:text-green-400">
+                      <LogIn className="h-6 w-6 mr-2" />
+                      <span>Ingreso registrado con éxito</span>
+                    </div>
+                  ) : foundStaff.tipo === "salida" ? (
+                    <div className="flex items-center text-blue-600 dark:text-blue-400">
+                      <LogOut className="h-6 w-6 mr-2" />
+                      <span>Salida registrada con éxito</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-amber-600 dark:text-amber-400">
+                      <AlertTriangle className="h-6 w-6 mr-2" />
+                      <span>Ya registró ingreso y salida hoy</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -412,7 +561,7 @@ export default function Home() {
       )}
 
       <Alert
-        message="Usuario no encontrado."
+        message={alertMessage}
         isOpen={showAlert}
         onClose={() => setShowAlert(false)}
         autoRedirect={false}
