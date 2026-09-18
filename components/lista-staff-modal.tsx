@@ -36,6 +36,7 @@ export default function ListaStaffModal({ isOpen, onClose }: ListaStaffModalProp
   const [showPinModal, setShowPinModal] = useState(false)
   const [pinAccion, setPinAccion] = useState<PinAccion>(null)
   const [miembroSeleccionado, setMiembroSeleccionado] = useState<StaffMiembro | null>(null)
+  const [confirmarEliminarAbierto, setConfirmarEliminarAbierto] = useState(false)
 
   const [alertaInfo, setAlertaInfo] = useState<{ mensaje: string; visible: boolean; tipo: "success" | "error" }>({
     mensaje: "",
@@ -145,8 +146,18 @@ export default function ListaStaffModal({ isOpen, onClose }: ListaStaffModalProp
 
   const solicitarEliminar = (miembro: StaffMiembro) => {
     setMiembroSeleccionado(miembro)
+    setConfirmarEliminarAbierto(true)
+  }
+
+  const confirmarEliminar = () => {
+    setConfirmarEliminarAbierto(false)
     setPinAccion("eliminar")
     setShowPinModal(true)
+  }
+
+  const cancelarEliminar = () => {
+    setConfirmarEliminarAbierto(false)
+    setMiembroSeleccionado(null)
   }
 
   const handlePinSuccess = async () => {
@@ -604,6 +615,48 @@ export default function ListaStaffModal({ isOpen, onClose }: ListaStaffModalProp
                 ) : (
                   "Guardar Cambios"
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diálogo de confirmación de eliminación */}
+      {confirmarEliminarAbierto && miembroSeleccionado && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[55] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Eliminar Staff</h2>
+              <button
+                onClick={cancelarEliminar}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <p className="text-gray-700 dark:text-gray-300">
+                ¿Estás seguro de que querés eliminar a{" "}
+                <span className="font-bold text-gray-900 dark:text-gray-100">
+                  {miembroSeleccionado.nombreApellido}
+                </span>
+                ? Esta acción no se puede deshacer.
+              </p>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={cancelarEliminar}
+                className="flex-1 px-4 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarEliminar}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Eliminar
               </button>
             </div>
           </div>
