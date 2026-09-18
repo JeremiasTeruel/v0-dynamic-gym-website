@@ -89,6 +89,9 @@ export default function ListaStaffModal({ isOpen, onClose }: ListaStaffModalProp
   }
 
   const cerrarAgregar = () => {
+    // No cerrar/limpiar mientras se está verificando el PIN o guardando,
+    // para evitar enviar campos vacíos al backend.
+    if (showPinModal || guardando) return
     setAgregarModalAbierto(false)
     resetFormulario()
   }
@@ -107,6 +110,15 @@ export default function ListaStaffModal({ isOpen, onClose }: ListaStaffModalProp
   }
 
   const handlePinSuccess = async () => {
+    // Validación defensiva: evitar enviar campos vacíos al backend.
+    if (!nombreApellido.trim() || !dni.trim() || !oficio.trim()) {
+      setAlertaInfo({
+        mensaje: "Todos los campos son obligatorios",
+        visible: true,
+        tipo: "error",
+      })
+      return
+    }
     try {
       setGuardando(true)
       const response = await fetch("/api/staff", {
@@ -130,7 +142,8 @@ export default function ListaStaffModal({ isOpen, onClose }: ListaStaffModalProp
       }
 
       setStaff((prev) => ordenarStaff([...prev, data]))
-      cerrarAgregar()
+      setAgregarModalAbierto(false)
+      resetFormulario()
       setAlertaInfo({
         mensaje: "Nuevo miembro de staff creado con éxito!",
         visible: true,
