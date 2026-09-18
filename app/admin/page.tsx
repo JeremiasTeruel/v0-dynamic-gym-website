@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Calendar,
   Download,
+  Briefcase,
 } from "lucide-react"
 import EditarUsuarioModal from "@/components/editar-usuario-modal"
 import UserCard from "@/components/user-card"
@@ -32,6 +33,8 @@ import ReporteCierreCaja from "@/components/reporte-cierre-caja"
 import VentaBebidasModal from "@/components/venta-bebidas-modal"
 import EgresosModal from "@/components/egresos-modal"
 import HistoricoAsistenciasModal from "@/components/historico-asistencias-modal"
+import ListaStaffModal from "@/components/lista-staff-modal"
+import AsistenciaStaff from "@/components/asistencia-staff"
 import { useMobile } from "@/hooks/use-mobile"
 import type { Usuario } from "@/data/usuarios"
 import { ACTIVIDADES_OPCIONES } from "@/data/usuarios"
@@ -71,6 +74,7 @@ export default function Admin() {
   const [listaUsuariosModalAbierto, setListaUsuariosModalAbierto] = useState(false)
   const [egresosModalAbierto, setEgresosModalAbierto] = useState(false)
   const [historicoAsistenciasAbierto, setHistoricoAsistenciasAbierto] = useState(false)
+  const [listaStaffModalAbierto, setListaStaffModalAbierto] = useState(false)
   const isMobile = useMobile()
   const { getSoundEnabled } = useSoundPreferences()
 
@@ -451,6 +455,14 @@ export default function Admin() {
             Lista de Usuarios
           </button>
 
+          <button
+            onClick={() => setListaStaffModalAbierto(true)}
+            className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-green-600 dark:text-green-400 font-medium hover:bg-green-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <Briefcase className="h-5 w-5" />
+            Lista de Staff
+          </button>
+
           <Link
             href="/admin/control-pagos"
             className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm text-green-600 font-medium hover:bg-green-50 transition-colors"
@@ -658,6 +670,10 @@ export default function Admin() {
               </>
             )}
           </div>
+        </div>
+
+        <div className="mb-8">
+          <AsistenciaStaff />
         </div>
 
         {listaUsuariosModalAbierto && (
@@ -1173,6 +1189,11 @@ export default function Admin() {
         isOpen={historicoAsistenciasAbierto}
         onClose={() => setHistoricoAsistenciasAbierto(false)}
       />
+
+        <ListaStaffModal
+          isOpen={listaStaffModalAbierto}
+          onClose={() => setListaStaffModalAbierto(false)}
+        />
 
         <VentaBebidasModal isOpen={showVentaBebidasModal} onClose={() => setShowVentaBebidasModal(false)} />
 
