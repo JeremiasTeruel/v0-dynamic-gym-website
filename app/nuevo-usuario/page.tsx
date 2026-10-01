@@ -16,16 +16,16 @@ import { soundGenerator, useSoundPreferences } from "@/utils/sound-utils"
 
 const calcularMontoPorActividad = (actividad: string, metodoPago: string): string => {
   if (actividad === "Normal") {
-    return metodoPago === "Efectivo" ? "32000" : "40000"
+    return metodoPago === "Efectivo" ? "42000" : "50000"
   } else if (actividad === "Familiar") {
-    return metodoPago === "Efectivo" ? "30000" : "38000"
+    return metodoPago === "Efectivo" ? "40000" : "48000"
   } else if (actividad === "Dia") {
     return "5000"
   } else if (actividad === "Referees") {
     return "0"
   } else {
     // BJJ, MMA, Boxeo, Convenio
-    return metodoPago === "Efectivo" ? "28000" : "36000"
+    return "38000"
   }
 }
 
@@ -54,7 +54,7 @@ export default function NuevoUsuario() {
     fechaInicio: "",
     metodoPago: "Efectivo",
     actividad: "Normal",
-    montoPago: "32000",
+    montoPago: "42000",
     montoEfectivo: "0",
     montoMercadoPago: "0",
   })
