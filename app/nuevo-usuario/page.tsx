@@ -51,6 +51,7 @@ export default function NuevoUsuario() {
     dni: "",
     whatsapp: "",
     email: "",
+    sede: "",
     fechaInicio: "",
     metodoPago: "Efectivo",
     actividad: "Normal",
@@ -163,7 +164,7 @@ export default function NuevoUsuario() {
       return
     }
 
-    if (!formData.nombreApellido || !formData.dni || !formData.whatsapp || !formData.email || !formData.fechaInicio || !formData.montoPago) {
+    if (!formData.nombreApellido || !formData.dni || !formData.whatsapp || !formData.email || !formData.sede || !formData.fechaInicio || !formData.montoPago) {
       setError("Por favor complete todos los campos")
       return
     }
@@ -367,6 +368,28 @@ export default function NuevoUsuario() {
             disabled={isSubmitting}
             style={{ fontSize: "16px" }}
           />
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">
+          <label htmlFor="sede" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+            Sede
+          </label>
+          <select
+            id="sede"
+            name="sede"
+            value={formData.sede}
+            onChange={handleChange}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            required
+            disabled={isSubmitting}
+            style={{ fontSize: "16px" }}
+          >
+            <option value="" disabled>
+              Seleccioná una sede
+            </option>
+            <option value="Godoy Cruz">Godoy Cruz</option>
+            <option value="Maipú">Maipú</option>
+          </select>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 md:p-0 md:shadow-none border border-gray-200 dark:border-gray-700 md:border-0">

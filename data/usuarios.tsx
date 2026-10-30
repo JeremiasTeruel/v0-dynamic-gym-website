@@ -6,6 +6,7 @@ export interface Usuario {
   dni: string
   whatsapp?: string // Numero de WhatsApp del usuario
   email?: string // Email del usuario
+  sede?: "Godoy Cruz" | "Maipú"
   fechaInicio: string
   fechaVencimiento: string
   metodoPago: string
