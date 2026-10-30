@@ -167,6 +167,23 @@ export default function EditarUsuarioModal({ usuario, isOpen, onClose, onSave }:
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Sede</label>
+              <select
+                name="sede"
+                value={formData.sede || ""}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                disabled={isSubmitting}
+              >
+                <option value="" disabled>
+                  Sin sede - seleccioná una
+                </option>
+                <option value="Godoy Cruz">Godoy Cruz</option>
+                <option value="Maipú">Maipú</option>
+              </select>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Imagen</label>
               <FotoUsuario
                 foto={formData.foto}

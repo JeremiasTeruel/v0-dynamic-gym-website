@@ -1035,8 +1035,8 @@ export default function Admin() {
                         )}
 
                         {!isMobile && (
-                          <div className="border dark:border-gray-600 rounded-md overflow-hidden">
-                            <table className="w-full">
+                          <div className="border dark:border-gray-600 rounded-md overflow-x-auto">
+                            <table className="w-full min-w-[1400px] whitespace-nowrap">
                               <thead className="bg-gray-100 dark:bg-gray-700">
                                 <tr>
                                   <th className="p-3 text-left text-gray-900 dark:text-gray-100">ID</th>
@@ -1044,6 +1044,7 @@ export default function Admin() {
                                   <th className="p-3 text-left text-gray-900 dark:text-gray-100">DNI</th>
                                   <th className="p-3 text-left text-gray-900 dark:text-gray-100">WhatsApp</th>
                                   <th className="p-3 text-left text-gray-900 dark:text-gray-100">Email</th>
+                                  <th className="p-3 text-left text-gray-900 dark:text-gray-100">Sede</th>
                                   <th className="p-3 text-left text-gray-900 dark:text-gray-100">Foto</th>
                                   <th className="p-3 text-left text-gray-900 dark:text-gray-100">Actividad</th>
                                   <th className="p-3 text-left text-gray-900 dark:text-gray-100">Fecha Inicio</th>
@@ -1055,7 +1056,7 @@ export default function Admin() {
                               <tbody>
                                 {usuariosFiltrados.length === 0 ? (
                                   <tr>
-                                    <td colSpan={11} className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={12} className="p-4 text-center text-gray-500 dark:text-gray-400">
                                       No hay usuarios registrados
                                     </td>
                                   </tr>
@@ -1075,6 +1076,11 @@ export default function Admin() {
                                       </td>
                                       <td className="p-3 text-gray-900 dark:text-gray-100 max-w-[200px] truncate">
                                         {usuario.email || <span className="text-gray-400 dark:text-gray-500">-</span>}
+                                      </td>
+                                      <td className="p-3 text-gray-900 dark:text-gray-100">
+                                        {usuario.sede || (
+                                          <span className="text-gray-400 dark:text-gray-500">sin sede</span>
+                                        )}
                                       </td>
                                       <td className="p-3">
                                         <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border">
