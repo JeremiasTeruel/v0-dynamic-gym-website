@@ -414,17 +414,27 @@ export default function ControlPagos() {
         const ultimoDia = new Date(mesInfo.anio, mesInfo.mes + 1, 0)
 
         const usuariosDelMes = usuarios.filter((usuario) => {
-          if (!usuario.fechaCreacion) return false
+          let fechaReferencia: Date | null = null
+          if (usuario.fechaInicio) {
+            const [anio, mes, dia] = String(usuario.fechaInicio).split("T")[0].split("-").map(Number)
+            fechaReferencia = new Date(anio, mes - 1, dia)
+          } else if (usuario.fechaCreacion) {
+            fechaReferencia = new Date(usuario.fechaCreacion)
+          }
+          if (!fechaReferencia || isNaN(fechaReferencia.getTime())) return false
 
-          const fechaCreacion = new Date(usuario.fechaCreacion)
-          return fechaCreacion >= primerDia && fechaCreacion <= ultimoDia
+          return fechaReferencia >= primerDia && fechaReferencia <= ultimoDia
         })
 
-        console.log(`[v0] Usuarios creados en ${mesInfo.nombre} ${mesInfo.anio}:`, usuariosDelMes.length)
+        const godoyCruz = usuariosDelMes.filter((u) => u.sede === "Godoy Cruz").length
+        const maipu = usuariosDelMes.filter((u) => u.sede === "Maipú").length
 
         return {
           mes: mesInfo.nombre,
           usuarios: usuariosDelMes.length,
+          godoyCruz,
+          maipu,
+          sinSede: usuariosDelMes.length - godoyCruz - maipu,
         }
       })
 
